@@ -1,0 +1,248 @@
+@model List<ReadEase.Models.Notification>
+@{
+    ViewData["Title"] = "Updates";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+
+    var grouped = Model
+        .GroupBy(n => {
+            var diff = (DateTime.UtcNow - n.CreatedAt).TotalDays;
+            if (diff < 1) return "TODAY";
+            if (diff < 2) return "YESTERDAY";
+            return n.CreatedAt.ToString("MMM d, yyyy").ToUpper();
+        })
+        .ToList();
+}
+
+<style>
+    /* MAUI: notifications page header spacing */
+    body.maui-host .notif-page-header {
+        padding-top: max(1rem, env(safe-area-inset-top, 1rem));
+    }
+    
+    .notif-page-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--re-border);
+    }
+
+    .notif-page-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: var(--re-text);
+    }
+
+    .notif-mark-btn {
+        background: rgba(242,101,34,.12);
+        border: 1px solid rgba(242,101,34,.25);
+        color: var(--re-orange);
+        font-family: 'Nunito', sans-serif;
+        font-size: .75rem;
+        font-weight: 800;
+        cursor: pointer;
+        padding: .35rem .85rem;
+        border-radius: 99px;
+        transition: background .15s;
+    }
+
+        .notif-mark-btn:hover {
+            background: rgba(242,101,34,.2);
+        }
+
+    /* Notification items */
+    .notif-item {
+        display: flex;
+        gap: .9rem;
+        padding: .95rem 1rem;
+        border-radius: 16px;
+        border: 1px solid transparent;
+        margin-bottom: .5rem;
+        cursor: pointer;
+        transition: background .15s, border-color .15s, transform .15s;
+        text-decoration: none !important;
+    }
+
+        .notif-item.unread {
+            background: linear-gradient(135deg, rgba(200,134,10,.08), rgba(233,165,32,.04));
+            border-color: rgba(200,134,10,.2);
+        }
+
+        .notif-item:hover {
+            background: var(--re-surface-2);
+            border-color: var(--re-border);
+            transform: translateX(2px);
+        }
+
+    .notif-icon {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        background: var(--re-surface-2);
+        border: 1px solid var(--re-border);
+    }
+    .notif-item.unread .notif-icon {
+        background: linear-gradient(135deg, rgba(200,134,10,.15), rgba(233,165,32,.08));
+        border-color: rgba(200,134,10,.2);
+    }
+
+    .notif-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notif-row-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .5rem;
+        margin-bottom: .25rem;
+    }
+    .notif-title {
+        font-size: .86rem;
+        font-weight: 800;
+        color: var(--re-text);
+        line-height: 1.3;
+    }
+    .notif-time {
+        font-size: .65rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-top: .1rem;
+    }
+    .notif-msg {
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--re-muted);
+        line-height: 1.45;
+    }
+
+    .notif-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #C8860A, #E9A520);
+        flex-shrink: 0;
+        margin-top: .35rem;
+        box-shadow: 0 0 10px rgba(200,134,10,.5);
+        transition: opacity .3s, transform .2s;
+    }
+    .notif-item.unread .notif-dot {
+        transform: scale(1.1);
+    }
+
+        .notif-dot.read {
+            opacity: 0;
+        }
+
+    .notif-group-label {
+        font-size: .65rem;
+        font-weight: 900;
+        color: var(--re-muted);
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        margin: 1.25rem 0 .6rem;
+        padding: 0 .1rem;
+    }
+</style>
+
+<div class="notif-page-head">
+    <div class="notif-page-title">Notifications</div>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <button class="notif-mark-btn" onclick="markAllRead()">Mark all as read</button>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="mob-empty" style="padding:3rem 1.5rem;">
+        <span class="mob-empty-icon" style="font-size:3.5rem;margin-bottom:1rem;">🔔</span>
+        <div class="mob-empty-title" style="font-size:1.1rem;">All caught up!</div>
+        <div class="mob-empty-sub" style="max-width:280px;">Get notified about new chapters, book updates, and personalized recommendations</div>
+    </div>
+}
+else
+{
+    @foreach (var group in grouped)
+    {
+        <div class="notif-group-label">@group.Key</div>
+        @foreach (var n in group)
+        {
+            var href = NormalizeMobileLink(n.Link);
+            var msg = n.Message ?? "";
+            var icon = msg.Contains("Chapter") ? "⭐" :
+                       msg.Contains("coin") || msg.Contains("Coin") || msg.Contains("purchase") || msg.Contains("Purchase") ? "💳" :
+                       msg.Contains("gift") || msg.Contains("Gift") || msg.Contains("coupon") ? "🎁" :
+                       msg.Contains("follow") || msg.Contains("Follow") ? "👤" : "🔔";
+            var firstLine = msg.Contains('.') ? msg.Substring(0, msg.IndexOf('.') + 1) : msg;
+            var rest = msg.Length > firstLine.Length ? msg.Substring(firstLine.Length).Trim() : "";
+
+            <a class="notif-item @(!n.IsRead ? "unread" : "")" href="@href">
+                <div class="notif-icon">@icon</div>
+                <div class="notif-body">
+                    <div class="notif-row-top">
+                        <div class="notif-title">@firstLine</div>
+                        <div class="notif-time">@FormatTime(n.CreatedAt)</div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(rest))
+                    {
+                        <div class="notif-msg">@rest</div>
+                    }
+                </div>
+                @if (!n.IsRead) { <div class="notif-dot"></div> }
+            </a>
+        }
+    }
+}
+
+@functions {
+    string NormalizeMobileLink(string? link)
+    {
+        if (string.IsNullOrEmpty(link)) return "#";
+        if (link.StartsWith("/Mobile")) return link;
+        if (link.StartsWith("/Library/Detail/")) return link.Replace("/Library/Detail/", "/Mobile/Detail/");
+        if (link.StartsWith("/Library/Read/"))  return link.Replace("/Library/Read/",   "/Mobile/Read/");
+        if (link.StartsWith("/Library"))        return "/Mobile/Ongoing";
+        if (link.StartsWith("/Subscription"))   return "/Mobile/Subscribe";
+        if (link.StartsWith("/User/Library"))   return "/Mobile/Ongoing";
+        if (link.StartsWith("/Author/MyBooks")) return "/Mobile/Write";
+        if (link.StartsWith("/Admin"))          return "#";
+        return link;
+    }
+
+    string FormatTime(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalHours < 1) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalDays < 1) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return dt.ToString("MMM d, yyyy");
+    }
+}
+
+@section Scripts {
+    <script>
+        async function markAllRead() {
+            try {
+                await mobileApi('/Areas/Mobile/api/Notifications/mark-all-read', { method: 'POST' });
+                document.querySelectorAll('.notif-item.unread').forEach(el => {
+                    el.classList.remove('unread');
+                    el.querySelector('.notif-dot')?.classList.add('read');
+                });
+                document.querySelector('.notif-mark-btn')?.remove();
+                showToast('All caught up ✓');
+            } catch {}
+        }
+    </script>
+}

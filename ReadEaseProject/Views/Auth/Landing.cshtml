@@ -1,0 +1,2884 @@
+﻿@model ReadEase.ViewModels.Landing.LandingViewModel
+@{
+    ViewData["Title"] = "ReadEase – Your Reading World";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Gradient palette — assigned by index so each book gets a distinct colour
+    string[] gradients = {
+        "linear-gradient(160deg,#667eea,#764ba2)",
+        "linear-gradient(160deg,#f26522,#e91e63)",
+        "linear-gradient(160deg,#f093fb,#f5576c)",
+        "linear-gradient(160deg,#4facfe,#00f2fe)",
+        "linear-gradient(160deg,#43e97b,#38f9d7)",
+        "linear-gradient(160deg,#fa709a,#fee140)",
+        "linear-gradient(160deg,#a18cd1,#fbc2eb)",
+        "linear-gradient(160deg,#fda085,#f6d365)",
+        "linear-gradient(160deg,#30cfd0,#330867)",
+        "linear-gradient(160deg,#6a11cb,#2575fc)",
+    };
+
+    string[] rankClass = { "gold", "silver", "bronze", "", "", "" };
+
+    string StarsSvg(double r)
+    {
+        var sb = new System.Text.StringBuilder();
+        int rounded = (int)Math.Round(r);
+        for (int i = 1; i <= 5; i++)
+        {
+            bool full = i <= rounded;
+            sb.Append($"<svg class='star-{(full ? "full" : "empty")}' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/></svg>");
+        }
+        return sb.ToString();
+    }
+
+    string FmtViews(int v) => v >= 1000 ? $"{v / 1000.0:0.#}k" : v.ToString();
+    string FmtRating(double r) => r > 0 ? r.ToString("0.0") : "—";
+}
+
+<style>
+    /* ══════════════════════════════════════════
+                       DESIGN TOKENS
+                    ══════════════════════════════════════════ */
+    :root {
+        --orange: #f26522;
+        --orange-dark: #d9541a;
+        --orange-glow: rgba(242,101,34,.18);
+        --orange-light: #fff3ed;
+        --navy: #1a1a2e;
+        --navy-mid: #0f3460;
+        --navy-light: #16213e;
+        --cream: #faf7f3;
+        --cream-border: #ede8e0;
+        --text-body: #3d3a4a;
+        --text-muted: #6b6878;
+        --text-faint: #9994a8;
+        --white: #ffffff;
+        --font: 'Nunito', sans-serif;
+        --radius-sm: 8px;
+        --radius-md: 14px;
+        --radius-lg: 22px;
+        --radius-xl: 30px;
+        --shadow-card: 0 4px 20px rgba(0,0,0,.07);
+        --shadow-hover: 0 20px 56px rgba(0,0,0,.13);
+    }
+
+    /* ══════════════════════════════════════════
+                       RESET & BASE
+                    ══════════════════════════════════════════ */
+    body > nav, footer, .re-main > .container {
+        display: none !important;
+    }
+
+    .re-main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: var(--font);
+        background: var(--cream);
+        color: var(--text-body);
+        overflow-x: hidden;
+    }
+
+    /* ══════════════════════════════════════════
+                       AMBIENT BLOBS (fixed, full-page depth)
+                    ══════════════════════════════════════════ */
+    .blob {
+        position: fixed;
+        background: var(--orange);
+        pointer-events: none;
+        z-index: 0;
+        opacity: .045;
+    }
+
+    .blob-tl {
+        width: 340px;
+        height: 660px;
+        top: -200px;
+        left: -130px;
+        border-radius: 38% 62% 55% 45%/42% 38% 62% 58%;
+        animation: bA 9s ease-in-out infinite;
+    }
+
+    .blob-br {
+        width: 310px;
+        height: 590px;
+        bottom: -190px;
+        right: -115px;
+        border-radius: 55% 45% 38% 62%/60% 42% 58% 40%;
+        animation: bB 11s ease-in-out infinite;
+    }
+
+    @@keyframes bA {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45%/42% 38% 62% 58%
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60%/55% 45% 58% 42%
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38%/40% 58% 42% 60%
+        }
+    }
+
+    @@keyframes bB {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62%/60% 42% 58% 40%
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42%/45% 55% 40% 60%
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55%/55% 45% 62% 38%
+        }
+    }
+
+    /* ══════════════════════════════════════════
+                       NAVBAR
+                    ══════════════════════════════════════════ */
+    .re-nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(15,52,96,.96);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        padding: .75rem 0;
+    }
+
+    .re-nav-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .re-brand {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        text-decoration: none;
+    }
+
+    .re-brand-book {
+        width: 32px;
+        height: 38px;
+        background: var(--orange);
+        border-radius: 4px 6px 6px 4px;
+        position: relative;
+        box-shadow: 0 4px 14px var(--orange-glow);
+        flex-shrink: 0;
+    }
+
+        .re-brand-book::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: rgba(0,0,0,.18);
+        }
+
+        .re-brand-book::after {
+            content: '';
+            position: absolute;
+            left: 13px;
+            top: 9px;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(#fff,#fff) 0 0/12px 2px no-repeat, linear-gradient(#fff,#fff) 0 5px/12px 2px no-repeat, linear-gradient(#fff,#fff) 0 10px/8px 2px no-repeat;
+            opacity: .9;
+        }
+
+    .re-brand-name {
+        font-size: 1.45rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: -.025em;
+        line-height: 1;
+    }
+
+        .re-brand-name em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+    .re-nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+    }
+
+        .re-nav-links a {
+            font-size: .85rem;
+            font-weight: 700;
+            color: rgba(255,255,255,.6);
+            text-decoration: none;
+            transition: color .15s;
+        }
+
+            .re-nav-links a:hover {
+                color: var(--orange);
+            }
+
+    .re-nav-cta {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+    }
+
+    .btn-nav-ghost {
+        font-size: .82rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.85) !important;
+        padding: .42rem 1.1rem;
+        border: 1.5px solid rgba(255,255,255,.25);
+        border-radius: 50px;
+        text-decoration: none !important;
+        transition: border-color .15s, color .15s;
+        background: transparent;
+    }
+
+        .btn-nav-ghost:hover {
+            border-color: var(--orange);
+            color: var(--orange) !important;
+        }
+
+    .btn-nav-primary {
+        font-size: .82rem;
+        font-weight: 800;
+        color: #fff !important;
+        padding: .42rem 1.2rem;
+        border-radius: 50px;
+        background: var(--orange);
+        text-decoration: none !important;
+        box-shadow: 0 3px 12px var(--orange-glow);
+        transition: background .15s, box-shadow .15s;
+    }
+
+        .btn-nav-primary:hover {
+            background: var(--orange-dark);
+            color: #fff !important;
+        }
+
+    /* ══════════════════════════════════════════
+                       HERO
+                    ══════════════════════════════════════════ */
+    /* ── Hero video background ── */
+    .re-hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        padding: 6rem 0 4rem;
+        background: linear-gradient(150deg, #0a1428 0%, #0f3460 55%, #0a1428 100%);
+    }
+
+    .re-hero-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        z-index: 0;
+    }
+    /* Dark overlay so text stays readable */
+    .re-hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient( 135deg, rgba(10,20,45,.82) 0%, rgba(15,52,96,.70) 50%, rgba(10,20,45,.75) 100% );
+        z-index: 1;
+    }
+        /* Subtle orange glow top-right */
+        .re-hero-overlay::after {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(242,101,34,.18) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+    .re-hero-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .re-hero-text {
+        flex: 1;
+        min-width: 300px;
+        max-width: 680px;
+    }
+
+    .re-hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: rgba(242,101,34,.15);
+        border: 1px solid rgba(242,101,34,.3);
+        border-radius: 20px;
+        padding: .22rem .8rem;
+        font-size: .67rem;
+        font-weight: 900;
+        color: #fbb07a;
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        margin-bottom: 1.25rem;
+    }
+
+        .re-hero-eyebrow svg {
+            width: 12px;
+            height: 12px;
+        }
+
+    .re-hero-h1 {
+        font-size: clamp(2.4rem, 5vw, 3.8rem);
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.08;
+        letter-spacing: -.03em;
+        margin-bottom: 1.25rem;
+    }
+
+        .re-hero-h1 em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+        .re-hero-h1 .line-accent {
+            display: inline-block;
+            position: relative;
+        }
+
+            .re-hero-h1 .line-accent::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: -4px;
+                width: 100%;
+                height: 3px;
+                background: var(--orange);
+                border-radius: 2px;
+            }
+
+    .re-hero-sub {
+        font-size: 1.05rem;
+        color: rgba(255,255,255,.65);
+        font-weight: 600;
+        line-height: 1.65;
+        margin-bottom: 2.25rem;
+        max-width: 520px;
+    }
+
+    .re-hero-btns {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-hero-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: var(--orange);
+        color: #fff;
+        font-family: var(--font);
+        font-weight: 900;
+        font-size: .95rem;
+        padding: .85rem 2rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 6px 28px rgba(242,101,34,.42);
+        transition: background .18s, transform .18s, box-shadow .18s;
+    }
+
+        .btn-hero-primary:hover {
+            background: var(--orange-dark);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 36px rgba(242,101,34,.5);
+        }
+
+        .btn-hero-primary svg {
+            width: 16px;
+            height: 16px;
+        }
+
+    .btn-hero-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: rgba(255,255,255,.12);
+        border: 1.5px solid rgba(255,255,255,.25);
+        color: rgba(255,255,255,.85);
+        font-family: var(--font);
+        font-weight: 800;
+        font-size: .9rem;
+        padding: .8rem 1.6rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: background .18s;
+    }
+
+        .btn-hero-ghost:hover {
+            background: rgba(255,255,255,.2);
+            color: #fff;
+        }
+
+        .btn-hero-ghost svg {
+            width: 14px;
+            height: 14px;
+        }
+    /* Trust bar */
+    .re-hero-trust {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-top: 2.5rem;
+        flex-wrap: wrap;
+    }
+
+    .trust-item {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        font-size: .78rem;
+        font-weight: 700;
+        color: rgba(255,255,255,.5);
+    }
+
+        .trust-item svg {
+            width: 14px;
+            height: 14px;
+            color: rgba(242,101,34,.8);
+        }
+
+    .trust-sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(255,255,255,.15);
+    }
+
+    /* ══════════════════════════════════════════
+                       STATS BAR
+                    ══════════════════════════════════════════ */
+    .re-stats-bar {
+        background: #fff;
+        border-bottom: 1px solid var(--cream-border);
+        position: relative;
+        z-index: 3;
+    }
+
+    .re-stats-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 1.75rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-num {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: var(--navy);
+        line-height: 1;
+    }
+
+        .stat-num span {
+            color: var(--orange);
+        }
+
+    .stat-label {
+        font-size: .7rem;
+        font-weight: 800;
+        color: var(--text-faint);
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        margin-top: .2rem;
+    }
+
+    .stat-div {
+        width: 1px;
+        height: 40px;
+        background: var(--cream-border);
+    }
+
+    /* ══════════════════════════════════════════
+                       SECTION CHROME
+                    ══════════════════════════════════════════ */
+    .re-section {
+        padding: 4.5rem 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .re-section-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .re-section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .re-section-eyebrow {
+        font-size: .68rem;
+        font-weight: 900;
+        color: var(--orange);
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        margin-bottom: .35rem;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+        .re-section-eyebrow svg {
+            width: 12px;
+            height: 12px;
+        }
+
+    .re-section-title {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: var(--navy);
+        line-height: 1.15;
+        letter-spacing: -.025em;
+    }
+
+        .re-section-title em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+    .re-section-sub {
+        font-size: .88rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-top: .3rem;
+    }
+
+    .re-view-all {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .8rem;
+        font-weight: 800;
+        color: var(--orange);
+        text-decoration: none;
+        padding: .42rem 1rem;
+        border: 1.5px solid rgba(242,101,34,.25);
+        border-radius: 50px;
+        transition: background .15s, border-color .15s;
+        flex-shrink: 0;
+    }
+
+        .re-view-all:hover {
+            background: var(--orange-light);
+            border-color: var(--orange);
+        }
+
+        .re-view-all svg {
+            width: 13px;
+            height: 13px;
+        }
+
+    /* ══════════════════════════════════════════
+                       BOOK CARDS (shared)
+                    ══════════════════════════════════════════ */
+    .book-card {
+        background: #fff;
+        border: 1px solid var(--cream-border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        transition: transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s, border-color .2s;
+        box-shadow: var(--shadow-card);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+        .book-card:hover {
+            transform: translateY(-8px) scale(1.015);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--orange);
+        }
+
+    .book-cover-wrap {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .book-cover {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        display: block;
+        transition: transform .38s ease;
+    }
+
+    .book-card:hover .book-cover {
+        transform: scale(1.06);
+    }
+
+    .book-cover-ph {
+        width: 100%;
+        height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .book-cover-ph svg {
+            width: 48px;
+            height: 48px;
+            opacity: .5;
+            color: #fff;
+        }
+    /* Rank badge */
+    .book-rank {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: rgba(26,26,46,.75);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .65rem;
+        font-weight: 900;
+        color: #fff;
+    }
+
+        .book-rank.gold {
+            background: linear-gradient(135deg,#f59e0b,#d97706);
+        }
+
+        .book-rank.silver {
+            background: linear-gradient(135deg,#94a3b8,#64748b);
+        }
+
+        .book-rank.bronze {
+            background: linear-gradient(135deg,#c2855c,#a0633a);
+        }
+    /* Free / premium badge */
+    .book-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border-radius: 6px;
+        font-size: .58rem;
+        font-weight: 900;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: .18rem .5rem;
+    }
+
+        .book-badge.free {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .book-badge.premium {
+            background: linear-gradient(135deg,#f59e0b,#d97706);
+            color: #fff;
+        }
+    /* Stars */
+    .star-row {
+        display: flex;
+        align-items: center;
+        gap: .2rem;
+        margin-bottom: .3rem;
+    }
+
+        .star-row svg {
+            width: 11px;
+            height: 11px;
+        }
+
+    .star-full {
+        color: #f59e0b;
+    }
+
+    .star-empty {
+        color: #ddd;
+    }
+
+    .star-val {
+        font-size: .68rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        margin-left: .2rem;
+    }
+    /* Card body */
+    .book-body {
+        padding: .8rem .9rem .4rem;
+        flex: 1;
+    }
+
+    .book-genre-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        background: var(--cream);
+        border: 1px solid var(--cream-border);
+        border-radius: 20px;
+        padding: .1rem .55rem;
+        font-size: .58rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .35rem;
+    }
+
+        .book-genre-pill svg {
+            width: 9px;
+            height: 9px;
+        }
+
+    .book-title {
+        font-family: var(--font);
+        font-size: .85rem;
+        font-weight: 900;
+        color: var(--navy);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.35;
+        margin-bottom: .18rem;
+    }
+
+    .book-author {
+        font-size: .7rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    /* Card footer */
+    .book-foot {
+        padding: .45rem .9rem .8rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+
+    .book-views {
+        display: flex;
+        align-items: center;
+        gap: .28rem;
+        font-size: .64rem;
+        font-weight: 700;
+        color: var(--text-faint);
+    }
+
+        .book-views svg {
+            width: 11px;
+            height: 11px;
+        }
+
+    .btn-book-read {
+        font-size: .7rem;
+        font-weight: 900;
+        padding: .3rem .9rem;
+        border-radius: 8px;
+        background: var(--orange);
+        color: #fff;
+        border: none;
+        text-decoration: none;
+        transition: background .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        box-shadow: 0 2px 10px var(--orange-glow);
+    }
+
+        .btn-book-read:hover {
+            background: var(--orange-dark);
+            color: #fff;
+        }
+
+        .btn-book-read svg {
+            width: 11px;
+            height: 11px;
+        }
+
+    /* ══════════════════════════════════════════
+                       BOOK PREVIEW SNIPPET  ← NEW ADDITION
+                    ══════════════════════════════════════════ */
+    .book-preview-wrap {
+        position: relative;
+        margin: 0 .9rem .1rem;
+        padding-top: .55rem;
+        border-top: 1px dashed var(--cream-border);
+    }
+
+    .book-preview-text {
+        font-size: .73rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        font-weight: 500;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* cream-coloured gradient that fades the text out */
+    .book-preview-fade {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2rem;
+        background: linear-gradient(to bottom, transparent, #fff);
+        pointer-events: none;
+    }
+
+    /* "Log in to read more" row */
+    .book-preview-cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        padding: .4rem .9rem .65rem;
+        font-size: .72rem;
+        font-weight: 700;
+        color: var(--text-muted);
+    }
+
+        .book-preview-cta svg {
+            width: 12px;
+            height: 12px;
+            color: var(--orange);
+            flex-shrink: 0;
+        }
+
+        .book-preview-cta a {
+            color: var(--orange);
+            font-weight: 800;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+            .book-preview-cta a:hover {
+                color: var(--orange-dark);
+            }
+
+    /* ══════════════════════════════════════════
+                       TOP RATED SECTION
+                    ══════════════════════════════════════════ */
+    .section-rated {
+        background: var(--cream);
+    }
+
+    /* ══════════════════════════════════════════
+                       MOST VIEWED — horizontal scroll on mobile
+                    ══════════════════════════════════════════ */
+    .section-viewed {
+        background: #fff;
+    }
+
+    .viewed-scroll-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: .5rem;
+    }
+
+        .viewed-scroll-wrap::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .viewed-scroll-wrap::-webkit-scrollbar-track {
+            background: var(--cream);
+            border-radius: 2px;
+        }
+
+        .viewed-scroll-wrap::-webkit-scrollbar-thumb {
+            background: var(--orange);
+            border-radius: 2px;
+        }
+
+    .viewed-row {
+        display: flex;
+        gap: 1rem;
+        width: max-content;
+        padding: .25rem .1rem;
+    }
+
+    .viewed-card-wrap {
+        width: 170px;
+        flex-shrink: 0;
+    }
+
+    /* ══════════════════════════════════════════
+                       FEATURED / SPOTLIGHT
+                    ══════════════════════════════════════════ */
+    .section-spotlight {
+        background: var(--cream);
+    }
+
+    .spotlight-card {
+        background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--navy-light) 100%);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        position: relative;
+        padding: 3rem 3rem 3rem 2.5rem;
+        display: flex;
+        align-items: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+        box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    }
+
+        .spotlight-card::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(242,101,34,.18) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+    .spotlight-text {
+        flex: 1;
+        min-width: 260px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .spotlight-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(242,101,34,.15);
+        border: 1px solid rgba(242,101,34,.3);
+        border-radius: 20px;
+        padding: .2rem .8rem;
+        font-size: .65rem;
+        font-weight: 900;
+        color: #fbb07a;
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        margin-bottom: 1rem;
+    }
+
+        .spotlight-eyebrow svg {
+            width: 11px;
+            height: 11px;
+        }
+
+    .spotlight-title {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.15;
+        letter-spacing: -.02em;
+        margin-bottom: .65rem;
+    }
+
+        .spotlight-title em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+    .spotlight-desc {
+        font-size: .9rem;
+        color: rgba(255,255,255,.5);
+        font-weight: 600;
+        line-height: 1.65;
+        margin-bottom: 1.75rem;
+        max-width: 460px;
+    }
+
+    .spotlight-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .sp-stat {
+    }
+
+    .sp-stat-num {
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: #fff;
+    }
+
+        .sp-stat-num em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+    .sp-stat-label {
+        font-size: .65rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.35);
+        text-transform: uppercase;
+        letter-spacing: .6px;
+    }
+
+    .btn-spotlight {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: var(--orange);
+        color: #fff;
+        font-family: var(--font);
+        font-weight: 900;
+        font-size: .9rem;
+        padding: .75rem 1.75rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 4px 22px rgba(242,101,34,.4);
+        transition: background .18s, transform .18s;
+    }
+
+        .btn-spotlight:hover {
+            background: var(--orange-dark);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn-spotlight svg {
+            width: 15px;
+            height: 15px;
+        }
+
+    .spotlight-visual {
+        flex-shrink: 0;
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .sp-book {
+        border-radius: 12px;
+        position: relative;
+        box-shadow: 0 16px 48px rgba(0,0,0,.4);
+    }
+
+        .sp-book::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background: rgba(0,0,0,.25);
+            border-radius: 12px 0 0 12px;
+        }
+
+    .sp-book-1 {
+        width: 80px;
+        height: 120px;
+        background: linear-gradient(160deg,#667eea,#764ba2);
+        transform: rotate(-5deg);
+    }
+
+    .sp-book-2 {
+        width: 90px;
+        height: 138px;
+        background: linear-gradient(160deg,#f26522,#e91e63);
+    }
+
+    .sp-book-3 {
+        width: 80px;
+        height: 112px;
+        background: linear-gradient(160deg,#43e97b,#38f9d7);
+        transform: rotate(4deg);
+    }
+
+    /* ══════════════════════════════════════════
+                       GENRES SECTION
+                    ══════════════════════════════════════════ */
+    .section-genres {
+        background: #fff;
+    }
+
+    .genre-pill {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        background: var(--cream);
+        border: 1.5px solid var(--cream-border);
+        border-radius: 14px;
+        padding: .8rem 1.1rem;
+        cursor: default;
+        position: relative;
+    }
+
+    .genre-pill-clickable {
+        cursor: pointer;
+        transition: background .18s, border-color .18s, box-shadow .18s, transform .18s;
+    }
+
+        .genre-pill-clickable:hover {
+            border-color: var(--orange);
+            background: var(--orange-light);
+            box-shadow: 0 4px 18px var(--orange-glow);
+            transform: translateY(-2px);
+        }
+
+        .genre-pill-clickable.active {
+            border-color: var(--orange);
+            background: var(--orange-light);
+            box-shadow: 0 4px 20px var(--orange-glow);
+        }
+
+    .genre-chevron {
+        width: 14px;
+        height: 14px;
+        color: var(--text-faint);
+        margin-left: auto;
+        flex-shrink: 0;
+        transition: transform .25s ease, color .18s;
+    }
+
+    .genre-pill-clickable.active .genre-chevron {
+        transform: rotate(180deg);
+        color: var(--orange);
+    }
+
+    .genre-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+        .genre-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+    .genre-name {
+        font-size: .82rem;
+        font-weight: 800;
+        color: var(--navy);
+    }
+
+    .genre-count {
+        font-size: .65rem;
+        font-weight: 700;
+        color: var(--text-faint);
+        margin-top: .05rem;
+    }
+
+    /* ── Genre Panel (inline book viewer) ── */
+    .genre-panel {
+        margin-top: 1.5rem;
+        background: #fff;
+        border: 1.5px solid var(--cream-border);
+        border-radius: var(--radius-lg);
+        padding: 1.75rem 2rem;
+        box-shadow: 0 8px 40px rgba(0,0,0,.08);
+        animation: panelSlideIn .3s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    @@keyframes panelSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-14px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .genre-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .genre-panel-title {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+    }
+
+    .genre-panel-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+        .genre-panel-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+    .genre-panel-eyebrow {
+        font-size: .62rem;
+        font-weight: 900;
+        color: var(--orange);
+        text-transform: uppercase;
+        letter-spacing: .8px;
+    }
+
+    .genre-panel-name {
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: var(--navy);
+        line-height: 1.1;
+    }
+
+    .genre-panel-close {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 1.5px solid var(--cream-border);
+        background: var(--cream);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background .18s, border-color .18s;
+        flex-shrink: 0;
+        padding: 0;
+    }
+
+        .genre-panel-close svg {
+            width: 15px;
+            height: 15px;
+            color: var(--text-muted);
+        }
+
+        .genre-panel-close:hover {
+            background: #fff0ec;
+            border-color: var(--orange);
+        }
+
+            .genre-panel-close:hover svg {
+                color: var(--orange);
+            }
+
+    .genre-panel-note {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        background: #fafaf8;
+        border: 1px solid var(--cream-border);
+        border-radius: 10px;
+        padding: .55rem .9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .genre-books-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    @@media (max-width: 640px) {
+        .genre-books-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .genre-panel {
+            padding: 1.25rem;
+        }
+    }
+
+    .genre-book-item {
+        display: flex;
+        gap: .85rem;
+        padding: .9rem 1rem;
+        background: var(--cream);
+        border: 1px solid var(--cream-border);
+        border-radius: 14px;
+        transition: box-shadow .22s, transform .22s, border-color .22s;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        align-items: center;
+    }
+
+        .genre-book-item:hover {
+            box-shadow: 0 8px 28px rgba(0,0,0,.1);
+            transform: translateY(-3px);
+            border-color: var(--orange);
+        }
+
+    .genre-book-num {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: #e0dbd3;
+        min-width: 20px;
+        flex-shrink: 0;
+        line-height: 1;
+        align-self: flex-start;
+        margin-top: .2rem;
+    }
+
+        .genre-book-num.top3 {
+            color: var(--orange);
+        }
+
+    .genre-book-cover {
+        width: 60px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        flex-shrink: 0;
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .genre-book-cover img {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .genre-book-cover svg {
+            width: 24px;
+            height: 24px;
+            opacity: .5;
+            color: #fff;
+        }
+
+    .genre-book-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .genre-book-title {
+        font-size: .82rem;
+        font-weight: 800;
+        color: var(--navy);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.3;
+        margin-bottom: .15rem;
+    }
+
+    .genre-book-author {
+        font-size: .68rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: .35rem;
+    }
+
+    .genre-book-tags {
+        display: flex;
+        gap: .3rem;
+        flex-wrap: wrap;
+        margin-bottom: .35rem;
+    }
+
+    .genre-book-tag {
+        font-size: .6rem;
+        font-weight: 800;
+        padding: .1rem .45rem;
+        border-radius: 6px;
+        border: 1px solid;
+    }
+
+        .genre-book-tag.free {
+            background: #f0fdf4;
+            color: #15803d;
+            border-color: #bbf7d0;
+        }
+
+        .genre-book-tag.premium {
+            background: #fff7ed;
+            color: #c2410c;
+            border-color: #fed7aa;
+        }
+
+    .genre-book-reads {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        font-size: .62rem;
+        font-weight: 700;
+        color: var(--text-faint);
+    }
+
+        .genre-book-reads svg {
+            width: 10px;
+            height: 10px;
+        }
+
+    .genre-book-actions {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+        flex-shrink: 0;
+    }
+
+    .btn-genre-read {
+        font-size: .72rem;
+        font-weight: 800;
+        padding: .3rem .75rem;
+        border-radius: 8px;
+        background: var(--orange);
+        color: #fff;
+        text-decoration: none;
+        text-align: center;
+        white-space: nowrap;
+        transition: background .18s, transform .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        border: none;
+        cursor: pointer;
+        font-family: var(--font);
+    }
+
+        .btn-genre-read:hover {
+            background: var(--orange-dark);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-genre-read.locked {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+    .genre-empty {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: .88rem;
+    }
+
+        .genre-empty svg {
+            display: block;
+            margin: 0 auto .75rem;
+            opacity: .35;
+        }
+
+    /* ══════════════════════════════════════════
+                       CTA SECTION
+                    ══════════════════════════════════════════ */
+    .section-cta {
+        background: var(--cream);
+    }
+
+    .cta-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 60%, #16213e 100%);
+        border-radius: var(--radius-xl);
+        padding: 4rem 3rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(242,101,34,.15) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+    .cta-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(242,101,34,.15);
+        border: 1px solid rgba(242,101,34,.3);
+        border-radius: 20px;
+        padding: .22rem .85rem;
+        font-size: .67rem;
+        font-weight: 900;
+        color: #fbb07a;
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        margin-bottom: 1.25rem;
+    }
+
+        .cta-eyebrow svg {
+            width: 11px;
+            height: 11px;
+        }
+
+    .cta-title {
+        font-size: clamp(1.6rem,3.5vw,2.6rem);
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.12;
+        letter-spacing: -.03em;
+        margin-bottom: .8rem;
+    }
+
+        .cta-title em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+    .cta-sub {
+        font-size: 1rem;
+        color: rgba(255,255,255,.5);
+        font-weight: 600;
+        max-width: 500px;
+        margin: 0 auto 2.25rem;
+        line-height: 1.65;
+    }
+
+    .cta-btns {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-cta-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: var(--orange);
+        color: #fff;
+        font-family: var(--font);
+        font-weight: 900;
+        font-size: .95rem;
+        padding: .9rem 2.25rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 6px 28px rgba(242,101,34,.5);
+        transition: background .18s, transform .18s;
+    }
+
+        .btn-cta-primary:hover {
+            background: var(--orange-dark);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn-cta-primary svg {
+            width: 16px;
+            height: 16px;
+        }
+
+    .btn-cta-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: rgba(255,255,255,.1);
+        border: 1.5px solid rgba(255,255,255,.2);
+        color: rgba(255,255,255,.8);
+        font-family: var(--font);
+        font-weight: 800;
+        font-size: .9rem;
+        padding: .85rem 1.75rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: background .18s;
+    }
+
+        .btn-cta-ghost:hover {
+            background: rgba(255,255,255,.18);
+            color: #fff;
+        }
+
+        .btn-cta-ghost svg {
+            width: 14px;
+            height: 14px;
+        }
+
+    /* ══════════════════════════════════════════
+                       FOOTER
+                    ══════════════════════════════════════════ */
+    .re-footer {
+        background: var(--navy);
+        border-top: 1px solid rgba(255,255,255,.06);
+        padding: 3rem 0 2rem;
+    }
+
+    .re-footer-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .re-footer-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
+    }
+
+    .re-footer-brand-name {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: -.025em;
+    }
+
+        .re-footer-brand-name em {
+            color: var(--orange);
+            font-style: normal;
+        }
+
+    .re-footer-brand-sub {
+        font-size: .75rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.3);
+        margin-top: .15rem;
+    }
+
+    .re-footer-links {
+        display: flex;
+        gap: 1.75rem;
+        flex-wrap: wrap;
+    }
+
+        .re-footer-links a {
+            font-size: .82rem;
+            font-weight: 700;
+            color: rgba(255,255,255,.4);
+            text-decoration: none;
+            transition: color .15s;
+        }
+
+            .re-footer-links a:hover {
+                color: var(--orange);
+            }
+
+    .re-footer-bottom {
+        border-top: 1px solid rgba(255,255,255,.07);
+        padding-top: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .re-footer-copy {
+        font-size: .75rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.25);
+    }
+
+    .re-footer-socials {
+        display: flex;
+        gap: .65rem;
+    }
+
+    .footer-social {
+        width: 32px;
+        height: 32px;
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: background .15s, border-color .15s;
+    }
+
+        .footer-social:hover {
+            background: rgba(242,101,34,.2);
+            border-color: rgba(242,101,34,.4);
+        }
+
+        .footer-social svg {
+            width: 14px;
+            height: 14px;
+            color: rgba(255,255,255,.5);
+        }
+
+        .footer-social:hover svg {
+            color: var(--orange);
+        }
+
+    /* ══════════════════════════════════════════
+                       ANIMATIONS
+                    ══════════════════════════════════════════ */
+    .fade-up {
+        animation: fadeUp .5s ease both;
+    }
+
+    .fade-up-1 {
+        animation-delay: .1s;
+    }
+
+    .fade-up-2 {
+        animation-delay: .2s;
+    }
+
+    .fade-up-3 {
+        animation-delay: .3s;
+    }
+
+    .fade-up-4 {
+        animation-delay: .4s;
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(22px)
+        }
+
+        to {
+            opacity: 1;
+            transform: none
+        }
+    }
+
+    /* ══════════════════════════════════════════
+                       RESPONSIVE
+                    ══════════════════════════════════════════ */
+    @@media (max-width: 991px) {
+        .re-hero-visual {
+            display: none;
+        }
+
+        .re-hero-inner {
+            justify-content: center;
+            text-align: center;
+        }
+
+        .re-hero-btns {
+            justify-content: center;
+        }
+
+        .re-hero-trust {
+            justify-content: center;
+        }
+
+        .re-hero-sub {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .spotlight-card {
+            text-align: center;
+            justify-content: center;
+        }
+
+        .spotlight-visual {
+            justify-content: center;
+        }
+
+        .spotlight-stats {
+            justify-content: center;
+        }
+
+        .btn-spotlight {
+            margin: 0 auto;
+            display: inline-flex;
+        }
+    }
+
+    @@media (max-width: 767px) {
+        .re-nav-links {
+            display: none;
+        }
+
+        .re-section {
+            padding: 3rem 0;
+        }
+
+        .re-section-title {
+            font-size: 1.4rem;
+        }
+
+        .re-hero {
+            padding: 4rem 0 3rem;
+        }
+
+        .cta-card {
+            padding: 3rem 1.5rem;
+        }
+    }
+
+    /* ══════════════════════════════════════════
+                       HERO VISUAL (right side)
+                    ══════════════════════════════════════════ */
+    .re-hero-visual {
+        flex-shrink: 0;
+        width: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .hero-books-scene {
+        position: relative;
+        width: 340px;
+        height: 340px;
+    }
+
+    /* Glow rings */
+    .hero-glow-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(242,101,34,.18);
+        pointer-events: none;
+        top: 50%;
+        left: 50%;
+    }
+
+    .hero-glow-ring-1 { width: 180px; height: 180px; transform: translate(-50%,-50%); animation: ringPulse 3.5s ease-in-out infinite; }
+    .hero-glow-ring-2 { width: 260px; height: 260px; transform: translate(-50%,-50%); animation: ringPulse 3.5s ease-in-out infinite .7s; }
+    .hero-glow-ring-3 { width: 340px; height: 340px; transform: translate(-50%,-50%); animation: ringPulse 3.5s ease-in-out infinite 1.4s; }
+
+    @@keyframes ringPulse {
+        0%, 100% { opacity: .2; }
+        50% { opacity: .5; }
+    }
+
+    /* Book stack */
+    .hero-book-stack {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: flex-end;
+        gap: .9rem;
+    }
+
+    .hbs-book {
+        border-radius: 10px;
+        position: relative;
+        box-shadow: 0 24px 56px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+
+        .hbs-book::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 9px;
+            background: rgba(0,0,0,.22);
+            border-radius: 10px 0 0 10px;
+        }
+
+        .hbs-book::after {
+            content: '';
+            position: absolute;
+            left: 16px;
+            top: 14px;
+            right: 10px;
+            height: 2px;
+            background: rgba(255,255,255,.25);
+            border-radius: 2px;
+            box-shadow: 0 7px 0 rgba(255,255,255,.18), 0 14px 0 rgba(255,255,255,.12);
+        }
+
+    .hbs-1 { width: 78px; height: 114px; background: linear-gradient(160deg,#667eea,#764ba2); animation: hbsFloat1 5s ease-in-out infinite; }
+    .hbs-2 { width: 90px; height: 132px; background: linear-gradient(160deg,#f26522,#e91e63); animation: hbsFloat2 5s ease-in-out infinite .9s; }
+    .hbs-3 { width: 74px; height: 108px; background: linear-gradient(160deg,#43e97b,#38f9d7); animation: hbsFloat3 5s ease-in-out infinite 1.8s; }
+
+    @@keyframes hbsFloat1 {
+        0%, 100% { transform: rotate(-9deg) translateY(8px); }
+        50% { transform: rotate(-9deg) translateY(-6px); }
+    }
+
+    @@keyframes hbsFloat2 {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-14px); }
+    }
+
+    @@keyframes hbsFloat3 {
+        0%, 100% { transform: rotate(7deg) translateY(6px); }
+        50% { transform: rotate(7deg) translateY(-6px); }
+    }
+
+    /* Floating info badges */
+    .hero-badge {
+        position: absolute;
+        background: rgba(255,255,255,.1);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 14px;
+        padding: .65rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+    }
+
+    .hero-badge-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+        .hero-badge-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+    .hero-badge-text {
+        font-size: .78rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .hero-badge-sub {
+        font-size: .63rem;
+        color: rgba(255,255,255,.5);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .hero-badge-1 {
+        top: 24px;
+        right: 10px;
+        animation: badgeFloat1 4.5s ease-in-out infinite;
+    }
+
+    .hero-badge-2 {
+        bottom: 50px;
+        left: 5px;
+        animation: badgeFloat2 4.5s ease-in-out infinite 1.5s;
+    }
+
+    .hero-badge-3 {
+        top: 50%;
+        right: -20px;
+        animation: badgeFloat3 4.5s ease-in-out infinite 3s;
+    }
+
+    @@keyframes badgeFloat1 {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    @@keyframes badgeFloat2 {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    @@keyframes badgeFloat3 {
+        0%, 100% { transform: translateY(-50%); }
+        50% { transform: translateY(calc(-50% - 8px)); }
+    }
+
+    /* ══════════════════════════════════════════
+                       FEATURES SECTION
+                    ══════════════════════════════════════════ */
+    .section-features {
+        background: linear-gradient(180deg, #fff 0%, var(--cream) 100%);
+    }
+
+    .re-section-head-center {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    @@media (max-width: 900px) {
+        .features-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @@media (max-width: 560px) {
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .feature-card {
+        background: #fff;
+        border: 1.5px solid var(--cream-border);
+        border-radius: var(--radius-lg);
+        padding: 1.75rem 1.5rem 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s, border-color .2s;
+        box-shadow: var(--shadow-card);
+    }
+
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 3px 3px 0 0;
+            opacity: 0;
+            transition: opacity .2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-7px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--orange);
+        }
+
+        .feature-card:hover::after {
+            opacity: 1;
+            background: var(--orange);
+        }
+
+    .feature-card-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.1rem;
+    }
+
+        .feature-card-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+    .feature-card-title {
+        font-size: 1rem;
+        font-weight: 900;
+        color: var(--navy);
+        margin-bottom: .4rem;
+        letter-spacing: -.015em;
+    }
+
+    .feature-card-desc {
+        font-size: .82rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        line-height: 1.65;
+    }
+
+    /* ══════════════════════════════════════════
+                       DIVIDER WAVE
+                    ══════════════════════════════════════════ */
+    .re-wave-divider {
+        line-height: 0;
+        overflow: hidden;
+        position: relative;
+        z-index: 2;
+    }
+
+        .re-wave-divider svg {
+            display: block;
+            width: 100%;
+        }
+</style>
+
+<!-- Ambient blobs -->
+<div class="blob blob-tl"></div>
+<div class="blob blob-br"></div>
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<nav class="re-nav">
+    <div class="re-nav-inner">
+        <a href="/" class="re-brand">
+            <div class="re-brand-book"></div>
+            <div class="re-brand-name">Read<em>Ease</em></div>
+        </a>
+        <div class="re-nav-links">
+            <a href="#rated">Top Rated</a>
+            <a href="#viewed">Most Viewed</a>
+            <a href="#genres">Genres</a>
+        </div>
+        <div class="re-nav-cta">
+            <a asp-controller="Auth" asp-action="Login" class="btn-nav-ghost">Log In</a>
+            <a asp-controller="Auth" asp-action="Register" class="btn-nav-primary">Get Started</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<section class="re-hero">
+    <!-- Background video — person reading. Place your video at wwwroot/videos/hero-reading.mp4 -->
+    <video class="re-hero-video" autoplay muted loop playsinline>
+        <source src="~/videos/hero-reading.mp4" type="video/mp4">
+        <!-- Fallback gradient if video not loaded -->
+    </video>
+    <!-- Dark overlay -->
+    <div class="re-hero-overlay"></div>
+
+    <div class="re-hero-inner">
+        <div class="re-hero-text fade-up">
+            <div class="re-hero-eyebrow">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                Your Next Favorite Book Awaits
+            </div>
+            <h1 class="re-hero-h1">
+                Thousands of Stories.<br>
+                <em><span class="line-accent">One Place.</span></em>
+            </h1>
+            <p class="re-hero-sub">
+                Free and premium books across every genre, available anytime. Discover, read, and build your personal library with ReadEase.
+            </p>
+            <div class="re-hero-btns">
+                <a asp-controller="Auth" asp-action="Register" class="btn-hero-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                    Start Reading Free
+                </a>
+                <a asp-controller="Library" asp-action="Index" class="btn-hero-ghost">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                    Browse Library
+                </a>
+            </div>
+            <div class="re-hero-trust">
+                <div class="trust-item">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                    Top-rated books
+                </div>
+                <div class="trust-sep"></div>
+                <div class="trust-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                    @Model.TotalBooks+ titles
+                </div>
+                <div class="trust-sep"></div>
+                <div class="trust-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                    Always free tier
+                </div>
+            </div>
+        </div>
+        <!-- Hero Visual: floating book stack + badges -->
+        <div class="re-hero-visual">
+            <div class="hero-books-scene">
+                <div class="hero-glow-ring hero-glow-ring-1"></div>
+                <div class="hero-glow-ring hero-glow-ring-2"></div>
+                <div class="hero-glow-ring hero-glow-ring-3"></div>
+                <div class="hero-book-stack">
+                    <div class="hbs-book hbs-1"></div>
+                    <div class="hbs-book hbs-2"></div>
+                    <div class="hbs-book hbs-3"></div>
+                </div>
+                <div class="hero-badge hero-badge-1">
+                    <div class="hero-badge-icon" style="background:rgba(242,101,34,.18);">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="color:#f26522;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    </div>
+                    <div>
+                        <div class="hero-badge-text">4.8 &#9733; Avg Rating</div>
+                        <div class="hero-badge-sub">Community favorite</div>
+                    </div>
+                </div>
+                <div class="hero-badge hero-badge-2">
+                    <div class="hero-badge-icon" style="background:rgba(67,233,123,.18);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#43e97b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <div>
+                        <div class="hero-badge-text">100% Free Tier</div>
+                        <div class="hero-badge-sub">No credit card needed</div>
+                    </div>
+                </div>
+                <div class="hero-badge hero-badge-3">
+                    <div class="hero-badge-icon" style="background:rgba(102,126,234,.18);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div>
+                        <div class="hero-badge-text">Active Readers</div>
+                        <div class="hero-badge-sub">Join the community</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════ STATS BAR ═══════════════════ -->
+<div class="re-stats-bar" style="position:relative;z-index:3;">
+    <div class="re-stats-inner">
+        <div class="stat-item fade-up fade-up-1">
+            <div class="stat-num">@Model.TotalBooks<span>+</span></div>
+            <div class="stat-label">Books Available</div>
+        </div>
+        <div class="stat-div"></div>
+        <div class="stat-item fade-up fade-up-2">
+            <div class="stat-num">@Model.TotalGenres<span>+</span></div>
+            <div class="stat-label">Genres</div>
+        </div>
+        <div class="stat-div"></div>
+        <div class="stat-item fade-up fade-up-3">
+            <div class="stat-num"><span>∞</span></div>
+            <div class="stat-label">Free Titles</div>
+        </div>
+        <div class="stat-div"></div>
+        <div class="stat-item fade-up fade-up-4">
+            <div class="stat-num">@(Model.SiteAvgRating > 0 ? Model.SiteAvgRating.ToString("0.0") : "—")<span>★</span></div>
+            <div class="stat-label">Avg Rating</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════ FEATURES ═══════════════════ -->
+<section class="re-section section-features">
+    <div class="re-section-inner">
+        <div class="re-section-head re-section-head-center">
+            <div class="re-section-eyebrow">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Why ReadEase
+            </div>
+            <div class="re-section-title">Everything You Need to <em>Love Reading</em></div>
+            <div class="re-section-sub">Built for readers who love stories — free, fast, and beautiful.</div>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-card-icon" style="background:#fff3ed;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#f26522" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <div class="feature-card-title">Massive Free Library</div>
+                <div class="feature-card-desc">Hundreds of free books across every genre — no subscription required. Start reading in seconds.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card-icon" style="background:#eef0fd;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <div class="feature-card-title">Distraction-Free Reader</div>
+                <div class="feature-card-desc">Clean, beautiful reading experience with adjustable settings and zero clutter. Just you and your book.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card-icon" style="background:#eafbf1;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#43e97b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <div class="feature-card-title">Community Ratings</div>
+                <div class="feature-card-desc">Rate books, read honest reviews, and discover what readers are loving right now. Find your next obsession.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card-icon" style="background:#f3eef8;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#764ba2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div class="feature-card-title">Premium Unlocks Everything</div>
+                <div class="feature-card-desc">Upgrade anytime to access the full premium catalog — thousands of bestsellers with no limits.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card-icon" style="background:#e8f5fe;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4facfe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="feature-card-title">Author Platform</div>
+                <div class="feature-card-desc">Writers can publish chapters, build a following, and reach thousands of eager readers on ReadEase.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card-icon" style="background:#fdeef0;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#f5576c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </div>
+                <div class="feature-card-title">Personal Library</div>
+                <div class="feature-card-desc">Track what you've read, what you're reading, and build your favorites list — all in one place.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════ TOP RATED ═══════════════════ -->
+<section class="re-section section-rated" id="rated">
+    <div class="re-section-inner">
+        <div class="re-section-head">
+            <div>
+                <div class="re-section-eyebrow">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                    Best of ReadEase
+                </div>
+                <div class="re-section-title">Top <em>Rated</em> Books</div>
+                <div class="re-section-sub">Handpicked favorites with the highest community ratings</div>
+            </div>
+            <a asp-controller="Library" asp-action="Index" class="re-view-all">
+                View All
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </a>
+        </div>
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+            @if (!Model.TopRated.Any())
+            {
+                <div class="col-12">
+                    <p style="color:var(--text-muted);font-weight:600;font-size:.88rem;">No rated books yet — be the first to rate one!</p>
+                </div>
+            }
+            @{
+                int rIdx = 0;
+            }
+            @foreach (var b in Model.TopRated)
+            {
+                int rank = rIdx + 1;
+                string grad = gradients[rIdx % gradients.Length];
+                string rClass = rank <= 3 ? rankClass[rank - 1] : "";
+                rIdx++;
+                <div class="col fade-up">
+                    <div class="book-card" onclick="window.location='@Url.Action("Detail", "Library", new { id = b.Id })'">
+                        <div class="book-cover-wrap">
+                            @if (!string.IsNullOrEmpty(b.CoverImage))
+                            {
+                                <img src="@b.CoverImage" class="book-cover" alt="@b.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="book-cover-ph" style="background:@grad">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                                </div>
+                            }
+                            <div class="book-rank @rClass">@rank</div>
+                            <span class="book-badge @(b.IsFree ? "free" : "premium")">@(b.IsFree ? "Free" : "Premium")</span>
+                        </div>
+                        <div class="book-body">
+                            <div class="book-genre-pill">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                                @(b.Category?.Split(',').FirstOrDefault()?.Trim() ?? b.Category)
+                            </div>
+                            <div class="star-row">
+                                @Html.Raw(StarsSvg(b.AverageRating))
+                                <span class="star-val">@FmtRating(b.AverageRating)</span>
+                            </div>
+                            <div class="book-title">@b.Title</div>
+                            <div class="book-author">@b.Author</div>
+                        </div>
+
+                        <div class="book-foot">
+                            <div class="book-views">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                @FmtViews(b.ReadCount)
+                            </div>
+                            @if (b.IsFree)
+                            {
+                                <a asp-controller="Landing" asp-action="GuestRead" asp-route-id="@b.Id" class="btn-book-read" onclick="event.stopPropagation()">
+                                    Read
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="/Auth/Login" class="btn-book-read" onclick="event.stopPropagation()" style="background:linear-gradient(135deg,#f59e0b,#d97706);" title="Premium — login to read">
+                                    🔒 Login
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════ SPOTLIGHT / PROMO ═══════════════════ -->
+<section class="re-section section-spotlight">
+    <div class="re-section-inner">
+        <div class="spotlight-card">
+            <div class="spotlight-text">
+                <div class="spotlight-eyebrow">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                    Premium Membership
+                </div>
+                <h2 class="spotlight-title">Unlock Every<br><em>Story Ever Told</em></h2>
+                <p class="spotlight-desc">Get unlimited access to our full premium catalog — thousands of bestsellers, new releases, and rare finds. No limits, no waiting.</p>
+                <div class="spotlight-stats">
+                    <div class="sp-stat">
+                        <div class="sp-stat-num">300<em>+</em></div>
+                        <div class="sp-stat-label">Premium Titles</div>
+                    </div>
+                    <div class="sp-stat">
+                        <div class="sp-stat-num">New<em> weekly</em></div>
+                        <div class="sp-stat-label">Additions</div>
+                    </div>
+                    <div class="sp-stat">
+                        <div class="sp-stat-num">AI<em>-powered</em></div>
+                        <div class="sp-stat-label">Reader tools</div>
+                    </div>
+                </div>
+                <a asp-controller="Subscription" asp-action="Index" class="btn-spotlight">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                    Explore Premium
+                </a>
+            </div>
+            <div class="spotlight-visual">
+                <div class="sp-book sp-book-1"></div>
+                <div class="sp-book sp-book-2"></div>
+                <div class="sp-book sp-book-3"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════ MOST VIEWED ═══════════════════ -->
+<section class="re-section section-viewed" id="viewed">
+    <div class="re-section-inner">
+        <div class="re-section-head">
+            <div>
+                <div class="re-section-eyebrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                    Trending Now
+                </div>
+                <div class="re-section-title">Most <em>Viewed</em> This Week</div>
+                <div class="re-section-sub">Books everyone is reading right now</div>
+            </div>
+            <a asp-controller="Library" asp-action="Index" class="re-view-all">
+                View All
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </a>
+        </div>
+        <div class="viewed-scroll-wrap">
+            <div class="viewed-row">
+                @if (!Model.MostViewed.Any())
+                {
+                    <p style="color:var(--text-muted);font-weight:600;font-size:.88rem;padding:.5rem 0;">No books viewed yet — check back soon!</p>
+                }
+                @{
+                    int vIdx = 0;
+                }
+                @foreach (var b in Model.MostViewed)
+                {
+                    string vGrad = gradients[vIdx % gradients.Length];
+                    vIdx++;
+                    <div class="viewed-card-wrap">
+                        <div class="book-card" onclick="window.location='@(b.IsFree? Url.Action("GuestRead", "Landing", new { id = b.Id }) : "/Auth/Login")'">
+                            <div class="book-cover-wrap">
+                                @if (!string.IsNullOrEmpty(b.CoverImage))
+                                {
+                                    <img src="@b.CoverImage" class="book-cover" alt="@b.Title" loading="lazy" style="height:190px;" />
+                                }
+                                else
+                                {
+                                    <div class="book-cover-ph" style="background:@vGrad;height:190px;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="width:36px;height:36px;opacity:.45;color:#fff;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                                    </div>
+                                }
+                                <span class="book-badge @(b.IsFree ? "free" : "premium")">@(b.IsFree ? "Free" : "Premium")</span>
+                            </div>
+                            <div class="book-body">
+                                <div class="book-genre-pill">@(b.Category?.Split(',').FirstOrDefault()?.Trim() ?? b.Category)</div>
+                                <div class="star-row">
+                                    @Html.Raw(StarsSvg(b.AverageRating))
+                                    <span class="star-val">@FmtRating(b.AverageRating)</span>
+                                </div>
+                                <div class="book-title">@b.Title</div>
+                                <div class="book-author">@b.Author</div>
+                            </div>
+
+                            <div class="book-foot">
+                                <div class="book-views">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                    @FmtViews(b.ReadCount)
+                                </div>
+                                <a asp-controller="Landing" asp-action="GuestRead" asp-route-id="@b.Id" class="btn-book-read" onclick="event.stopPropagation()">
+                                    Read
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════ GENRES ═══════════════════ -->
+<section class="re-section section-genres" id="genres">
+    <div class="re-section-inner">
+        <div class="re-section-head">
+            <div>
+                <div class="re-section-eyebrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
+                    Explore by Category
+                </div>
+                <div class="re-section-title">Browse <em>Genres</em></div>
+            </div>
+        </div>
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-2">
+            @{
+                // Color + icon palette — cycles by index for visual variety
+                var genreStyles = new[] {
+                        new { Color="#667eea", Bg="#eef0fd", Icon="<path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/>" },
+                        new { Color="#4facfe", Bg="#e8f5fe", Icon="<circle cx='12' cy='12' r='10'/><line x1='2' y1='12' x2='22' y2='12'/><path d='M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'/>" },
+                        new { Color="#f5576c", Bg="#fdeef0", Icon="<path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/>" },
+                        new { Color="#f26522", Bg="#fff3ed", Icon="<polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/>" },
+                        new { Color="#43e97b", Bg="#eafbf1", Icon="<path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/>" },
+                        new { Color="#764ba2", Bg="#f3eef8", Icon="<circle cx='12' cy='12' r='10'/><polyline points='12 6 12 12 16 14'/>" },
+                        };
+            }
+            @if (!Model.Genres.Any())
+            {
+                <div class="col-12">
+                    <p style="color:var(--text-muted);font-size:.88rem;font-weight:600;">No categories found yet.</p>
+                </div>
+            }
+            @{
+                int gIdx = 0;
+            }
+            @foreach (var g in Model.Genres)
+            {
+                var style = genreStyles[gIdx % genreStyles.Length];
+                gIdx++;
+                // Serialize books for this genre as JSON for client-side rendering
+                var genreBooks = Model.AllBooks
+                .Where(b => !string.IsNullOrWhiteSpace(b.Category) &&
+                    b.Category.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                              .Any(tag => string.Equals(tag.Trim(), g.Name, StringComparison.OrdinalIgnoreCase)))
+                .GroupBy(b => b.Id)
+                .Select(grp => grp.First())
+                .ToList();
+
+                var booksJson = System.Text.Json.JsonSerializer.Serialize(genreBooks.Select(b => new
+                {
+                    id = b.Id,
+                    title = b.Title,
+                    author = b.Author,
+                    cover = b.CoverImage ?? "",
+                    isFree = b.IsFree,
+                    readCount = b.ReadCount,
+                    category = b.Category,
+                    rating = b.AverageRating,
+                    description = ""
+                }));
+
+                <div class="col">
+                    <div class="genre-pill genre-pill-clickable"
+                         data-genre="@g.Name"
+                         data-color="@style.Color"
+                         data-bg="@style.Bg"
+                         data-books="@Html.Raw(System.Web.HttpUtility.HtmlAttributeEncode(booksJson))"
+                         onclick="toggleGenrePanel(this)"
+                         role="button"
+                         tabindex="0"
+                         onkeydown="if(event.key==='Enter'||event.key===' ')toggleGenrePanel(this)">
+                        <div class="genre-icon" style="background:@style.Bg;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="@style.Color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">@Html.Raw(style.Icon)</svg>
+                        </div>
+                        <div>
+                            <div class="genre-name">@g.Name</div>
+                            <div class="genre-count">@g.Count book@(g.Count != 1 ? "s" : "")</div>
+                        </div>
+                        <svg class="genre-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- ── Inline Genre Book Panel ── -->
+        <div id="genre-panel" class="genre-panel" style="display:none;" aria-live="polite">
+            <div class="genre-panel-header">
+                <div class="genre-panel-title">
+                    <div class="genre-panel-icon" id="genre-panel-icon"></div>
+                    <div>
+                        <div class="genre-panel-eyebrow">Browsing Genre</div>
+                        <div class="genre-panel-name" id="genre-panel-name"></div>
+                    </div>
+                </div>
+                <button class="genre-panel-close" onclick="closeGenrePanel()" title="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+            </div>
+            <div class="genre-panel-note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0;"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                You're browsing as a guest. Free books are available to read now — <a href="/Auth/Login" style="color:var(--orange);font-weight:800;">log in</a> to unlock Premium titles.
+            </div>
+            <div id="genre-books-grid" class="genre-books-grid"></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════ CTA ═══════════════════ -->
+<section class="re-section section-cta">
+    <div class="re-section-inner">
+        <div class="cta-card">
+            <div class="cta-eyebrow">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                Join ReadEase Today
+            </div>
+            <h2 class="cta-title">Ready to Start<br><em>Your Reading Journey?</em></h2>
+            <p class="cta-sub">Create a free account in seconds and get instant access to hundreds of books across every genre. No credit card required.</p>
+            <div class="cta-btns">
+                <a asp-controller="Auth" asp-action="Register" class="btn-cta-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                    Create Free Account
+                </a>
+                <a asp-controller="Auth" asp-action="Login" class="btn-cta-ghost">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+                    Already have an account?
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer class="re-footer" style="display:block!important;">
+    <div class="re-footer-inner">
+        <div class="re-footer-top">
+            <div>
+                <div class="re-footer-brand-name">Read<em>Ease</em></div>
+                <div class="re-footer-brand-sub">Your personal reading world</div>
+            </div>
+            <div class="re-footer-links">
+                <a asp-controller="Library" asp-action="Index">Library</a>
+                <a asp-controller="Subscription" asp-action="Index">Premium</a>
+                <a asp-controller="Auth" asp-action="Register">Sign Up</a>
+                <a asp-controller="Auth" asp-action="Login">Log In</a>
+            </div>
+        </div>
+        <div class="re-footer-bottom">
+            <div class="re-footer-copy">&copy; @DateTime.Now.Year ReadEase. All rights reserved.</div>
+            <div class="re-footer-socials">
+                <a href="#" class="footer-social" title="Twitter/X">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                </a>
+                <a href="#" class="footer-social" title="Instagram">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
+                </a>
+                <a href="#" class="footer-social" title="Facebook">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+@section Scripts {
+    <script>
+        // ── Redirect all non-anchor links to Login ──────────────────────
+        document.querySelectorAll('a[href]:not([href^="#"])').forEach(a => {
+            a.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                // Only intercept if it's NOT already the login/register page
+                if (href && !href.includes('Login') && !href.includes('login')
+                         && !href.includes('Register') && !href.includes('register')
+                         && !href.includes('GuestRead') && !href.includes('guestread')) {
+                    e.preventDefault();
+                    window.location.href = '/Auth/Login';
+                }
+            });
+        });
+
+        // Also intercept book cards (onclick) — but not the preview CTA link or Read button
+        document.querySelectorAll('.book-card').forEach(card => {
+            card.addEventListener('click', function (e) {
+                if (e.target.closest('.book-preview-cta')) return;
+                if (e.target.closest('.btn-book-read')) return;
+                e.preventDefault();
+                window.location.href = '/Auth/Login';
+            });
+        });
+
+        // Scroll-triggered fade-up for sections
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.style.opacity = '1';
+                    e.target.style.transform = 'none';
+                    observer.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.08 });
+
+        document.querySelectorAll('.re-section').forEach(s => {
+            s.style.opacity = '0';
+            s.style.transform = 'translateY(28px)';
+            s.style.transition = 'opacity .55s ease, transform .55s ease';
+            observer.observe(s);
+        });
+        document.querySelectorAll('.re-stats-bar').forEach(s => {
+            s.style.opacity = '0';
+            s.style.transform = 'translateY(12px)';
+            s.style.transition = 'opacity .4s ease .1s, transform .4s ease .1s';
+            observer.observe(s);
+        });
+
+        // Smooth scroll for nav anchors
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                const target = document.querySelector(a.getAttribute('href'));
+                if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            });
+        });
+
+        // ── Genre Panel ────────────────────────────────────────────────
+        let activeGenre = null;
+
+        function fmtViews(v) {
+            if (v >= 1000000) return (v / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (v >= 1000) return (v / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return v.toString();
+        }
+
+        function toggleGenrePanel(pill) {
+            const genre = pill.dataset.genre;
+            const panel = document.getElementById('genre-panel');
+            const allPills = document.querySelectorAll('.genre-pill-clickable');
+
+            // If clicking the already-active genre, close it
+            if (activeGenre === genre) {
+                closeGenrePanel();
+                return;
+            }
+
+            // Deactivate all pills
+            allPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            activeGenre = genre;
+
+            // Build books from data attribute
+            let books = [];
+            try { books = JSON.parse(pill.dataset.books || '[]'); } catch(e) {}
+
+            // Populate panel
+            document.getElementById('genre-panel-name').textContent = genre;
+
+            // Icon
+            const iconEl = document.getElementById('genre-panel-icon');
+            iconEl.style.background = pill.dataset.bg || '#fff3ed';
+            const srcIcon = pill.querySelector('.genre-icon');
+            iconEl.innerHTML = srcIcon ? srcIcon.innerHTML : '';
+
+            // Books grid
+            const grid = document.getElementById('genre-books-grid');
+
+            if (!books.length) {
+                grid.innerHTML = `<div class="genre-empty">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    No books found in <strong>${genre}</strong> yet.
+                </div>`;
+            } else {
+                const sorted = [...books].sort((a, b) => b.readCount - a.readCount);
+                grid.innerHTML = sorted.map((b, i) => {
+                    const rank = i + 1;
+                    const isTop3 = rank <= 3;
+                    const coverHtml = b.cover
+                        ? `<img src="${b.cover}" alt="${escHtml(b.title)}" loading="lazy" style="width:60px;height:80px;object-fit:cover;border-radius:8px;" />`
+                        : `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg>`;
+
+                    const readBtn = b.isFree
+                        ? `<a href="/Landing/GuestRead/${b.id}" class="btn-genre-read" onclick="event.stopPropagation()">
+                                Read
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><polyline points="9 18 15 12 9 6"/></svg>
+                           </a>`
+                        : `<a href="/Auth/Login" class="btn-genre-read locked" onclick="event.stopPropagation()" title="Premium – login to read">
+                                🔒 Login
+                           </a>`;
+
+                    const tag = b.isFree
+                        ? `<span class="genre-book-tag free">free</span>`
+                        : `<span class="genre-book-tag premium">premium</span>`;
+
+                    return `<div class="genre-book-item" onclick="window.location='${b.isFree ? '/Landing/GuestRead/' + b.id : '/Auth/Login'}'">
+                        <div class="genre-book-num ${isTop3 ? 'top3' : ''}">${rank}</div>
+                        <div class="genre-book-cover">${coverHtml}</div>
+                        <div class="genre-book-info">
+                            <div class="genre-book-title">${escHtml(b.title)}</div>
+                            <div class="genre-book-author">${escHtml(b.author)}</div>
+                            <div class="genre-book-tags">${tag}</div>
+                            <div class="genre-book-reads">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                ${fmtViews(b.readCount)}
+                            </div>
+                        </div>
+                        <div class="genre-book-actions">${readBtn}</div>
+                    </div>`;
+                }).join('');
+            }
+
+            // Show panel
+            panel.style.display = 'block';
+
+            // Scroll to panel smoothly
+            setTimeout(() => {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 60);
+        }
+
+        function closeGenrePanel() {
+            const panel = document.getElementById('genre-panel');
+            panel.style.display = 'none';
+            document.querySelectorAll('.genre-pill-clickable').forEach(p => p.classList.remove('active'));
+            activeGenre = null;
+        }
+
+        function escHtml(str) {
+            return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+}

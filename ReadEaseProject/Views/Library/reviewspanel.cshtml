@@ -1,0 +1,99 @@
+﻿@model ReadEase.ViewModels.Library.Partials.ReviewsPanelViewModel
+
+<div class="dh-panel" id="panel-reviews">
+
+    @* Rate / Write hero *@
+    @if (!Model.IsBookAuthor)
+    {
+        <div class="rv-hero">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rv-hero-icon">📖</div>
+                <div>
+                    <div class="rv-hero-title">What do <em>you</em> think?</div>
+                    <div class="rv-hero-sub mt-1">Your review helps other readers discover great books.</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="rv-quick-stars" id="quickStars">
+                    <span class="qs" data-q="1">☆</span>
+                    <span class="qs" data-q="2">☆</span>
+                    <span class="qs" data-q="3">☆</span>
+                    <span class="qs" data-q="4">☆</span>
+                    <span class="qs" data-q="5">☆</span>
+                </div>
+                <span class="rv-quick-label" id="quickLabel">Tap to rate</span>
+                <button class="rv-write-btn ms-auto" onclick="openReviewForm()">✏️ Write a Review</button>
+            </div>
+        </div>
+        <div class="rv-form-wrap" id="rvFormWrap">
+            <div class="rv-form-title">✏️ Write Your Review</div>
+            <div class="mb-3">
+                <div style="font-family:'Nunito',sans-serif;font-size:.68rem;font-weight:800;color:#c0bdd0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;">Your rating</div>
+                <div class="rv-form-stars-row" id="formStars">
+                    <span class="fs" data-f="1">☆</span>
+                    <span class="fs" data-f="2">☆</span>
+                    <span class="fs" data-f="3">☆</span>
+                    <span class="fs" data-f="4">☆</span>
+                    <span class="fs" data-f="5">☆</span>
+                    <span class="rv-form-star-label" id="formStarLabel">Tap to rate</span>
+                </div>
+            </div>
+            <textarea class="rv-textarea" id="rvTextarea" placeholder="Share your thoughts about this book… (optional)" maxlength="1200"></textarea>
+            <div class="rv-form-actions">
+                <button class="rv-submit-btn" onclick="submitReview()">🚀 Post Review</button>
+                <button class="rv-cancel-btn" onclick="closeReviewForm()">✕ Cancel</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="rv-hero" style="background:linear-gradient(135deg,#fff8f4,#fff5ef);border-color:rgba(242,101,34,.22);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rv-hero-icon" style="background:linear-gradient(135deg,#f26522,#d97706);border:none;font-size:1.5rem;">✍️</div>
+                <div>
+                    <div class="rv-hero-title">Your <em>readers</em> have spoken</div>
+                    <p class="rv-hero-sub mt-1 mb-0">Reply to reviews below to connect with your audience.</p>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Rating summary *@
+    <div class="rv-summary">
+        <div class="d-flex align-items-center gap-4">
+            <div class="text-center" style="flex-shrink:0;">
+                <div class="rv-big-avg" id="rvBigAvg">@Model.AverageRating.ToString("0.0")</div>
+                <div class="rv-sum-stars justify-content-center my-1" id="rvSumStars">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <span class="@(i <= Math.Round(Model.AverageRating) ? "" : "off")">★</span>
+                    }
+                </div>
+                <div class="rv-sum-total" id="rvSumTotal">@Model.RatingCount rating@(Model.RatingCount != 1 ? "s" : "")</div>
+            </div>
+            <div class="rv-divider d-none d-md-block"></div>
+            <div class="rv-bars flex-grow-1">
+                @for (int star = 5; star >= 1; star--)
+                {
+                    <div class="rv-bar-row">
+                        <span class="rv-bar-lbl">@star ★</span>
+                        <div class="rv-bar-track"><div class="rv-bar-fill" data-star="@star" style="width:0%"></div></div>
+                        <span class="rv-bar-cnt" data-star-count="@star">0</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* List header *@
+    <div class="rv-section-label">
+        <span class="rv-section-label-text">Community Reviews</span>
+        <div class="rv-section-label-line"></div>
+        <span class="rv-section-label-cnt" id="rvListCnt">0 reviews</span>
+    </div>
+
+    <div id="rvList">
+        <div class="rv-empty"><span class="rv-empty-icon">💬</span>No reviews yet — be the first to share your thoughts!</div>
+    </div>
+
+</div>

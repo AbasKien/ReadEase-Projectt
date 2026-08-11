@@ -1,0 +1,461 @@
+@model ReadEase.ViewModels.Author.PublishBookViewModel
+@{
+    ViewData["Title"] = "Edit Book";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+
+    var categories = new[] { "Action", "Adventure", "Anime", "Arts", "Comedy", "Drama", "Eastern", "Ecchi", "Fan-Fiction", "Fantasy", "Game", "Gender-Bender", "Harem", "Historical", "Horror", "Isekai", "Josei", "Lgbt+", "Magic", "Magical-Realism", "Manhua", "Martial-Arts", "Mature", "Mecha", "Military", "Modern-Life", "Movies", "Mystery", "Psychological", "Realistic-Fiction", "Reincarnation", "Romance", "School-Life", "Sci-Fi", "Seinen", "Shoujo", "Shoujo-Ai", "Shounen", "Shounen-Ai", "Slice-Of-Life", "Smut", "Sports", "Supernatural", "System", "Tragedy", "Urban", "Urban-Life", "Video-Games", "War", "Wuxia", "Xianxia", "Xuanhuan", "Yaoi", "Yuri" };
+}
+
+@if (Model is null)
+{
+    <div class="mob-empty">
+        <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <div class="mob-empty-title">Book not found</div>
+        <a class="mob-empty-btn" href="/Mobile/Write">Back to My Books</a>
+    </div>
+    return;
+}
+
+<style>
+    /* ── MAUI WebView Compatibility ── */
+    /* Ensure content starts below status bar and doesn't clip */
+    body.maui-host .re-main {
+        padding-top: 0 !important;
+    }
+    .eb-header {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .eb-back {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--re-surface-2);
+        border: 1px solid var(--re-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--re-text);
+        text-decoration: none !important;
+        font-size: .95rem;
+        flex-shrink: 0;
+        transition: background .15s;
+    }
+
+        .eb-back:hover {
+            background: rgba(255,255,255,.1);
+            color: var(--re-text);
+        }
+
+    .eb-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: var(--re-text);
+    }
+
+    .eb-sub {
+        font-size: .72rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-top: .05rem;
+    }
+
+    .eb-cover-picker {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .eb-cover-preview {
+        width: 110px;
+        aspect-ratio: 2/3;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #1c2e3e, #f26522);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        border: 2px dashed rgba(242,101,34,.35);
+        overflow: hidden;
+        cursor: pointer;
+        transition: border-color .2s;
+        position: relative;
+    }
+
+        .eb-cover-preview:hover {
+            border-color: rgba(242,101,34,.7);
+        }
+
+        .eb-cover-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+        }
+
+    .eb-cover-label {
+        font-size: .75rem;
+        color: var(--re-muted);
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .eb-status {
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        font-size: .82rem;
+        font-weight: 700;
+        margin-bottom: .85rem;
+        display: none;
+    }
+
+    .eb-status-err {
+        background: rgba(239,68,68,.1);
+        border: 1px solid rgba(239,68,68,.25);
+        color: #fca5a5;
+    }
+
+    .eb-status-ok {
+        background: rgba(34,197,94,.1);
+        border: 1px solid rgba(34,197,94,.25);
+        color: #86efac;
+    }
+
+    .eb-status-inf {
+        background: rgba(59,130,246,.1);
+        border: 1px solid rgba(59,130,246,.25);
+        color: var(--re-orange);
+    }
+
+    .eb-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 12px;
+        padding: .85rem 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .eb-toggle-label {
+        font-size: .88rem;
+        font-weight: 800;
+        color: var(--re-text);
+    }
+
+    .eb-toggle-desc {
+        font-size: .7rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-top: .05rem;
+    }
+
+    .eb-switch {
+        position: relative;
+        width: 46px;
+        height: 26px;
+        flex-shrink: 0;
+    }
+
+        .eb-switch input {
+            display: none;
+        }
+
+    .eb-switch-track {
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,.12);
+        border-radius: 99px;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+    .eb-switch input:checked + .eb-switch-track {
+        background: var(--re-orange);
+    }
+
+    .eb-switch-track::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform .2s;
+        box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+
+    .eb-switch input:checked + .eb-switch-track::after {
+        transform: translateX(20px);
+    }
+
+    .eb-danger-zone {
+        background: rgba(239,68,68,.06);
+        border: 1px solid rgba(239,68,68,.18);
+        border-radius: 14px;
+        padding: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .eb-dz-label {
+        font-size: .7rem;
+        font-weight: 900;
+        color: #f87171;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: .75rem;
+    }
+
+    .eb-dz-btn {
+        width: 100%;
+        padding: .85rem .75rem;
+        border-radius: 10px;
+        background: rgba(239,68,68,.1);
+        border: 1.5px solid rgba(239,68,68,.25);
+        color: #ef4444;
+        font-family: 'Nunito', sans-serif;
+        font-size: .85rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .15s;
+        margin-bottom: .5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+    }
+    .eb-dz-btn svg {
+        flex-shrink: 0;
+    }
+
+        .eb-dz-btn:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ── Genre Chips Mobile ── */
+        .genre-chips-mobile {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: var(--re-surface);
+            border: 1px solid var(--re-border);
+            border-radius: 10px;
+        }
+
+        .genre-chip-mobile {
+            padding: 0.4rem 0.75rem;
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--re-border);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--re-text);
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+            .genre-chip-mobile.selected {
+                background: var(--re-orange);
+                border-color: var(--re-orange);
+                color: #fff;
+            }
+    </style>
+
+<!-- Header -->
+<div class="eb-header">
+    <a class="eb-back" href="/Mobile/Write">←</a>
+    <div>
+        <div class="eb-title">Edit Book</div>
+        <div class="eb-sub" id="ebSubTitle">@Model.Title</div>
+    </div>
+</div>
+
+<!-- Status -->
+<div class="eb-status" id="ebStatus"></div>
+
+<!-- Cover picker -->
+<div class="eb-cover-picker">
+    <div class="eb-cover-preview" id="ebCoverPreview"
+         onclick="document.getElementById('ebCoverInput').click()">
+        @if (!string.IsNullOrEmpty(Model.ExistingCoverImage))
+        {
+            <img src="@Model.ExistingCoverImage" alt="Cover" />
+        }
+        else
+        {
+            <span></span>
+        }
+    </div>
+    <input type="file" id="ebCoverInput" accept="image/*" style="display:none;"
+           onchange="ebPreviewCover(this)" />
+    <div class="eb-cover-label">
+        Tap to change cover<br />
+        <span style="font-size:.68rem;opacity:.6;">(leave blank to keep current)</span>
+    </div>
+</div>
+
+<!-- Title -->
+<div class="mob-field">
+    <label>Book Title <span style="color:var(--re-orange)">*</span></label>
+    <input class="mob-input" id="ebTitle" type="text" value="@Model.Title" maxlength="200" />
+</div>
+
+<!-- Genres — multi-select chips -->
+<div class="mob-field">
+    <label>Genres <span style="color:var(--re-orange)">*</span> <span style="font-size:.65rem;opacity:.7;">(Tap to select multiple)</span></label>
+    <input type="hidden" id="ebCategory" value="@Model.Category" />
+    <div class="genre-chips-mobile">
+        @{
+            var selectedCats = Model.Category?.Split(',').Select(g => g.Trim()).ToList() ?? new List<string>();
+        }
+        @foreach (var cat in categories)
+        {
+            var isSelected = selectedCats.Any(s => s.Equals(cat, StringComparison.OrdinalIgnoreCase));
+            <span class="genre-chip-mobile @(isSelected ? "selected" : "")" data-genre="@cat" onclick="toggleGenreMobile(this)">@cat</span>
+        }
+    </div>
+</div>
+
+<!-- Description -->
+<div class="mob-field">
+    <label>Description</label>
+    <textarea class="mob-input" id="ebDescription" rows="4"
+              style="resize:vertical;min-height:100px;">@Model.Description</textarea>
+</div>
+
+<!-- Free / Pro toggle -->
+<div class="eb-toggle-row">
+    <div>
+        <div class="eb-toggle-label">Free to Read</div>
+        <div class="eb-toggle-desc">Toggle off to make this a Pro book</div>
+    </div>
+    <label class="eb-switch">
+        @if (Model.IsFree)
+        {
+            <input type="checkbox" id="ebIsFree" checked="checked" />
+        }
+        else
+        {
+            <input type="checkbox" id="ebIsFree" />
+        }
+        <span class="eb-switch-track"></span>
+    </label>
+</div>
+
+<!-- Save -->
+<button class="mob-btn-orange" id="ebSubmit" onclick="submitEdit()" style="width:100%;margin-top:.5rem;">
+    Save Changes
+</button>
+
+<!-- Danger zone -->
+<div class="eb-danger-zone">
+    <div class="eb-dz-label"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:currentColor;flex-shrink:0;vertical-align:middle;margin-right:.35rem;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Danger Zone</div>
+    <button class="eb-dz-btn" onclick="archiveBook()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:currentColor;flex-shrink:0;vertical-align:middle;margin-right:.35rem;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Archive Book</button>
+    <button class="eb-dz-btn" onclick="deleteBook()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:currentColor;flex-shrink:0;vertical-align:middle;margin-right:.35rem;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Permanently Delete</button>
+</div>
+
+@section Scripts {
+    <script>
+        const BOOK_ID = '@Model.Id';
+
+        function ebPreviewCover(input) {
+            const file = input.files[0];
+            if (!file) return;
+            document.getElementById('ebCoverPreview').innerHTML =
+                '<img src="' + URL.createObjectURL(file) + '" alt="Cover preview" />';
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('ebStatus');
+            el.textContent = msg;
+            el.className = 'eb-status eb-status-' + type;
+            el.style.display = 'block';
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // ── Genre toggle for mobile ──
+        function toggleGenreMobile(chip) {
+            chip.classList.toggle('selected');
+            updateSelectedGenres();
+        }
+
+        function updateSelectedGenres() {
+            const selected = Array.from(document.querySelectorAll('.genre-chip-mobile.selected'))
+                .map(c => c.dataset.genre);
+            document.getElementById('ebCategory').value = selected.join(',');
+        }
+
+        // Initialize selected genres on load
+        document.addEventListener('DOMContentLoaded', updateSelectedGenres);
+
+        async function submitEdit() {
+            const title     = document.getElementById('ebTitle').value.trim();
+            const category  = document.getElementById('ebCategory').value;
+            const desc      = document.getElementById('ebDescription').value.trim();
+            const isFree    = document.getElementById('ebIsFree').checked;
+            const coverFile = document.getElementById('ebCoverInput').files[0];
+            const btn       = document.getElementById('ebSubmit');
+
+            if (!title)    { showStatus('Book title is required.', 'err'); return; }
+            if (!category) { showStatus('Please choose at least one genre.', 'err'); return; }
+
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+
+            const fd = new FormData();
+            fd.append('Id',          BOOK_ID);
+            fd.append('Title',       title);
+            fd.append('Category',    category);
+            fd.append('Description', desc);
+            fd.append('IsFree',      isFree);
+            if (coverFile) fd.append('CoverImage', coverFile);
+
+            try {
+                const res  = await mobileApi('/Areas/Mobile/api/Books/edit', { method: 'PUT', body: fd });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Save failed.');
+                showStatus(data.message || 'Book updated!', data.isPending ? 'inf' : 'ok');
+                document.getElementById('ebSubTitle').textContent = title;
+                setTimeout(() => window.location.href = '/Mobile/Write', 1600);
+            } catch(e) {
+                showStatus('Error: ' + e.message, 'err');
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+
+        async function archiveBook() {
+            if (!confirm("Archive this book? Readers won't see it until you restore it.")) return;
+            try {
+                const res = await mobileApi('/Areas/Mobile/api/Books/archive/' + BOOK_ID, { method: 'POST' });
+                if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+                showStatus('Book archived.', 'ok');
+                setTimeout(() => window.location.href = '/Mobile/Write', 1400);
+            } catch(e) { showStatus('Error: ' + e.message, 'err'); }
+        }
+
+        async function deleteBook() {
+            if (!confirm('Permanently delete? This cannot be undone.')) return;
+            try {
+                const res = await mobileApi('/Areas/Mobile/api/Books/' + BOOK_ID, { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+                showStatus('Book deleted.', 'ok');
+                setTimeout(() => window.location.href = '/Mobile/Write', 1400);
+            } catch(e) { showStatus('Error: ' + e.message, 'err'); }
+        }
+    </script>
+}

@@ -1,0 +1,122 @@
+﻿@model ReadEase.ViewModels.Library.Partials.DetailsPanelViewModel
+
+<div class="dh-panel" id="panel-details">
+
+    <div class="dp-grid">
+
+        <div class="dp-row">
+            <span class="dp-label">Title</span>
+            <span class="dp-value">@Model.Title</span>
+        </div>
+
+        <div class="dp-row">
+            <span class="dp-label">Author</span>
+            <span class="dp-value">@Model.Author</span>
+        </div>
+
+        <div class="dp-row">
+            <span class="dp-label">Category</span>
+            <span class="dp-value">
+                <span class="dp-tag">@Model.Category</span>
+            </span>
+        </div>
+
+        <div class="dp-row">
+            <span class="dp-label">Access</span>
+            <span class="dp-value">
+                @if (Model.IsFree)
+                {
+                    <span class="dp-tag dp-tag-free">🆓 Free</span>
+                }
+                else
+                {
+                    <span class="dp-tag dp-tag-premium">⭐ Premium</span>
+                }
+            </span>
+        </div>
+
+        <div class="dp-row">
+            <span class="dp-label">Chapters</span>
+            <span class="dp-value">
+                @if (Model.ChapterCount > 0)
+                {
+                    <strong>@Model.ChapterCount</strong> 
+                    @(Model.ChapterCount == 1 ? "chapter" : "chapters")
+                }
+                else
+                {
+                    <span style="color:var(--ink-muted)">Single content book</span>
+                }
+            </span>
+        </div>
+
+        <div class="dp-row">
+            <span class="dp-label">Rating</span>
+            <span class="dp-value">
+                @Model.AverageRating.ToString("0.0") ⭐
+                <span style="color:var(--ink-muted);font-size:.8rem;">
+                    (@Model.RatingCount @(Model.RatingCount == 1 ? "rating" : "ratings"))
+                </span>
+            </span>
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    .dp-grid {
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+        padding: 1.25rem 0;
+    }
+
+    .dp-row {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+        padding: .6rem 0;
+        border-bottom: 1px solid #f2f0ec;
+    }
+
+        .dp-row:last-child {
+            border-bottom: none;
+        }
+
+    .dp-label {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--ink-muted);
+        min-width: 100px;
+        flex-shrink: 0;
+    }
+
+    .dp-value {
+        font-size: .9rem;
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    .dp-tag {
+        display: inline-block;
+        padding: .18rem .65rem;
+        border-radius: 20px;
+        font-size: .72rem;
+        font-weight: 700;
+        background: #f1f0ff;
+        color: #4f46e5;
+    }
+
+    .dp-tag-free {
+        background: #ecfdf5;
+        color: #065f46;
+    }
+
+    .dp-tag-premium {
+        background: #fef9e7;
+        color: #92400e;
+    }
+</style>

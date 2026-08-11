@@ -1,0 +1,1109 @@
+﻿@model ReadEase.ViewModels.Subscribe.SubscribeViewModel
+@using ReadEase.Enums
+
+@{
+    ViewData["Title"] = "Subscribe";
+    var isPending = Model.CurrentStatus == SubscriptionStatus.Pending;
+    var isApproved = Model.CurrentStatus == SubscriptionStatus.Approved;
+    var isRejected = Model.CurrentStatus == SubscriptionStatus.Rejected;
+
+    var isFreeUser = Model.CurrentTier == SubscriptionTier.Free
+                        || (int)Model.CurrentTier == 0;
+    var isPremiumUser = Model.CurrentTier == SubscriptionTier.Premium;
+    var isPremiumPlusUser = Model.CurrentTier == SubscriptionTier.PremiumPlus;
+
+    // Labels for current tier banner
+    string currentTierName = isFreeUser ? "Free" : isPremiumUser ? "Premium" : "Premium++";
+    string currentTierDesc = isFreeUser
+        ? "You're on the Free plan. Upgrade to access premium books and more!"
+        : isPremiumUser
+            ? "You're on Premium. Upgrade to Premium++ for downloads, notifications, and AI Voice Reader."
+            : "You're on Premium++! You have full access to all features.";
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+    .sub-page *, .sub-page *::before, .sub-page *::after {
+        box-sizing: border-box;
+    }
+
+    .sub-page {
+        position: relative;
+        font-family: 'Nunito', sans-serif;
+        background: #0e0e1a;
+        min-height: 100vh;
+        color: #f0eee8;
+        overflow-x: hidden;
+        padding: 0;
+        margin: -1rem;
+    }
+
+    /* ── Blobs ── */
+    .sub-blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+        opacity: .06;
+    }
+
+    .sub-blob-tl {
+        width: 420px;
+        height: 800px;
+        top: -240px;
+        left: -150px;
+        border-radius: 38% 62% 55% 45%/42% 38% 62% 58%;
+        animation: subMorph1 10s ease-in-out infinite;
+    }
+
+    .sub-blob-br {
+        width: 380px;
+        height: 720px;
+        bottom: -220px;
+        right: -140px;
+        border-radius: 55% 45% 38% 62%/60% 42% 58% 40%;
+        animation: subMorph2 13s ease-in-out infinite;
+    }
+
+    .sub-blob-mid {
+        width: 260px;
+        height: 260px;
+        top: 38%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        border-radius: 50%;
+        opacity: .04;
+        animation: subMorph3 8s ease-in-out infinite;
+    }
+
+    @@keyframes subMorph1 {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45%/42% 38% 62% 58%
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60%/55% 45% 58% 42%
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38%/40% 58% 42% 60%
+        }
+    }
+
+    @@keyframes subMorph2 {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62%/60% 42% 58% 40%
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42%/45% 55% 40% 60%
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55%/55% 45% 62% 38%
+        }
+    }
+
+    @@keyframes subMorph3 {
+        0%, 100% {
+            transform: translate(-50%,-50%) scale(1)
+        }
+
+        50% {
+            transform: translate(-50%,-50%) scale(1.3)
+        }
+    }
+
+    @@media(max-width:768px) {
+        .sub-blob-tl, .sub-blob-br, .sub-blob-mid {
+            display: none
+        }
+    }
+
+    .sub-inner {
+        position: relative;
+        z-index: 1;
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 2.75rem 1.25rem 5rem;
+    }
+
+    /* ── Back Button ── */
+    .sub-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        color: rgba(255,255,255,.5);
+        font-size: .8rem;
+        font-weight: 800;
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+        padding: .4rem .75rem .4rem .5rem;
+        border-radius: 50px;
+        border: 1px solid rgba(255,255,255,.1);
+        background: rgba(255,255,255,.04);
+        transition: color .18s, background .18s, border-color .18s;
+    }
+
+        .sub-back-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,.09);
+            border-color: rgba(255,255,255,.2);
+        }
+
+    /* ── Page header ── */
+    .sub-header {
+        text-align: center;
+        margin-bottom: 1.75rem;
+        animation: subFadeUp .5s ease both;
+    }
+
+    .sub-header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(242,101,34,.18);
+        border: 1px solid rgba(242,101,34,.4);
+        border-radius: 20px;
+        padding: .22rem .85rem;
+        font-size: .68rem;
+        font-weight: 800;
+        color: #f9a875;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: .85rem;
+    }
+
+    .sub-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.1;
+        margin-bottom: .55rem;
+    }
+
+        .sub-title span {
+            color: #f26522;
+        }
+
+    .sub-subtitle {
+        font-size: .92rem;
+        color: rgba(255,255,255,.42);
+        font-weight: 600;
+    }
+
+    /* ── Current Tier Banner ── */
+    .sub-current-tier {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(255,255,255,.04);
+        border: 1.5px solid rgba(255,255,255,.1);
+        border-radius: 18px;
+        padding: 1.1rem 1.4rem;
+        margin-bottom: 2rem;
+        animation: subFadeUp .5s ease .05s both;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .sub-current-tier::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(242,101,34,.07) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .sub-current-tier.tier-free {
+            border-color: rgba(255,255,255,.15);
+        }
+
+        .sub-current-tier.tier-premium {
+            border-color: rgba(242,101,34,.45);
+            background: rgba(242,101,34,.06);
+        }
+
+        .sub-current-tier.tier-premium {
+            border-color: rgba(242,101,34,.45);
+        }
+
+        .sub-current-tier.tier-premiumplus {
+            border-color: rgba(251,191,36,.4);
+            background: rgba(251,191,36,.05);
+        }
+
+    .sub-current-tier-icon {
+        flex-shrink: 0;
+        width: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,.06);
+        border-radius: 14px;
+    }
+
+    .sub-current-tier-info {
+        flex: 1;
+    }
+
+    .sub-current-tier-label {
+        font-size: .67rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.38);
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        margin-bottom: .15rem;
+    }
+
+    .sub-current-tier-name {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #fff;
+        margin-bottom: .22rem;
+    }
+
+    .sub-current-tier-desc {
+        font-size: .76rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.45);
+        line-height: 1.4;
+    }
+
+    .sub-current-tier-pill {
+        flex-shrink: 0;
+        background: rgba(74,222,128,.15);
+        border: 1px solid rgba(74,222,128,.3);
+        color: #4ade80;
+        font-size: .65rem;
+        font-weight: 900;
+        padding: .25rem .75rem;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        white-space: nowrap;
+    }
+
+    .sub-current-tier.tier-premiumplus .sub-current-tier-pill {
+        background: rgba(251,191,36,.15);
+        border-color: rgba(251,191,36,.35);
+        color: #fbbf24;
+    }
+
+    /* ── Status banners ── */
+    .sub-status {
+        border-radius: 14px;
+        padding: .9rem 1.25rem;
+        margin-bottom: 1.5rem;
+        font-size: .85rem;
+        font-weight: 700;
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        animation: subFadeUp .5s ease .08s both;
+    }
+
+    .sub-status-icon {
+        flex-shrink: 0;
+        margin-top: .05rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .sub-status.pending {
+        background: rgba(251,191,36,.1);
+        border: 1px solid rgba(251,191,36,.35);
+        color: #fde68a;
+    }
+
+    .sub-status.approved {
+        background: rgba(34,197,94,.1);
+        border: 1px solid rgba(34,197,94,.35);
+        color: #86efac;
+    }
+
+    .sub-status.rejected {
+        background: rgba(239,68,68,.1);
+        border: 1px solid rgba(239,68,68,.35);
+        color: #fca5a5;
+    }
+
+    .sub-status strong {
+        color: #fff;
+    }
+
+    .sub-status-meta {
+        font-size: .75rem;
+        opacity: .65;
+        margin-top: .18rem;
+    }
+
+    /* ── Alerts ── */
+    .sub-alert-success {
+        background: rgba(34,197,94,.1);
+        border: 1px solid rgba(34,197,94,.35);
+        color: #86efac;
+        border-radius: 12px;
+        padding: .85rem 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .sub-alert-danger {
+        background: rgba(239,68,68,.1);
+        border: 1px solid rgba(239,68,68,.35);
+        color: #fca5a5;
+        border-radius: 12px;
+        padding: .85rem 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ── Plans grid ── */
+    .sub-plans {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 1rem;
+        margin-bottom: 2.25rem;
+        animation: subFadeUp .5s ease .12s both;
+    }
+
+    @@media(max-width:640px) {
+        .sub-plans {
+            grid-template-columns: 1fr
+        }
+    }
+
+    .sub-plan {
+        background: rgba(255,255,255,.04);
+        border: 1.5px solid rgba(255,255,255,.09);
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+        transition: transform .3s cubic-bezier(.34,1.56,.64,1), border-color .25s, box-shadow .25s;
+    }
+
+        .sub-plan:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 24px 60px rgba(0,0,0,.4);
+        }
+
+        .sub-plan.premium {
+            border-color: rgba(242,101,34,.5);
+            background: rgba(242,101,34,.06);
+        }
+
+            .sub-plan.premium:hover {
+                box-shadow: 0 24px 60px rgba(242,101,34,.22);
+            }
+
+        .sub-plan.premium-plus {
+            border-color: rgba(251,191,36,.4);
+            background: rgba(251,191,36,.05);
+        }
+
+            .sub-plan.premium-plus:hover {
+                box-shadow: 0 24px 60px rgba(251,191,36,.18);
+            }
+
+        /* ── Current plan highlight ── */
+        .sub-plan.is-current {
+            border-color: rgba(74,222,128,.5) !important;
+            background: rgba(74,222,128,.05) !important;
+            box-shadow: 0 0 0 1px rgba(74,222,128,.2);
+        }
+
+            .sub-plan.is-current:hover {
+                box-shadow: 0 24px 60px rgba(74,222,128,.18);
+            }
+
+        /* ── Dimmed (below current tier) ── */
+        .sub-plan.is-below {
+            opacity: .45;
+            filter: grayscale(.6);
+            pointer-events: none;
+        }
+
+    .sub-plan-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #f26522;
+        color: #fff;
+        font-size: .58rem;
+        font-weight: 900;
+        padding: .22rem .8rem;
+        border-radius: 0 20px 0 10px;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+    }
+
+        .sub-plan-badge.current-badge {
+            background: #4ade80;
+            color: #0e0e1a;
+        }
+
+    .sub-plan-head {
+        padding: 1.35rem 1.35rem .9rem;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    .sub-plan-icon {
+        margin-bottom: .45rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sub-plan-name {
+        font-size: .95rem;
+        font-weight: 900;
+        color: #fff;
+        margin-bottom: .2rem;
+    }
+
+    .sub-plan-price {
+        font-size: 1.85rem;
+        font-weight: 900;
+        line-height: 1;
+        color: #f26522;
+    }
+
+        .sub-plan-price.free {
+            color: rgba(255,255,255,.35);
+            font-size: 1.3rem;
+        }
+
+        .sub-plan-price.gold {
+            color: #fbbf24;
+        }
+
+    .sub-plan-period {
+        font-size: .68rem;
+        font-weight: 700;
+        color: rgba(255,255,255,.3);
+    }
+
+    .sub-plan-body {
+        padding: 1rem 1.35rem 1.35rem;
+    }
+
+    .sub-feat-list {
+        list-style: none;
+    }
+
+        .sub-feat-list li {
+            font-size: .78rem;
+            font-weight: 700;
+            padding: .3rem 0;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+        }
+
+            .sub-feat-list li:last-child {
+                border-bottom: none;
+            }
+
+    .ico-yes {
+        color: #4ade80;
+        font-size: .75rem;
+    }
+
+    .ico-no {
+        color: rgba(255,255,255,.2);
+        font-size: .75rem;
+    }
+
+    .txt-yes {
+        color: rgba(255,255,255,.8);
+    }
+
+    .txt-no {
+        color: rgba(255,255,255,.22);
+    }
+
+    /* ── Submit form card ── */
+    .sub-form-card {
+        background: rgba(255,255,255,.04);
+        border: 1.5px solid rgba(255,255,255,.1);
+        border-radius: 22px;
+        padding: 1.9rem 2rem 2rem;
+        position: relative;
+        overflow: hidden;
+        animation: subFadeUp .5s ease .22s both;
+    }
+
+        .sub-form-card::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle,rgba(242,101,34,.11) 0%,transparent 65%);
+            pointer-events: none;
+        }
+
+    .sub-form-title {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: #fff;
+        margin-bottom: 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+    }
+
+    .sub-gcash-note {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        background: rgba(59,130,246,.08);
+        border: 1px solid rgba(59,130,246,.22);
+        border-radius: 10px;
+        padding: .65rem 1rem;
+        margin-bottom: 1.5rem;
+        font-size: .75rem;
+        font-weight: 700;
+        color: rgba(147,197,253,.9);
+    }
+
+    .sub-tier-label {
+        font-size: .75rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.45);
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        margin-bottom: .75rem;
+    }
+
+    .sub-tier-row {
+        display: flex;
+        gap: .75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .sub-tier-opt {
+        flex: 1;
+        min-width: 140px;
+        background: rgba(255,255,255,.04);
+        border: 1.5px solid rgba(255,255,255,.1);
+        border-radius: 14px;
+        padding: .9rem 1rem;
+        cursor: pointer;
+        position: relative;
+        transition: border-color .2s,background .2s,transform .2s cubic-bezier(.34,1.56,.64,1);
+        user-select: none;
+    }
+
+        .sub-tier-opt:hover {
+            border-color: rgba(242,101,34,.5);
+            background: rgba(242,101,34,.07);
+            transform: translateY(-2px);
+        }
+
+        .sub-tier-opt input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .sub-tier-opt.active {
+            border-color: #f26522 !important;
+            background: rgba(242,101,34,.12) !important;
+            box-shadow: 0 0 0 1px rgba(242,101,34,.3);
+        }
+
+    .sub-tier-icon {
+        font-size: 1.25rem;
+        margin-bottom: .3rem;
+    }
+
+    .sub-tier-name {
+        font-size: .85rem;
+        font-weight: 900;
+        color: #fff;
+        margin-bottom: .1rem;
+    }
+
+    .sub-tier-price {
+        font-size: .75rem;
+        font-weight: 800;
+        color: #f26522;
+    }
+
+    .sub-tier-check {
+        position: absolute;
+        top: .6rem;
+        right: .65rem;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .6rem;
+        color: transparent;
+        transition: all .2s;
+    }
+
+    .sub-tier-opt.active .sub-tier-check {
+        background: #f26522;
+        border-color: #f26522;
+        color: #fff;
+    }
+
+    /* ── Upload ── */
+    .sub-upload-wrap {
+        position: relative;
+        border: 1.5px dashed rgba(255,255,255,.18);
+        border-radius: 14px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .22s,background .22s;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+        .sub-upload-wrap:hover {
+            border-color: rgba(242,101,34,.5);
+            background: rgba(242,101,34,.05);
+        }
+
+        .sub-upload-wrap input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+    .sub-upload-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(242,101,34,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto .75rem;
+    }
+
+    .sub-upload-title {
+        font-size: .85rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.75);
+        margin-bottom: .2rem;
+    }
+
+    .sub-upload-sub {
+        font-size: .72rem;
+        color: rgba(255,255,255,.32);
+        font-weight: 600;
+    }
+
+        .sub-upload-sub span {
+            color: #f26522;
+        }
+
+    /* ── Submit button ── */
+    .sub-btn-submit {
+        width: 100%;
+        background: linear-gradient(135deg,#f26522,#d9541a);
+        border: none;
+        border-radius: 14px;
+        padding: .9rem 1.5rem;
+        font-family: 'Nunito',sans-serif;
+        font-size: .95rem;
+        font-weight: 900;
+        color: #fff;
+        cursor: pointer;
+        transition: transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        box-shadow: 0 6px 24px rgba(242,101,34,.35);
+        letter-spacing: .3px;
+        text-decoration: none;
+    }
+
+        .sub-btn-submit:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 14px 40px rgba(242,101,34,.5);
+            color: #fff;
+        }
+
+        .sub-btn-submit:active {
+            transform: scale(.98);
+        }
+
+    .sub-fade {
+        animation: subFadeUp .45s ease both;
+    }
+
+    @@keyframes subFadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px)
+        }
+
+        to {
+            opacity: 1;
+            transform: none
+        }
+    }
+
+    @@media(max-width:640px) {
+        .sub-title {
+            font-size: 1.85rem
+        }
+
+        .sub-tier-row {
+            flex-direction: column
+        }
+
+        .sub-form-card {
+            padding: 1.35rem 1.1rem 1.5rem
+        }
+
+        .sub-inner {
+            padding: 2rem .85rem 4rem
+        }
+
+        .sub-current-tier {
+            flex-wrap: wrap
+        }
+    }
+</style>
+
+<div class="sub-page">
+    <div class="sub-blob sub-blob-tl"></div>
+    <div class="sub-blob sub-blob-br"></div>
+    <div class="sub-blob sub-blob-mid"></div>
+
+    <div class="sub-inner">
+
+        @* ── Back Button ── *@
+        <a asp-controller="User" asp-action="Profile" class="sub-back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Back to Profile
+        </a>
+
+        @* ── Page header ── *@
+        <div class="sub-header">
+            <div class="sub-header-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                ReadEase Premium
+            </div>
+            <h1 class="sub-title">Unlock Your <span>Reading</span> Potential</h1>
+            <p class="sub-subtitle">Choose a plan and submit your GCash receipt to get started</p>
+        </div>
+
+        @* ── Current Tier Banner ── *@
+        <div class="sub-current-tier @(isFreeUser ? "tier-free" : isPremiumUser ? "tier-premium" : "tier-premiumplus")">
+            <div class="sub-current-tier-icon">
+                @if (isFreeUser)
+                {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                }
+                else if (isPremiumUser)
+                {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                }
+                else
+                {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                }
+            </div>
+            <div class="sub-current-tier-info">
+                <div class="sub-current-tier-label">Your Current Plan</div>
+                <div class="sub-current-tier-name">@currentTierName</div>
+                <div class="sub-current-tier-desc">@currentTierDesc</div>
+            </div>
+            <div class="sub-current-tier-pill">
+                @if (isPremiumPlusUser)
+                {
+                    <span>✦ Max Tier</span>
+                }
+                else
+                {
+                    <span>✓ Active</span>
+                }
+            </div>
+        </div>
+
+        @* ── Flash alerts ── *@
+        @if (TempData["SuccessMessage"] is string successMsg)
+        {
+            <div class="sub-alert-success sub-fade">@successMsg</div>
+        }
+        @if (TempData["ErrorMessage"] is string errorMsg)
+        {
+            <div class="sub-alert-danger sub-fade">@errorMsg</div>
+        }
+
+        @* ── Status banners ── *@
+        @if (isPending)
+        {
+            <div class="sub-status pending sub-fade">
+                <span class="sub-status-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </span>
+                <div>
+                    <strong>Request under review</strong> — Your <strong>@Model.RequestedTier</strong> subscription is being processed.
+                    <div class="sub-status-meta">Submitted: @Model.SubmittedAt?.ToString("MMM dd, yyyy h:mm tt")</div>
+                </div>
+            </div>
+        }
+        @if (isRejected)
+        {
+            <div class="sub-status rejected sub-fade">
+                <span class="sub-status-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </span>
+                <div>
+                    <strong>Your last request was rejected.</strong>
+                    @if (!string.IsNullOrEmpty(Model.RejectionReason))
+                    {
+                        <span> Reason: <em>@Model.RejectionReason</em></span>
+                    }
+                    <div class="sub-status-meta">You may submit a new request below.</div>
+                </div>
+            </div>
+        }
+
+        @* ── Plan comparison cards ── *@
+        @*
+            is-current  = user's active tier   → green border highlight
+            is-below    = lower than user tier  → dimmed, no hover
+            (neither)   = upgradeable tier      → normal interactive card
+        *@
+        <div class="sub-plans">
+
+            @* FREE *@
+            <div class="sub-plan @(isFreeUser ? "is-current" : "is-below")">
+                @if (isFreeUser)
+                {
+                    <div class="sub-plan-badge current-badge">Your Plan</div>
+                }
+                <div class="sub-plan-head">
+                    <div class="sub-plan-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <div class="sub-plan-name">Free</div>
+                    <div class="sub-plan-price free">₱0</div>
+                    <div class="sub-plan-period">always free</div>
+                </div>
+                <div class="sub-plan-body">
+                    <ul class="sub-feat-list">
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">Read free books</span></li>
+                        <li><span class="ico-no">✗</span><span class="txt-no">Premium books</span></li>
+                        <li><span class="ico-no">✗</span><span class="txt-no">Notifications</span></li>
+                        <li><span class="ico-no">✗</span><span class="txt-no">Downloads</span></li>
+                        <li><span class="ico-no">✗</span><span class="txt-no">AI Voice Reader</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            @* PREMIUM *@
+            <div class="sub-plan premium @(isPremiumUser ? "is-current" : isFreeUser ? "" : "is-below")">
+                @if (isPremiumUser)
+                {
+                    <div class="sub-plan-badge current-badge">Your Plan</div>
+                }
+                else if (isFreeUser)
+                {
+                    <div class="sub-plan-badge">Most Popular</div>
+                }
+                <div class="sub-plan-head">
+                    <div class="sub-plan-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <div class="sub-plan-name">Premium</div>
+                    <div class="sub-plan-price">₱99</div>
+                    <div class="sub-plan-period">per month</div>
+                </div>
+                <div class="sub-plan-body">
+                    <ul class="sub-feat-list">
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">Read free books</span></li>
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">Premium books</span></li>
+                        <li><span class="ico-no">✗</span><span class="txt-no">Notifications</span></li>
+                        <li><span class="ico-no">✗</span><span class="txt-no">Downloads</span></li>
+                        <li><span class="ico-no">✗</span><span class="txt-no">AI Voice Reader</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            @* PREMIUM++ *@
+            <div class="sub-plan premium-plus @(isPremiumPlusUser ? "is-current" : "")">
+                @if (isPremiumPlusUser)
+                {
+                    <div class="sub-plan-badge current-badge">Your Plan</div>
+                }
+                <div class="sub-plan-head">
+                    <div class="sub-plan-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </div>
+                    <div class="sub-plan-name">Premium++</div>
+                    <div class="sub-plan-price gold">₱199</div>
+                    <div class="sub-plan-period">per month</div>
+                </div>
+                <div class="sub-plan-body">
+                    <ul class="sub-feat-list">
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">Read free books</span></li>
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">Premium books</span></li>
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">Notifications</span></li>
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">Download books</span></li>
+                        <li><span class="ico-yes">✓</span><span class="txt-yes">AI Voice Reader</span></li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        @* ── Submit form ── *@
+        @* Show when: not pending AND not already on highest tier (Premium++) *@
+        @if (!isPending && !isPremiumPlusUser)
+        {
+            <div class="sub-form-card">
+
+                <div class="sub-form-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f26522" stroke-width="2.5">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    Submit Subscription Request
+                </div>
+
+                <div class="sub-gcash-note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    GCash payments are reviewed within 24 hours. Keep your receipt ready.
+                </div>
+
+                <form asp-action="Submit" asp-controller="Subscription"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    @* ── Tier picker ── *@
+                    <div class="sub-tier-label">Select Tier</div>
+                    <div class="sub-tier-row">
+
+                        @if (isFreeUser)
+                        {
+                            @* FREE → can pick Premium or Premium++ *@
+                            var premChecked = Model.RequestedTier != SubscriptionTier.PremiumPlus;
+                            var premPlusChecked = !premChecked;
+
+                            <label class="sub-tier-opt @(premChecked ? "active" : "")"
+                                   id="lbl-premium"
+                                   onclick="subPickTier(this,'lbl-premplus')">
+                                <input type="radio" name="requestedTier"
+                                       value="@((int)SubscriptionTier.Premium)"
+                                       @(premChecked ? "checked" : "") />
+                                <div class="sub-tier-icon">⭐</div>
+                                <div class="sub-tier-name">Premium</div>
+                                <div class="sub-tier-price">₱99 / mo</div>
+                                <div class="sub-tier-check">✓</div>
+                            </label>
+
+                            <label class="sub-tier-opt @(premPlusChecked ? "active" : "")"
+                                   id="lbl-premplus"
+                                   onclick="subPickTier(this,'lbl-premium')">
+                                <input type="radio" name="requestedTier"
+                                       value="@((int)SubscriptionTier.PremiumPlus)"
+                                       @(premPlusChecked ? "checked" : "") />
+                                <div class="sub-tier-icon">🚀</div>
+                                <div class="sub-tier-name">Premium++</div>
+                                <div class="sub-tier-price">₱199 / mo</div>
+                                <div class="sub-tier-check">✓</div>
+                            </label>
+                        }
+                        else
+                        {
+                            @* PREMIUM → only Premium++ shown as upgrade option *@
+                            <label class="sub-tier-opt active" id="lbl-premplus">
+                                <input type="radio" name="requestedTier"
+                                       value="@((int)SubscriptionTier.PremiumPlus)"
+                                       checked />
+                                <div class="sub-tier-icon">🚀</div>
+                                <div class="sub-tier-name">Premium++</div>
+                                <div class="sub-tier-price">₱199 / mo</div>
+                                <div class="sub-tier-check">✓</div>
+                            </label>
+                        }
+
+                    </div>
+
+                    @* ── Receipt upload ── *@
+                    <div class="sub-tier-label">Payment Receipt</div>
+                    <div class="sub-upload-wrap" id="subUploadArea">
+                        <input type="file" name="receiptPhoto"
+                               accept=".jpg,.jpeg,.png,.webp"
+                               onchange="subHandleFile(this)" />
+                        <div class="sub-upload-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f26522" stroke-width="2.5">
+                                <polyline points="16 16 12 12 8 16" />
+                                <line x1="12" y1="12" x2="12" y2="21" />
+                                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                            </svg>
+                        </div>
+                        <div class="sub-upload-title" id="subUploadTitle">Click or drag to upload receipt</div>
+                        <div class="sub-upload-sub">JPG, PNG or WEBP — <span>max 5 MB</span> · optional but recommended</div>
+                    </div>
+
+                    <button type="submit" class="sub-btn-submit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Submit Request
+                    </button>
+
+                </form>
+            </div>
+        }
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function subPickTier(active, otherId) {
+            active.classList.add('active');
+            var other = document.getElementById(otherId);
+            if (other) other.classList.remove('active');
+            active.querySelector('input[type="radio"]').checked = true;
+        }
+
+        function subHandleFile(input) {
+            const area  = document.getElementById('subUploadArea');
+            const title = document.getElementById('subUploadTitle');
+            if (input.files && input.files[0]) {
+                area.style.borderColor = 'rgba(74,222,128,.55)';
+                area.style.background  = 'rgba(74,222,128,.05)';
+                title.textContent      = input.files[0].name;
+                title.style.color      = '#4ade80';
+            }
+        }
+    </script>
+}

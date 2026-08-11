@@ -1,0 +1,1280 @@
+﻿@model ReadEase.ViewModels.Library.LibraryViewModel
+@{
+    ViewData["Title"] = string.IsNullOrEmpty(Model.SelectedCategory) ? "Browse Books" : Model.SelectedCategory + " Stories";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var allCategories = Model.Categories.ToList();
+    bool isFiltering = !string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.SelectedCategory);
+    bool isCategoryPage = !string.IsNullOrEmpty(Model.SelectedCategory) && string.IsNullOrEmpty(Model.SearchQuery);
+
+    string FormatReads(int count)
+    {
+        if (count >= 1_000_000) return (count / 1_000_000.0).ToString("0.#") + "M";
+        if (count >= 1_000) return (count / 1_000.0).ToString("0.#") + "K";
+        return count.ToString();
+    }
+
+    // ── SVG icon constants — zero emojis ──
+    const string IcoBook = "<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.75)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg>";
+    const string IcoBookSm = "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.75)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg>";
+    const string IcoBookOr = "<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='#f26522' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg>";
+    const string IcoBadgeBook = "<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg>";
+    const string IcoEye = "<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>";
+    const string IcoLock = "<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='11' width='18' height='11' rx='2' ry='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>";
+    const string IcoStar = "<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='#fbbf24' stroke='#fbbf24' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/></svg>";
+    const string IcoStarOr = "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='#f26522' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/></svg>";
+    const string IcoStarAmb = "<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='#d97706' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/></svg>";
+    const string IcoSparkle = "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='#f26522' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='5'/><line x1='12' y1='1' x2='12' y2='3'/><line x1='12' y1='21' x2='12' y2='23'/><line x1='4.22' y1='4.22' x2='5.64' y2='5.64'/><line x1='18.36' y1='18.36' x2='19.78' y2='19.78'/><line x1='1' y1='12' x2='3' y2='12'/><line x1='21' y1='12' x2='23' y2='12'/><line x1='4.22' y1='19.78' x2='5.64' y2='18.36'/><line x1='18.36' y1='5.64' x2='19.78' y2='4.22'/></svg>";
+    const string IcoChevL = "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='15 18 9 12 15 6'/></svg>";
+    const string IcoChevR = "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='9 18 15 12 9 6'/></svg>";
+    const string IcoHrtFill = "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='#ef4444' stroke='#ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>";
+    const string IcoHrtLine = "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#c4bfb8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>";
+    const string IcoInbox = "<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24' fill='none' stroke='#f26522' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='22 12 16 12 14 15 10 15 8 12 2 12'/><path d='M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/></svg>";
+    const string IcoSearchI = "<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24' fill='none' stroke='#f26522' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>";
+}
+
+<style>
+    .lib-blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .lib-blob-tl {
+        width: 320px;
+        height: 640px;
+        top: -180px;
+        left: -120px;
+        border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        animation: blobMorph1 9s ease-in-out infinite;
+        opacity: .07;
+    }
+
+    .lib-blob-br {
+        width: 300px;
+        height: 580px;
+        bottom: -180px;
+        right: -110px;
+        border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        animation: blobMorph2 11s ease-in-out infinite;
+        opacity: .07;
+    }
+
+    @@keyframes blobMorph1 {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60% / 55% 45% 58% 42%;
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38% / 40% 58% 42% 60%;
+        }
+    }
+
+    @@keyframes blobMorph2 {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42% / 45% 55% 40% 60%;
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55% / 55% 45% 62% 38%;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .lib-blob-tl, .lib-blob-br {
+            display: none;
+        }
+    }
+
+    .sec-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .sec-bar-title {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 900;
+        font-size: 1.2rem;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .sec-bar-badge {
+        font-size: .67rem;
+        font-weight: 800;
+        background: #fff3ed;
+        color: #f26522;
+        padding: .15rem .55rem;
+        border-radius: 20px;
+        border: 1px solid #fcd9c3;
+        margin-left: .3rem;
+    }
+
+    .sec-bar-link {
+        font-size: .8rem;
+        font-weight: 800;
+        color: #f26522;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: color .15s;
+    }
+
+        .sec-bar-link:hover {
+            color: #d9541a;
+            text-decoration: underline;
+        }
+
+    .carousel-outer {
+        position: relative;
+        margin-bottom: 2.75rem;
+        z-index: 2;
+    }
+
+    .book-rail {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding: .3rem .15rem 1rem;
+        scrollbar-width: none;
+    }
+
+        .book-rail::-webkit-scrollbar {
+            display: none;
+        }
+
+    .bk-card {
+        flex: 0 0 180px;
+        width: 180px;
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #ede8e0;
+        box-shadow: 0 3px 12px rgba(0,0,0,.07);
+        transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, border-color .2s;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+        .bk-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,.16);
+            border-color: #f26522;
+        }
+
+    .bk-cover {
+        width: 100%;
+        height: 234px;
+        object-fit: cover;
+        display: block;
+        transition: transform .35s;
+    }
+
+    .bk-card:hover .bk-cover {
+        transform: scale(1.06);
+    }
+
+    .bk-cover-ph {
+        width: 100%;
+        height: 234px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bk-premium-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(0,0,0,.72);
+        color: #fbbf24;
+        font-size: .58rem;
+        font-weight: 800;
+        padding: .18rem .52rem;
+        border-radius: 6px;
+        backdrop-filter: blur(6px);
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .bk-body {
+        padding: .65rem .75rem .3rem;
+        flex: 1;
+        display: flex; /* ADD THIS */
+        flex-direction: column; /* ADD THIS */
+    }
+
+    .bk-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.35;
+        color: #1a1a2e;
+        margin-bottom: .15rem;
+        min-height: 2.16rem;
+    }
+
+    .bk-author {
+        font-size: .67rem;
+        color: #6b6878;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: .2rem;
+        flex: 1;
+    }
+
+    .bk-reads-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .28rem;
+        background: #fff3ed;
+        border: 1px solid #fcd9c3;
+        border-radius: 20px;
+        padding: .12rem .55rem;
+        font-size: .62rem;
+        font-weight: 800;
+        color: #c2410c;
+        margin-top: auto; /* CHANGE from .1rem to auto */
+        transition: background .2s, transform .15s;
+        cursor: help;
+        align-self: flex-start; /* ADD THIS — don't stretch full width */
+    }
+
+        .bk-reads-pill:hover {
+            background: #f26522;
+            color: #fff;
+            border-color: #f26522;
+            transform: scale(1.05);
+        }
+
+            .bk-reads-pill:hover svg {
+                stroke: #fff;
+            }
+
+    .bk-actions {
+        display: flex;
+        gap: .35rem;
+        padding: .5rem .75rem .7rem;
+    }
+
+    .btn-bk-read {
+        flex: 1;
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 800;
+        padding: .32rem .4rem;
+        border-radius: 8px;
+        background: #f26522;
+        border: none;
+        color: #fff;
+        transition: background .18s, transform .15s;
+        text-align: center;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        box-shadow: 0 2px 8px rgba(242,101,34,.25);
+    }
+
+        .btn-bk-read:hover {
+            background: #d9541a;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-bk-read.locked {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            font-size: .65rem;
+        }
+
+    .btn-bk-fav {
+        width: 30px;
+        height: 30px;
+        flex-shrink: 0;
+        border-radius: 8px;
+        border: 1.5px solid #ede8e0;
+        background: #fafafa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: all .18s cubic-bezier(.34,1.56,.64,1);
+        cursor: pointer;
+    }
+
+        .btn-bk-fav:hover {
+            border-color: #fca5a5;
+            background: #fff5f5;
+            transform: scale(1.25);
+        }
+
+    .rail-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-75%);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1.5px solid #ede8e0;
+        box-shadow: 0 4px 16px rgba(0,0,0,.14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        cursor: pointer;
+        transition: all .2s cubic-bezier(.34,1.56,.64,1);
+        padding: 0;
+        color: #1a1a2e;
+    }
+
+        .rail-arrow:hover {
+            background: #f26522;
+            border-color: #f26522;
+            box-shadow: 0 6px 22px rgba(242,101,34,.4);
+            transform: translateY(-75%) scale(1.15);
+        }
+
+            .rail-arrow:hover svg {
+                stroke: #fff;
+            }
+
+        .rail-arrow.prev {
+            left: -17px;
+        }
+
+        .rail-arrow.next {
+            right: -17px;
+        }
+
+    .cat-hero {
+        background: linear-gradient(160deg, #1a1a2e 0%, #0f3460 55%, #16213e 100%);
+        border-radius: 22px;
+        margin-bottom: 2rem;
+        overflow: hidden;
+        position: relative;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        box-shadow: 0 12px 48px rgba(26,26,46,.3);
+    }
+
+    .cat-hero-bg::before {
+        content: '';
+        position: absolute;
+        top: -80px;
+        right: -80px;
+        width: 380px;
+        height: 380px;
+        background: radial-gradient(circle, rgba(242,101,34,.28) 0%, transparent 65%);
+    }
+
+    .cat-hero-bg::after {
+        content: '';
+        position: absolute;
+        bottom: -60px;
+        left: 20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(37,99,235,.18) 0%, transparent 65%);
+    }
+
+    .cat-hero-inner {
+        position: relative;
+        z-index: 2;
+        padding: 2.5rem 2.5rem 1.75rem;
+    }
+
+    .cat-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(242,101,34,.2);
+        border: 1px solid rgba(242,101,34,.4);
+        border-radius: 20px;
+        padding: .2rem .75rem;
+        font-size: .68rem;
+        font-weight: 800;
+        color: #f9a875;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin-bottom: .85rem;
+    }
+
+    .cat-hero-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: 2.4rem;
+        font-weight: 900;
+        color: #fff;
+        margin: 0 0 .3rem;
+        line-height: 1.1;
+    }
+
+    .cat-hero-count {
+        font-size: .9rem;
+        color: rgba(255,255,255,.5);
+        font-weight: 600;
+    }
+
+    .book-list-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.1rem;
+        margin-bottom: .1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .book-list-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background: #fff;
+        border: 1px solid #ede8e0;
+        border-radius: 16px;
+        transition: box-shadow .22s, transform .22s, border-color .22s;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        text-decoration: none !important;
+        color: inherit !important;
+        cursor: pointer;
+    }
+
+        .book-list-item:hover {
+            box-shadow: 0 10px 32px rgba(0,0,0,.12);
+            transform: translateY(-3px);
+            border-color: #f26522;
+        }
+
+    .book-list-num {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: #e0dbd3;
+        min-width: 22px;
+        align-self: flex-start;
+        line-height: 1;
+        margin-top: .35rem;
+    }
+
+        .book-list-num.top3 {
+            color: #f26522;
+        }
+
+    .book-list-cover {
+        width: 72px;
+        height: 96px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        display: block;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+
+    .book-list-cover-ph {
+        width: 72px;
+        height: 96px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+
+    .book-list-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .book-list-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: .9rem;
+        font-weight: 800;
+        color: #1a1a2e;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.35;
+        margin-bottom: .2rem;
+    }
+
+    .book-list-author {
+        font-size: .75rem;
+        color: #6b6878;
+        font-weight: 600;
+        margin-bottom: .4rem;
+    }
+
+    .book-list-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .3rem;
+        margin-bottom: .4rem;
+    }
+
+    .book-tag {
+        font-size: .62rem;
+        font-weight: 700;
+        background: #f5f3ff;
+        color: #7c3aed;
+        border: 1px solid #ddd6fe;
+        padding: .1rem .45rem;
+        border-radius: 20px;
+        text-transform: lowercase;
+    }
+
+    .book-list-desc {
+        font-size: .75rem;
+        color: #6b6878;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.5;
+    }
+
+    .book-list-meta {
+        display: flex;
+        gap: .75rem;
+        margin-top: .45rem;
+        font-size: .7rem;
+        color: #9994a8;
+        font-weight: 600;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .reads-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        background: #fff3ed;
+        border: 1px solid #fcd9c3;
+        border-radius: 20px;
+        padding: .1rem .5rem;
+        font-size: .68rem;
+        font-weight: 800;
+        color: #c2410c;
+        transition: background .18s, color .18s;
+        cursor: help;
+    }
+
+        .reads-pill:hover {
+            background: #f26522;
+            color: #fff;
+            border-color: #f26522;
+        }
+
+            .reads-pill:hover svg {
+                stroke: #fff;
+            }
+
+    .list-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        gap: .75rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .list-count {
+        font-family: 'Nunito', sans-serif;
+        font-size: .95rem;
+        font-weight: 800;
+        color: #1a1a2e;
+    }
+
+    .sort-btn {
+        background: #fff;
+        border: 1.5px solid #e0dbd3;
+        border-radius: 10px;
+        padding: .4rem .9rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        color: #4a4660;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        transition: all .18s;
+        text-decoration: none;
+    }
+
+        .sort-btn:hover {
+            border-color: #f26522;
+            color: #f26522;
+        }
+
+    .tag-refine {
+        background: #fff;
+        border: 1px solid #e8e3dc;
+        border-radius: 16px;
+        padding: 1.1rem 1.5rem;
+        margin-bottom: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        position: relative;
+        z-index: 2;
+    }
+
+    .tag-refine-label {
+        font-size: .75rem;
+        font-weight: 800;
+        color: #9994a8;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        margin-bottom: .75rem;
+    }
+
+    .tag-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        align-items: center;
+    }
+
+    .tag-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .28rem .75rem;
+        border-radius: 20px;
+        font-size: .78rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all .18s;
+        border: 1.5px solid;
+        cursor: pointer;
+    }
+
+        .tag-chip.active {
+            background: #1a1a2e;
+            border-color: #1a1a2e;
+            color: #fff;
+        }
+
+        .tag-chip.inactive {
+            background: #fff;
+            border-color: #e0dbd3;
+            color: #4a4660;
+        }
+
+            .tag-chip.inactive:hover {
+                border-color: #f26522;
+                color: #f26522;
+                background: #fff9f6;
+            }
+
+        .tag-chip.add {
+            background: transparent;
+            border-color: #e0dbd3;
+            color: #9994a8;
+        }
+
+            .tag-chip.add:hover {
+                border-color: #f26522;
+                color: #f26522;
+            }
+
+    .lib-empty {
+        text-align: center;
+        padding: 5rem 2rem;
+        position: relative;
+        z-index: 2;
+    }
+
+        .lib-empty .empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: #fff3ed;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+
+    @@keyframes floatIcon {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .fade-up {
+        animation: fadeUp .45s ease both;
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .bk-reads-pill.updated,
+    .reads-pill.updated {
+        background: #f26522 !important;
+        color: #fff !important;
+        border-color: #f26522 !important;
+        transition: background .3s, color .3s;
+    }
+
+    @@media (max-width: 768px) {
+        .book-list-row {
+            grid-template-columns: 1fr;
+        }
+
+        .cat-hero-title {
+            font-size: 1.75rem;
+        }
+
+        .cat-hero-inner {
+            padding: 1.75rem 1.25rem 1.25rem;
+        }
+
+        .rail-arrow {
+            display: none;
+        }
+
+        .bk-card {
+            flex: 0 0 132px;
+            width: 132px;
+        }
+
+        .bk-cover, .bk-cover-ph {
+            height: 172px;
+        }
+    }
+</style>
+
+<div class="lib-blob lib-blob-tl"></div>
+<div class="lib-blob lib-blob-br"></div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-3">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ═══════════════════ CATEGORY PAGE ═══════════════════ *@
+@if (isCategoryPage)
+{
+    <div class="cat-hero fade-up">
+        <div class="cat-hero-bg"></div>
+        <div class="cat-hero-inner">
+            <span class="cat-hero-badge">
+                @Html.Raw(IcoBadgeBook)
+                Genre
+            </span>
+            <h1 class="cat-hero-title">@Model.SelectedCategory Stories</h1>
+            <div class="cat-hero-count">@Model.Books.Count().ToString("N0") stories</div>
+        </div>
+    </div>
+   
+
+    <div class="list-bar fade-up">
+        <div class="list-count">@Model.Books.Count().ToString("N0") Stories</div>
+        
+    </div>
+
+    @if (!Model.Books.Any())
+    {
+        <div class="lib-empty">
+            <div class="empty-icon">@Html.Raw(IcoInbox)</div>
+            <h4 style="font-family:'Nunito',sans-serif;font-weight:900;color:#1a1a2e;">No @Model.SelectedCategory books yet</h4>
+            <p style="color:#6b6878;">Authors haven't published in this category yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="book-list-row fade-up">
+            @{
+                var sortedBooks = Model.Books.OrderByDescending(b => b.ReadCount).ToList();
+                for (int ri = 0; ri < sortedBooks.Count; ri++)
+                {
+                    var book = sortedBooks[ri];
+                    bool canRead = book.IsFree || Model.IsSubscribed;
+                    bool premLocked = !book.IsFree && !Model.IsSubscribed;
+                    int rankNo = ri + 1;
+                    <div class="book-list-item"
+                         onclick="window.location='@Url.Action("Detail", "Library", new { id = book.Id })'">
+                        <span class="book-list-num @(rankNo <= 3 ? "top3" : "")">@rankNo</span>
+                        @if (!string.IsNullOrEmpty(book.CoverImage))
+                        {
+                            <img src="@book.CoverImage" class="book-list-cover" alt="@book.Title" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="book-list-cover-ph">@Html.Raw(IcoBookSm)</div>
+                        }
+                        <div class="book-list-info">
+                            <div class="book-list-title">@book.Title</div>
+                            <div class="book-list-author">@book.Author</div>
+                            <div class="book-list-tags">
+                                <span class="book-tag">@book.Category.ToLower()</span>
+                                @if (!book.IsFree)
+                                {
+                                    <span class="book-tag" style="background:#fff7ed;color:#c2410c;border-color:#fed7aa;">premium</span>
+                                }
+                                else
+                                {
+                                    <span class="book-tag" style="background:#f0fdf4;color:#15803d;border-color:#bbf7d0;">free</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(book.Description))
+                            {
+                                <div class="book-list-desc">@book.Description</div>
+                            }
+                            <div class="book-list-meta">
+                                <span class="reads-pill"
+                                      data-book-id="@book.Id.ToString()"
+                                      title="@book.ReadCount.ToString("N0") unique readers">
+                                    @Html.Raw(IcoEye)
+                                    <span class="reads-count-val" data-raw="@book.ReadCount">@FormatReads(book.ReadCount)</span>
+                                    readers
+                                </span>
+                                @if (premLocked)
+                                {
+                                    <span style="color:#d97706;font-weight:800;font-size:.72rem;display:inline-flex;align-items:center;gap:3px;">
+                                        @Html.Raw(IcoStarAmb) Premium
+                                    </span>
+                                }
+                                <button class="btn-bk-fav fav-btn ms-auto" data-id="@book.Id.ToString()"
+                                        onclick="event.stopPropagation()">
+                                    @Html.Raw(book.IsFavorite ? IcoHrtFill : IcoHrtLine)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+}
+
+@* ═══════════════════ SEARCH RESULTS ═══════════════════ *@
+else if (!string.IsNullOrEmpty(Model.SearchQuery))
+{
+    <div class="d-flex align-items-center gap-2 mb-3 fade-up">
+        <h4 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.05rem;margin:0;">Search Results</h4>
+        <span style="font-size:.75rem;font-weight:800;background:#f0fdf4;color:#16a34a;padding:.2rem .65rem;border-radius:20px;border:1px solid #bbf7d0;">
+            @Model.Books.Count() found
+        </span>
+        <span style="font-size:.8rem;color:#6b6878;font-weight:600;">for "@Model.SearchQuery"</span>
+    </div>
+
+    @if (!Model.Books.Any())
+    {
+        <div class="lib-empty">
+            <div class="empty-icon">@Html.Raw(IcoSearchI)</div>
+            <h4 style="font-family:'Nunito',sans-serif;font-weight:900;color:#1a1a2e;">No results found</h4>
+            <p style="color:#6b6878;">Try different keywords or browse by genre.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-3 fade-up" style="position:relative;z-index:2;">
+            @foreach (var book in Model.Books)
+            {
+                bool canRead = book.IsFree || Model.IsSubscribed;
+                bool premLocked = !book.IsFree && !Model.IsSubscribed;
+                <div class="col">
+                    <div class="bk-card" style="width:100%;flex:none;"
+                         onclick="window.location='@Url.Action("Detail", "Library", new { id = book.Id })'">
+                        @if (premLocked)
+                        {
+                            <span class="bk-premium-badge">@Html.Raw(IcoLock) Premium</span>
+                        }
+                        else if (!book.IsFree)
+                        {
+                            <span class="bk-premium-badge" style="color:#86efac;">Pro</span>
+                        }
+                        @if (!string.IsNullOrEmpty(book.CoverImage))
+                        {
+                            <img src="@book.CoverImage" class="bk-cover" alt="@book.Title" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="bk-cover-ph" style="background:linear-gradient(135deg,#667eea,#764ba2);">@Html.Raw(IcoBook)</div>
+                        }
+                        <div class="bk-body">
+                            <p class="bk-title">@book.Title</p>
+                            <p class="bk-author">@book.Author</p>
+                            <span class="bk-reads-pill" title="@book.ReadCount.ToString("N0") unique readers">
+                                @Html.Raw(IcoEye)
+                                <span class="reads-count-val" data-raw="@book.ReadCount">@FormatReads(book.ReadCount)</span>
+                            </span>
+                        </div>
+                        <div class="bk-actions">
+                            <a asp-controller="Library" asp-action="Detail" asp-route-id="@book.Id"
+                               class="btn-bk-read @(!canRead ? "locked" : "")" onclick="event.stopPropagation()">
+                                @if (!canRead)
+                                {
+                                    @Html.Raw(IcoLock) <text> Preview</text>
+                                }
+                                else
+                                {
+
+                                    <text>Read</text>
+                                }
+                            </a>
+                            
+                            <button class="btn-bk-fav fav-btn" data-id="@book.Id.ToString()" onclick="event.stopPropagation()">
+                                @Html.Raw(book.IsFavorite ? IcoHrtFill : IcoHrtLine)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@* ═══════════════════ HOME PAGE ═══════════════════ *@
+else
+{
+    if (!Model.Books.Any())
+    {
+        <div class="lib-empty">
+            <div class="empty-icon">@Html.Raw(IcoInbox)</div>
+            <h4 style="font-family:'Nunito',sans-serif;font-weight:900;color:#1a1a2e;">No books yet</h4>
+            <p style="color:#6b6878;">Authors haven't published any books yet.</p>
+        </div>
+    }
+    else
+    {
+        @* ── TOP PICKS ── *@
+        if (Model.TopPicks.Any())
+        {
+            <div class="sec-bar fade-up">
+                <div class="sec-bar-title">
+                    @Html.Raw(IcoStarOr)
+                    Top Picks for You
+                    <span class="sec-bar-badge">@Model.TopPicks.Count</span>
+                </div>
+            </div>
+            <div class="carousel-outer fade-up">
+                <button class="rail-arrow prev" onclick="scrollRail('rail-top',-1)">@Html.Raw(IcoChevL)</button>
+                <div class="book-rail" id="rail-top">
+                    @foreach (var book in Model.TopPicks)
+                    {
+                        bool canRead = book.IsFree || Model.IsSubscribed;
+                        bool premLocked = !book.IsFree && !Model.IsSubscribed;
+                        <div class="bk-card" onclick="window.location='@Url.Action("Detail", "Library", new { id = book.Id })'">
+                            @if (premLocked)
+                            {
+                                <span class="bk-premium-badge">@Html.Raw(IcoLock) Premium</span>
+                            }
+                            else if (!book.IsFree)
+                            {
+                                <span class="bk-premium-badge" style="color:#86efac;">Pro</span>
+                            }
+                            @if (!string.IsNullOrEmpty(book.CoverImage))
+                            {
+                                <img src="@book.CoverImage" class="bk-cover" alt="@book.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="bk-cover-ph" style="background:linear-gradient(135deg,#667eea,#764ba2);">@Html.Raw(IcoBook)</div>
+                            }
+                            <div class="bk-body">
+                                <p class="bk-title">@book.Title</p>
+                                <p class="bk-author">@book.Author</p>
+                                <span class="bk-reads-pill" title="@book.ReadCount.ToString("N0") unique readers">
+                                    @Html.Raw(IcoEye)
+                                    <span class="reads-count-val" data-raw="@book.ReadCount">@FormatReads(book.ReadCount)</span>
+                                </span>
+                            </div>
+                            <div class="bk-actions">
+                                @if (canRead)
+                                {
+                                    <a asp-controller="Library" asp-action="Detail" asp-route-id="@book.Id"
+                                       class="btn-bk-read" onclick="event.stopPropagation()">Read</a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Subscription" asp-action="Index"
+                                       class="btn-bk-read locked" onclick="event.stopPropagation()">
+                                        @Html.Raw(IcoStar) Premium
+                                    </a>
+                                }
+                                <button class="btn-bk-fav fav-btn" data-id="@book.Id.ToString()" onclick="event.stopPropagation()">
+                                    @Html.Raw(book.IsFavorite ? IcoHrtFill : IcoHrtLine)
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button class="rail-arrow next" onclick="scrollRail('rail-top',1)">@Html.Raw(IcoChevR)</button>
+            </div>
+        }
+
+        @* ── NEW RELEASES ── *@
+        if (Model.NewReleases.Any())
+        {
+            <div class="sec-bar fade-up">
+                <div class="sec-bar-title">
+                    @Html.Raw(IcoSparkle)
+                    New Releases
+                    <span class="sec-bar-badge">@Model.NewReleases.Count</span>
+                </div>
+            </div>
+            <div class="carousel-outer fade-up">
+                <button class="rail-arrow prev" onclick="scrollRail('rail-new',-1)">@Html.Raw(IcoChevL)</button>
+                <div class="book-rail" id="rail-new">
+                    @foreach (var book in Model.NewReleases)
+                    {
+                        bool canRead = book.IsFree || Model.IsSubscribed;
+                        bool premLocked = !book.IsFree && !Model.IsSubscribed;
+                        <div class="bk-card" onclick="window.location='@Url.Action("Detail", "Library", new { id = book.Id })'">
+                            @if (premLocked)
+                            {
+                                <span class="bk-premium-badge">@Html.Raw(IcoLock) Premium</span>
+                            }
+                            @if (!string.IsNullOrEmpty(book.CoverImage))
+                            {
+                                <img src="@book.CoverImage" class="bk-cover" alt="@book.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="bk-cover-ph" style="background:linear-gradient(135deg,#f093fb,#f5576c);">@Html.Raw(IcoBook)</div>
+                            }
+                            <div class="bk-body">
+                                <p class="bk-title">@book.Title</p>
+                                <p class="bk-author">@book.Author</p>
+                                <span class="bk-reads-pill" title="@book.ReadCount.ToString("N0") unique readers">
+                                    @Html.Raw(IcoEye)
+                                    <span class="reads-count-val" data-raw="@book.ReadCount">@FormatReads(book.ReadCount)</span>
+                                </span>
+                            </div>
+                            <div class="bk-actions">
+                                @if (canRead)
+                                {
+                                    <a asp-controller="Library" asp-action="Detail" asp-route-id="@book.Id"
+                                       class="btn-bk-read" onclick="event.stopPropagation()">Read</a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Subscription" asp-action="Index"
+                                       class="btn-bk-read locked" onclick="event.stopPropagation()">
+                                        @Html.Raw(IcoStar) Premium
+                                    </a>
+                                }
+                                <button class="btn-bk-fav fav-btn" data-id="@book.Id.ToString()" onclick="event.stopPropagation()">
+                                    @Html.Raw(book.IsFavorite ? IcoHrtFill : IcoHrtLine)
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button class="rail-arrow next" onclick="scrollRail('rail-new',1)">@Html.Raw(IcoChevR)</button>
+            </div>
+        }
+
+        @* ── RECOMMENDED FOR YOU ── *@
+        if (Model.RecommendedForYou.Any())
+        {
+            <div class="sec-bar fade-up">
+                <div class="sec-bar-title">
+                    @Html.Raw(IcoSparkle)
+                    Recommended For You
+                    <span class="sec-bar-badge">@Model.RecommendedForYou.Count</span>
+                </div>
+            </div>
+            <div class="carousel-outer fade-up">
+                <button class="rail-arrow prev" onclick="scrollRail('rail-rec',-1)">@Html.Raw(IcoChevL)</button>
+                <div class="book-rail" id="rail-rec">
+                    @foreach (var book in Model.RecommendedForYou)
+                    {
+                        bool canRead = book.IsFree || Model.IsSubscribed;
+                        bool premLocked = !book.IsFree && !Model.IsSubscribed;
+                        <div class="bk-card" onclick="window.location='@Url.Action("Detail", "Library", new { id = book.Id })'">
+                            @if (premLocked)
+                            {
+                                <span class="bk-premium-badge">@Html.Raw(IcoLock) Premium</span>
+                            }
+                            else if (!book.IsFree)
+                            {
+                                <span class="bk-premium-badge" style="color:#86efac;">Pro</span>
+                            }
+                            @if (!string.IsNullOrEmpty(book.CoverImage))
+                            {
+                                <img src="@book.CoverImage" class="bk-cover" alt="@book.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="bk-cover-ph" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);">@Html.Raw(IcoBook)</div>
+                            }
+                            <div class="bk-body">
+                                <p class="bk-title">@book.Title</p>
+                                <p class="bk-author">@book.Author</p>
+                                <span class="bk-reads-pill" title="@book.ReadCount.ToString("N0") unique readers">
+                                    @Html.Raw(IcoEye)
+                                    <span class="reads-count-val" data-raw="@book.ReadCount">@FormatReads(book.ReadCount)</span>
+                                </span>
+                            </div>
+                            <div class="bk-actions">
+                                @if (canRead)
+                                {
+                                    <a asp-controller="Library" asp-action="Detail" asp-route-id="@book.Id"
+                                       class="btn-bk-read" onclick="event.stopPropagation()">Read</a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Subscription" asp-action="Index"
+                                       class="btn-bk-read locked" onclick="event.stopPropagation()">
+                                        @Html.Raw(IcoStar) Premium
+                                    </a>
+                                }
+                                <button class="btn-bk-fav fav-btn" data-id="@book.Id.ToString()" onclick="event.stopPropagation()">
+                                    @Html.Raw(book.IsFavorite ? IcoHrtFill : IcoHrtLine)
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button class="rail-arrow next" onclick="scrollRail('rail-rec',1)">@Html.Raw(IcoChevR)</button>
+            </div>
+        }
+
+    }
+}
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function scrollRail(id, dir) {
+            const el = document.getElementById(id);
+            if (el) el.scrollBy({ left: dir * 540, behavior: 'smooth' });
+        }
+
+        const heartFilled  = `<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='#ef4444' stroke='#ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>`;
+        const heartOutline = `<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#c4bfb8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>`;
+
+        document.querySelectorAll('.fav-btn').forEach(btn => {
+            btn.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                const id    = this.dataset.id;
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+                const res   = await fetch('/Library/ToggleFavorite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: `bookId=${id}`
+                });
+                if (res.ok) {
+                    const json  = await res.json();
+                    const isFav = json.isFavorite ?? json.IsFavorite ?? false;
+                    this.innerHTML = isFav ? heartFilled : heartOutline;
+                    this.style.transform = 'scale(1.45)';
+                    setTimeout(() => this.style.transform = '', 220);
+                }
+            });
+        });
+
+        function formatReads(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (n >= 1000)    return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return n.toString();
+        }
+
+        async function refreshReadCounts() {
+            const token  = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+            const allIds = [...new Set(
+                [...document.querySelectorAll('.fav-btn[data-id]')]
+                    .map(b => b.dataset.id).filter(Boolean)
+            )];
+            document.querySelectorAll('.reads-pill[data-book-id]').forEach(pill => {
+                const id = pill.dataset.bookId;
+                if (id && !allIds.includes(id)) allIds.push(id);
+            });
+            if (!allIds.length) return;
+            try {
+                const res = await fetch('/Library/GetReadCounts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify(allIds)
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                document.querySelectorAll('.fav-btn[data-id]').forEach(btn => {
+                    const id  = btn.dataset.id;
+                    const val = data[id];
+                    if (val == null) return;
+                    const card = btn.closest('.bk-card, .col');
+                    if (!card) return;
+                    card.querySelectorAll('.reads-count-val').forEach(span => _applyUpdate(span, val));
+                });
+                document.querySelectorAll('.reads-pill[data-book-id]').forEach(pill => {
+                    const id  = pill.dataset.bookId;
+                    const val = data[id];
+                    if (val == null) return;
+                    const span = pill.querySelector('.reads-count-val');
+                    if (span) _applyUpdate(span, val, pill);
+                });
+            } catch (_) {}
+        }
+
+        function _applyUpdate(span, val, pillOverride) {
+            const oldRaw = parseInt(span.dataset.raw ?? '0', 10);
+            if (oldRaw === val) return;
+            span.dataset.raw = val;
+            span.textContent = formatReads(val);
+            const pill = pillOverride ?? span.closest('.bk-reads-pill, .reads-pill');
+            if (pill) {
+                pill.title = val.toLocaleString() + ' unique readers';
+                pill.classList.add('updated');
+                setTimeout(() => pill.classList.remove('updated'), 1200);
+            }
+        }
+
+        refreshReadCounts();
+        setInterval(refreshReadCounts, 30000);
+    </script>
+}

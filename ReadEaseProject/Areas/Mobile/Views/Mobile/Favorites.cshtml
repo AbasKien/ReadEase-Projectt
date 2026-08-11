@@ -1,0 +1,88 @@
+@model ReadEase.ViewModels.Library.FavoritesViewModel
+@{
+    ViewData["Title"] = "My Favorites";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+}
+
+<style>
+    .fav-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.35rem; padding-bottom: 1rem; border-bottom: 1.5px solid var(--re-border); }
+    .fav-title { font-family: 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 900; color: var(--re-text); }
+    .fav-count { font-size: .68rem; font-weight: 900; color: var(--re-orange); background: rgba(200,134,10,.12); border: 1px solid rgba(200,134,10,.2); padding: .2rem .65rem; border-radius: 99px; }
+
+    .fav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; }
+    .fav-card { background: var(--re-surface); border: 1px solid var(--re-border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; transition: box-shadow .2s, transform .2s; }
+    .fav-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .fav-cover-wrap { width: 100%; aspect-ratio: 2/3; overflow: hidden; background: linear-gradient(135deg, #5C3210, #C8860A); position: relative; cursor: pointer; }
+    .fav-cover { width: 100%; height: 100%; object-fit: cover; }
+    .fav-cover-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+    .fav-remove { position: absolute; top: .4rem; right: .4rem; width: 28px; height: 28px; border-radius: 8px; border: none; background: rgba(254,226,226,.9); font-size: .8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); transition: all .2s; }
+    .fav-remove:hover { background: rgba(254,202,202,.95); transform: scale(1.05); }
+    .fav-body { padding: .65rem; flex: 1; display: flex; flex-direction: column; gap: .2rem; cursor: pointer; }
+    .fav-book-title { font-size: .8rem; font-weight: 800; color: var(--re-text); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+    .fav-author { font-size: .65rem; color: var(--re-muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-badge { font-size: .55rem; font-weight: 700; padding: .12rem .4rem; border-radius: 10px; margin-top: .2rem; display: inline-block; width: fit-content; }
+    .fav-badge-free { background: rgba(34,150,70,.12); color: #22a350; border: 1px solid rgba(34,150,70,.2); }
+    .fav-badge-premium { background: rgba(200,134,10,.12); color: var(--re-orange); border: 1px solid rgba(200,134,10,.2); }
+    .fav-btn { display: flex; align-items: center; justify-content: center; gap: .25rem; width: calc(100% - 1.2rem); margin: 0 .6rem .6rem; padding: .45rem 0; border-radius: 9px; font-size: .72rem; font-weight: 700; text-decoration: none; border: none; cursor: pointer; }
+    .fav-btn-read { background: var(--re-orange); color: var(--re-text); }
+    .fav-btn-subscribe { background: linear-gradient(135deg, #C8860A, #E9A520); color: var(--re-text); }
+
+    .fav-empty { text-align: center; padding: 3rem 1rem; background: var(--re-surface); border-radius: 16px; border: 2px dashed var(--re-border); }
+    .fav-empty-icon { font-size: 3rem; margin-bottom: .75rem; }
+    .fav-empty h4 { font-weight: 800; color: var(--re-text); font-size: 1rem; margin-bottom: .25rem; }
+    .fav-empty p { color: var(--re-muted); font-size: .85rem; margin: 0 0 1rem; }
+    .fav-discover { display: inline-flex; align-items: center; gap: .4rem; background: var(--re-orange); color: var(--re-text); font-weight: 700; font-size: .8rem; padding: .6rem 1.2rem; border-radius: 10px; text-decoration: none; }
+</style>
+
+<div class="fav-header">
+    <div class="fav-title">My Favorites</div>
+    <span class="fav-count">@Model.Books.Count books</span>
+</div>
+
+@if (!Model.Books.Any())
+{
+    <div class="fav-empty">
+        <div class="fav-empty-icon"></div>
+        <h4>No favorites yet</h4>
+        <p>Browse the library and tap ♥ on books you love.</p>
+        <a href="/Mobile/Home" class="fav-discover"> Discover Books</a>
+    </div>
+}
+else
+{
+    <div class="fav-grid" id="favGrid">
+        @foreach (var book in Model.Books)
+        {
+            bool canRead = book.IsFree || Model.IsSubscribed;
+            <div class="fav-card" data-id="@book.Id">
+                <div class="fav-cover-wrap" onclick="goToDetail('@book.Id')">
+                    @if (!string.IsNullOrEmpty(book.CoverImage)) { <img src="@book.CoverImage" class="fav-cover" alt="@book.Title" loading="lazy" /> }
+                    else { <div class="fav-cover-ph"></div> }
+                    <button class="fav-remove" onclick="event.stopPropagation(); removeFavorite('@book.Id')" title="Remove from favorites"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:#e11d48;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+                </div>
+                <div class="fav-body" onclick="goToDetail('@book.Id')">
+                    <p class="fav-book-title">@book.Title</p>
+                    <p class="fav-author">@book.Author</p>
+                    @if (book.IsFree) { <span class="fav-badge fav-badge-free">Free</span> }
+                    else { <span class="fav-badge fav-badge-premium">Premium</span> }
+                </div>
+                @if (canRead) { <a href="/Mobile/Detail/@book.Id" class="fav-btn fav-btn-read">Read</a> }
+                else { <a href="/Mobile/Subscribe" class="fav-btn fav-btn-subscribe">Subscribe</a> }
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function goToDetail(id) { window.location.href = '/Mobile/Detail/' + id; }
+        async function removeFavorite(bookId) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+            const response = await fetch('/Areas/Mobile/api/Library/favorite/' + bookId, { method: 'POST', headers: { 'RequestVerificationToken': token } });
+            if (response.ok) {
+                const card = document.querySelector(`[data-id="${bookId}"]`);
+                if (card) { card.style.transition = 'opacity 0.3s, transform 0.3s'; card.style.opacity = '0'; card.style.transform = 'scale(0.9)'; setTimeout(() => card.remove(), 300); }
+            }
+        }
+    </script>
+}

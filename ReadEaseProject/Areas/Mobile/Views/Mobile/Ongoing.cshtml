@@ -1,0 +1,97 @@
+@model ReadEase.ViewModels.Library.ReadingProgressViewModel
+@{
+    ViewData["Title"] = "Library";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+    var activeTab = (string?)ViewBag.ActiveTab ?? "ongoing";
+}
+
+<style>
+    /* ── Library header ── */
+    .lib-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .lib-title { font-family: 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 900; color: var(--re-text); }
+    .lib-filter-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: var(--re-surface); border: 1.5px solid var(--re-border); color: var(--re-muted); cursor: pointer; transition: all .15s; }
+    .lib-filter-btn:hover { border-color: var(--re-orange); color: var(--re-orange); }
+
+    /* ── Underline tabs (like screenshot) ── */
+    .lib-tabs { display: flex; gap: 0; border-bottom: 1.5px solid var(--re-border); margin-bottom: 1.35rem; }
+    .lib-tab { flex: 1; text-align: center; padding: .65rem .5rem; font-family: 'Nunito', sans-serif; font-size: .82rem; font-weight: 800; color: var(--re-muted); border: none; background: none; cursor: pointer; text-decoration: none !important; display: flex; align-items: center; justify-content: center; gap: .35rem; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: color .18s, border-color .18s; white-space: nowrap; }
+    .lib-tab.active { color: var(--re-orange); border-bottom-color: var(--re-orange); }
+    .lib-tab:not(.active):hover { color: var(--re-text); }
+
+    /* ── Book cards ── */
+    .prog-card { display: flex; gap: .9rem; background: var(--re-surface); border: 1px solid var(--re-border); border-radius: 18px; padding: 1rem; margin-bottom: .75rem; text-decoration: none !important; transition: border-color .18s, box-shadow .18s, transform .18s; }
+    .prog-card:hover { border-color: rgba(200,134,10,.3); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+    .prog-cover { width: 68px; flex-shrink: 0; aspect-ratio: 2/3; border-radius: 12px; object-fit: cover; box-shadow: var(--shadow-sm); }
+    .prog-cover-ph { width: 68px; aspect-ratio: 2/3; border-radius: 12px; background: linear-gradient(135deg, #C8860A, #E9A520); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; box-shadow: var(--shadow-sm); }
+    .prog-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .22rem; }
+    .prog-title { font-size: .9rem; font-weight: 800; color: var(--re-text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+    .prog-author { font-size: .7rem; color: var(--re-muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prog-bar-wrap { height: 4px; background: var(--re-border); border-radius: 99px; overflow: hidden; margin: .35rem 0 .3rem; }
+    .prog-bar-fill { height: 100%; background: linear-gradient(90deg, var(--re-orange), var(--re-orange-light)); border-radius: 99px; transition: width .5s ease; }
+    .prog-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+    .prog-status { font-size: .58rem; font-weight: 900; text-transform: uppercase; letter-spacing: .07em; }
+    .prog-status-reading { color: var(--re-orange); }
+    .prog-status-updated { color: var(--re-orange-light); }
+    .prog-status-done { color: #22a350; }
+    .prog-cta { display: inline-flex; align-items: center; gap: .28rem; font-size: .72rem; font-weight: 900; color: var(--re-orange); white-space: nowrap; }
+    .mob-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3rem 1.5rem; gap: .65rem; }
+    .mob-empty-icon { font-size: 2.8rem; }
+    .mob-empty-title { font-size: 1.05rem; font-weight: 900; color: var(--re-text); }
+    .mob-empty-sub { font-size: .82rem; color: var(--re-muted); font-weight: 600; max-width: 260px; line-height: 1.5; }
+    .mob-empty-btn { margin-top: .5rem; display: inline-flex; align-items: center; justify-content: center; background: var(--re-orange); color: var(--re-text) !important; border-radius: 99px; padding: .65rem 1.5rem; font-family: 'Nunito', sans-serif; font-size: .85rem; font-weight: 900; text-decoration: none !important; box-shadow: 0 4px 14px rgba(200,134,10,.3); }
+</style>
+
+<div class="lib-header">
+    <div class="lib-title">My Library</div>
+    <button class="lib-filter-btn" title="Filter">
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    </button>
+</div>
+
+<div class="lib-tabs">
+    <a class="lib-tab @(activeTab == "ongoing" ? "active" : "")" href="/Mobile/Ongoing">Reading</a>
+    <a class="lib-tab" href="/Mobile/Downloads">Downloaded</a>
+    <a class="lib-tab @(activeTab == "completed" ? "active" : "")" href="/Mobile/Completed">Finished</a>
+</div>
+
+@if (!Model.Books.Any())
+{
+    <div class="mob-empty">
+        <span class="mob-empty-icon">@(activeTab == "ongoing" ? Html.Raw("<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;> width=&quot;56&quot; height=&quot;56&quot; style=&quot;color:var(--re-muted);flex-shrink:0;vertical-align:middle;&quot;<path d=&quot;M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z&quot;/><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;3&quot;/></svg>") : Html.Raw("<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;> width=&quot;56&quot; height=&quot;56&quot; style=&quot;color:var(--re-muted);flex-shrink:0;vertical-align:middle;&quot;<polyline points=&quot;20 6 9 17 4 12&quot;/></svg>"))</span>
+        <div class="mob-empty-title">@(activeTab == "ongoing" ? "No books in progress" : "Nothing completed yet")</div>
+        <div class="mob-empty-sub">@(activeTab == "ongoing" ? "Start reading a book to track your progress here" : "Finish a book to see it here")</div>
+        <a class="mob-empty-btn" href="/Mobile/Home">Browse Books</a>
+    </div>
+}
+else
+{
+    @foreach (var b in Model.Books)
+    {
+        var pct = b.ProgressPercent;
+        var statusLabel = pct >= 80 ? "Almost done" : "In progress";
+        var statusClass = pct >= 80 ? "prog-status-updated" : "prog-status-reading";
+        var chLabel = b.TotalChapters > 0
+            ? $"Ch. {b.LastChapterRead}/{b.TotalChapters}"
+            : b.LastChapterRead > 0 ? $"Ch. {b.LastChapterRead}" : "";
+        <a class="prog-card" href="/Mobile/Read/@b.Id">
+            @if (!string.IsNullOrEmpty(b.CoverImage)) { <img class="prog-cover" src="@b.CoverImage" alt="@b.Title" loading="lazy" /> }
+            else { <div class="prog-cover-ph"></div> }
+            <div class="prog-info">
+                <div class="prog-title">@b.Title</div>
+                <div class="prog-author">by @b.Author</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.35rem 0 .2rem;">
+                    <div class="prog-bar-wrap" style="flex:1;margin:0;"><div class="prog-bar-fill" style="width:@(pct)%"></div></div>
+                    <span style="font-size:.65rem;font-weight:900;color:var(--re-orange);white-space:nowrap;flex-shrink:0;">@(pct)%</span>
+                </div>
+                @if (!string.IsNullOrEmpty(chLabel))
+                {
+                    <div style="font-size:.6rem;font-weight:700;color:var(--re-muted);margin-bottom:.1rem;">@chLabel</div>
+                }
+                <div class="prog-footer">
+                    <span class="prog-status @statusClass">@statusLabel</span>
+                    <span class="prog-cta">Continue ▶</span>
+                </div>
+            </div>
+        </a>
+    }
+}

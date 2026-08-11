@@ -1,0 +1,417 @@
+@model ReadEase.ViewModels.Author.AuthorDashboardViewModel
+@{
+    ViewData["Title"] = "Author Dashboard";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+    // FIX: Use fresh profile data from database (passed via ViewBag)
+    var userName = ViewBag.UserName ?? Model?.Name ?? User.Identity?.Name ?? "Author";
+    var profilePhoto = ViewBag.ProfilePhoto;
+    var initial = userName.Length > 0 ? userName[0].ToString().ToUpper() : "A";
+}
+
+<style>
+    /* ── MAUI WebView Compatibility ── */
+    /* Ensure content starts below status bar and doesn't clip */
+    body.maui-host .re-main {
+        padding-top: 0 !important;
+    }
+    /* ── Greeting ── */
+    .adash-hero {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: .25rem 0;
+    }
+
+    .adash-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: var(--re-text);
+        flex-shrink: 0;
+        overflow: hidden;
+        border: 2.5px solid rgba(242,101,34,.4);
+        box-shadow: 0 0 0 3px rgba(242,101,34,.12);
+    }
+
+    .adash-greet {
+        font-size: .7rem;
+        font-weight: 800;
+        color: var(--re-muted);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+    }
+
+    .adash-name {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: var(--re-text);
+        line-height: 1.2;
+    }
+
+    .adash-role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .62rem;
+        font-weight: 900;
+        background: rgba(242,101,34,.15);
+        color: var(--re-orange);
+        border: 1px solid rgba(242,101,34,.25);
+        border-radius: 99px;
+        padding: .18rem .65rem;
+        margin-top: .3rem;
+        letter-spacing: .04em;
+    }
+
+    /* ── Stats grid ── */
+    .adash-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: .75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .adash-stat-card {
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 16px;
+        padding: 1rem 1.1rem;
+        position: relative;
+        overflow: hidden;
+        transition: border-color .2s;
+    }
+
+        .adash-stat-card:hover {
+            border-color: rgba(242,101,34,.25);
+        }
+
+        .adash-stat-card::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            opacity: .07;
+        }
+
+        .adash-stat-card.orange::before {
+            background: #f26522;
+        }
+
+        .adash-stat-card.blue::before {
+            background: #3b82f6;
+        }
+
+        .adash-stat-card.green::before {
+            background: #22c55e;
+        }
+
+        .adash-stat-card.purple::before {
+            background: #a855f7;
+        }
+
+    .adash-stat-icon {
+        font-size: 1.3rem;
+        margin-bottom: .4rem;
+    }
+
+    .adash-stat-val {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: var(--re-text);
+        line-height: 1;
+    }
+
+    .adash-stat-lbl {
+        font-size: .68rem;
+        font-weight: 700;
+        color: var(--re-muted);
+        margin-top: .2rem;
+    }
+
+    /* ── Quick actions ── */
+    .adash-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: .7rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .adash-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .5rem;
+        padding: 1rem .75rem;
+        border-radius: 14px;
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        text-decoration: none !important;
+        color: var(--re-text) !important;
+        transition: all .18s;
+        text-align: center;
+    }
+
+        .adash-action:hover {
+            border-color: rgba(242,101,34,.3);
+            background: rgba(242,101,34,.08);
+            transform: translateY(-2px);
+        }
+
+    .adash-action-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+    }
+
+        .adash-action-icon.orange {
+            background: rgba(242,101,34,.16);
+        }
+
+        .adash-action-icon.green {
+            background: rgba(34,197,94,.12);
+        }
+
+        .adash-action-icon.blue {
+            background: rgba(59,130,246,.12);
+        }
+
+        .adash-action-icon.purple {
+            background: rgba(168,85,247,.12);
+        }
+
+    .adash-action-lbl {
+        font-size: .78rem;
+        font-weight: 800;
+    }
+
+    .adash-action-sub {
+        font-size: .65rem;
+        color: var(--re-muted);
+        font-weight: 600;
+    }
+
+    /* ── Books section ── */
+    .adash-book-card {
+        display: flex;
+        gap: .85rem;
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 14px;
+        padding: .85rem;
+        margin-bottom: .6rem;
+        text-decoration: none !important;
+        transition: border-color .15s, background .15s;
+    }
+
+        .adash-book-card:hover {
+            border-color: rgba(242,101,34,.25);
+            background: rgba(242,101,34,.04);
+        }
+
+    .adash-book-cover {
+        width: 54px;
+        aspect-ratio: 2/3;
+        border-radius: 9px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+
+    .adash-book-cover-ph {
+        width: 54px;
+        aspect-ratio: 2/3;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .adash-book-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .adash-book-title {
+        font-size: .88rem;
+        font-weight: 800;
+        color: var(--re-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .adash-book-meta {
+        font-size: .68rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin: .2rem 0 .45rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .adash-book-badges {
+        display: flex;
+        gap: .35rem;
+        flex-wrap: wrap;
+    }
+
+    .adash-pill {
+        font-size: .58rem;
+        font-weight: 900;
+        padding: .15rem .5rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+    }
+
+    .adash-pill-free {
+        background: rgba(34,197,94,.12);
+        color: #4ade80;
+    }
+
+    .adash-pill-pro {
+        background: rgba(242,101,34,.12);
+        color: var(--re-orange);
+    }
+
+    .adash-pill-done {
+        background: rgba(99,102,241,.12);
+        color: #a5b4fc;
+    }
+
+    .adash-pill-ongoing {
+        background: rgba(251,191,36,.1);
+        color: #fcd34d;
+    }
+</style>
+
+<!-- Hero greeting -->
+<div class="adash-hero">
+    <div class="adash-avatar">
+        @if (!string.IsNullOrEmpty(profilePhoto))
+        {
+            <img src="@profilePhoto" alt="avatar" style="width:100%;height:100%;object-fit:cover;" />
+        }
+        else
+        {
+            @initial
+        }
+    </div>
+    <div>
+        <div class="adash-greet">Author Dashboard</div>
+        <div class="adash-name">@userName</div>
+        <div class="adash-role-badge">@(User.IsInRole("Admin") ? "Admin" : "Author")</div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="adash-stats">
+    <div class="adash-stat-card orange">
+        <div class="adash-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="adash-stat-val">@(Model?.TotalBooks ?? 0)</div>
+        <div class="adash-stat-lbl">Total Books</div>
+    </div>
+    <div class="adash-stat-card blue">
+        <div class="adash-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="adash-stat-val">@(Model?.ArchivedCount ?? 0)</div>
+        <div class="adash-stat-lbl">Archived</div>
+    </div>
+    <div class="adash-stat-card green">
+        <div class="adash-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="adash-stat-val">@(Model?.TotalReads ?? 0)</div>
+        <div class="adash-stat-lbl">Total Reads</div>
+    </div>
+    <div class="adash-stat-card purple">
+        <div class="adash-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div class="adash-stat-val">@(Model?.Books?.Count ?? 0)</div>
+        <div class="adash-stat-lbl">My Books</div>
+    </div>
+</div>
+
+<!-- Quick actions -->
+<div class="mob-sec-head">
+    <div class="mob-sec-title">Quick Actions</div>
+</div>
+<div class="adash-actions">
+    <a class="adash-action" href="/Mobile/PublishBook">
+        <div class="adash-action-icon green"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
+        <div class="adash-action-lbl">Publish Book</div>
+        <div class="adash-action-sub">New story</div>
+    </a>
+    <a class="adash-action" href="/Mobile/Write">
+        <div class="adash-action-icon orange"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="adash-action-lbl">My Books</div>
+        <div class="adash-action-sub">Manage all</div>
+    </a>
+    <a class="adash-action" href="/Mobile/Profile">
+        <div class="adash-action-icon blue"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div class="adash-action-lbl">Profile</div>
+        <div class="adash-action-sub">Edit info</div>
+    </a>
+    <a class="adash-action" href="/Mobile/Downloads">
+        <div class="adash-action-icon purple"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <div class="adash-action-lbl">Downloads</div>
+        <div class="adash-action-sub">Offline reading</div>
+    </a>
+</div>
+
+<!-- Recent books -->
+@if (Model?.Books?.Any() == true)
+{
+    <div class="mob-sec-head">
+        <div class="mob-sec-title">My Recent Books</div>
+        <a class="mob-sec-link" href="/Mobile/Write">See all</a>
+    </div>
+    @foreach (var b in Model.Books.Take(5))
+    {
+        <a class="adash-book-card" href="/Mobile/ManageChapters/@b.Id">
+            @if (!string.IsNullOrEmpty(b.CoverImage))
+            {
+                <img class="adash-book-cover" src="@b.CoverImage" alt="@b.Title" loading="lazy" />
+            }
+            else
+            {
+                <div class="adash-book-cover-ph"></div>
+            }
+            <div class="adash-book-info">
+                <div class="adash-book-title">@b.Title</div>
+                <div class="adash-book-meta">@b.Category · @b.ChapterNumber ch.</div>
+                <div class="adash-book-badges">
+                    <span class="adash-pill @(b.IsFree ? "adash-pill-free" : "adash-pill-pro")">
+                        @(b.IsFree ? "Free" : "Pro")
+                    </span>
+                    <span class="adash-pill @(b.IsStoryComplete ? "adash-pill-done" : "adash-pill-ongoing")">
+                        @(b.IsStoryComplete ? "Complete" : "Ongoing")
+                    </span>
+                </div>
+            </div>
+        </a>
+    }
+}
+else
+{
+    <div class="mob-empty" style="padding:2rem 0;">
+        <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></span>
+        <div class="mob-empty-title">No books published yet</div>
+        <div class="mob-empty-sub">Start sharing your story today!</div>
+        <a class="mob-empty-btn" href="/Mobile/PublishBook">Publish Your First Book</a>
+    </div>
+}

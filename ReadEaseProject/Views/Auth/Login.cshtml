@@ -1,0 +1,710 @@
+﻿@model ReadEase.ViewModels.Auth.LoginViewModel
+@{
+    ViewData["Title"] = "Log In";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body > nav, footer, .re-main > .container {
+        display: none !important;
+    }
+
+    .re-main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .wp-page {
+        min-height: 100vh;
+        background: #fff;
+        display: flex;
+        align-items: stretch;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .blob-tl {
+        width: 280px;
+        height: 580px;
+        top: -160px;
+        left: -110px;
+        border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        animation: morph1 9s ease-in-out infinite;
+    }
+
+    .blob-br {
+        width: 260px;
+        height: 520px;
+        bottom: -160px;
+        right: -100px;
+        border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        animation: morph2 11s ease-in-out infinite;
+    }
+
+    @@keyframes morph1 {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60% / 55% 45% 58% 42%;
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38% / 40% 58% 42% 60%;
+        }
+    }
+
+    @@keyframes morph2 {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42% / 45% 55% 40% 60%;
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55% / 55% 45% 62% 38%;
+        }
+    }
+
+    .wp-left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem 3rem 3.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .wp-left-inner {
+        max-width: 460px;
+        width: 100%;
+    }
+
+    .brand-row {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        margin-bottom: 3rem;
+    }
+
+    .brand-book {
+        width: 36px;
+        height: 42px;
+        background: #f26522;
+        border-radius: 4px 6px 6px 4px;
+        position: relative;
+        box-shadow: 0 4px 14px rgba(242,101,34,.38);
+        flex-shrink: 0;
+    }
+
+        .brand-book::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: rgba(0,0,0,.18);
+        }
+
+        .brand-book::after {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 14px;
+            height: 13px;
+            background: linear-gradient(#fff,#fff) 0 0 / 14px 2px no-repeat, linear-gradient(#fff,#fff) 0 5px / 14px 2px no-repeat, linear-gradient(#fff,#fff) 0 10px / 9px 2px no-repeat;
+            opacity: .88;
+        }
+
+    .brand-name {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        letter-spacing: -.025em;
+        line-height: 1;
+    }
+
+        .brand-name em {
+            color: #f26522;
+            font-style: normal;
+        }
+
+    .mockup-card {
+        background: #f8f5f0;
+        border-radius: 22px;
+        padding: 2.25rem 2rem;
+        box-shadow: 0 8px 40px rgba(0,0,0,.08);
+        border: 1px solid #ede8e0;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .mockup-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(242,101,34,.1) 0%, transparent 65%);
+        }
+
+    .mockup-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(242,101,34,.1);
+        border: 1px solid rgba(242,101,34,.25);
+        border-radius: 20px;
+        padding: .2rem .75rem;
+        font-size: .67rem;
+        font-weight: 800;
+        color: #c84f10;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin-bottom: .9rem;
+    }
+
+    .mockup-headline {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        line-height: 1.2;
+        margin-bottom: .5rem;
+    }
+
+        .mockup-headline em {
+            color: #f26522;
+            font-style: normal;
+        }
+
+    .mockup-sub {
+        font-size: .88rem;
+        color: #6b6878;
+        font-weight: 600;
+        margin-bottom: 1.6rem;
+    }
+
+    .book-shelf {
+        display: flex;
+        gap: .7rem;
+        margin-bottom: 1.6rem;
+        align-items: flex-end;
+    }
+
+    .shelf-book {
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .55rem;
+        font-weight: 900;
+        color: rgba(255,255,255,.85);
+        letter-spacing: .4px;
+        font-family: 'Nunito', sans-serif;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        box-shadow: 0 6px 18px rgba(0,0,0,.2);
+        flex-shrink: 0;
+        animation: shelfFloat var(--d, 4s) ease-in-out infinite;
+        animation-delay: var(--dl, 0s);
+    }
+
+        .shelf-book:nth-child(1) {
+            width: 62px;
+            height: 88px;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            --d: 4.2s;
+        }
+
+        .shelf-book:nth-child(2) {
+            width: 62px;
+            height: 98px;
+            background: linear-gradient(135deg,#f093fb,#f5576c);
+            --dl: .4s;
+            --d: 3.8s;
+        }
+
+        .shelf-book:nth-child(3) {
+            width: 62px;
+            height: 84px;
+            background: linear-gradient(135deg,#4facfe,#00f2fe);
+            --dl: .8s;
+            --d: 4.5s;
+        }
+
+        .shelf-book:nth-child(4) {
+            width: 62px;
+            height: 93px;
+            background: linear-gradient(135deg,#43e97b,#38f9d7);
+            --dl: .2s;
+            --d: 4s;
+        }
+
+        .shelf-book:nth-child(5) {
+            width: 62px;
+            height: 86px;
+            background: linear-gradient(135deg,#fa709a,#fee140);
+            --dl: .6s;
+            --d: 3.6s;
+        }
+
+    @@keyframes shelfFloat {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-7px);
+        }
+    }
+
+    .stat-row {
+        display: flex;
+        gap: .85rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-chip {
+        background: #fff;
+        border: 1px solid #ede8e0;
+        border-radius: 12px;
+        padding: .45rem .85rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+
+    .stat-chip-num {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        line-height: 1;
+    }
+
+    .stat-chip-label {
+        font-size: .62rem;
+        font-weight: 700;
+        color: #9994a8;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-top: .1rem;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .wp-right {
+        width: 440px;
+        flex-shrink: 0;
+        background: #fff;
+        border-left: 1px solid #f0ece6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .wp-form-wrap {
+        width: 100%;
+        max-width: 340px;
+    }
+
+    .wp-form-title {
+        font-size: 1.85rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        text-align: center;
+        margin-bottom: 2rem;
+        letter-spacing: -.02em;
+    }
+
+    .btn-wp-social {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .65rem;
+        padding: .82rem 1rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .93rem;
+        font-weight: 800;
+        transition: box-shadow .2s, transform .15s;
+        text-decoration: none;
+        margin-bottom: .85rem;
+        cursor: pointer;
+        border: 2px solid #1a1a2e;
+        background: #fff;
+        color: #1a1a2e;
+    }
+
+        .btn-wp-social:hover {
+            box-shadow: 0 4px 18px rgba(0,0,0,.12);
+            transform: translateY(-1px);
+            color: #1a1a2e;
+        }
+
+    .wp-divider {
+        text-align: center;
+        font-size: .85rem;
+        color: #9994a8;
+        font-weight: 700;
+        margin: 1rem 0;
+        position: relative;
+    }
+
+        .wp-divider::before, .wp-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: calc(50% - 14px);
+            height: 1px;
+            background: #e8e3dc;
+        }
+
+        .wp-divider::before {
+            left: 0;
+        }
+
+        .wp-divider::after {
+            right: 0;
+        }
+
+    .btn-wp-email {
+        width: 100%;
+        padding: .82rem 1rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .93rem;
+        font-weight: 800;
+        background: #1a1a2e;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background .2s, transform .15s, box-shadow .2s;
+        box-shadow: 0 4px 14px rgba(26,26,46,.22);
+    }
+
+        .btn-wp-email:hover {
+            background: #0d0d1e;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(26,26,46,.3);
+            color: #fff;
+        }
+
+    .wp-forgot {
+        display: block;
+        text-align: center;
+        margin-top: .95rem;
+        font-size: .85rem;
+        font-weight: 700;
+        color: #6b6878;
+        text-decoration: none;
+    }
+
+        .wp-forgot:hover {
+            color: #f26522;
+        }
+
+    .email-form-box {
+        display: none;
+        margin-top: .85rem;
+        animation: slideIn .25s ease;
+    }
+
+        .email-form-box.open {
+            display: block;
+        }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .wp-label {
+        font-size: .74rem;
+        font-weight: 800;
+        color: #4a4660;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .38rem;
+        display: block;
+    }
+
+    .wp-input {
+        width: 100%;
+        border: 1.5px solid #e0dbd3;
+        border-radius: 10px;
+        padding: .65rem 1rem;
+        font-size: .9rem;
+        font-family: 'Nunito', sans-serif;
+        background: #fff;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .wp-input:focus {
+            border-color: #f26522;
+            box-shadow: 0 0 0 3px rgba(242,101,34,.13);
+        }
+
+    .pw-wrap {
+        position: relative;
+    }
+
+        .pw-wrap .wp-input {
+            padding-right: 3.5rem;
+        }
+
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear,
+    input[type="password"]::-webkit-contacts-auto-fill-button,
+    input[type="password"]::-webkit-credentials-auto-fill-button,
+    input[type="text"]::-webkit-contacts-auto-fill-button,
+    input[type="text"]::-webkit-credentials-auto-fill-button {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    .btn-wp-submit {
+        width: 100%;
+        padding: .75rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .93rem;
+        font-weight: 800;
+        background: #f26522;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background .2s, transform .15s, box-shadow .2s;
+        box-shadow: 0 4px 14px rgba(242,101,34,.3);
+    }
+
+        .btn-wp-submit:hover {
+            background: #d9541a;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px rgba(242,101,34,.4);
+        }
+
+    .wp-signup-row {
+        text-align: center;
+        margin-top: 1.9rem;
+        font-size: .88rem;
+        color: #6b6878;
+        font-weight: 600;
+    }
+
+        .wp-signup-row a {
+            color: #f26522;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+            .wp-signup-row a:hover {
+                text-decoration: underline;
+            }
+
+    .wp-alert {
+        border-radius: 10px;
+        padding: .65rem 1rem;
+        font-size: .85rem;
+        font-weight: 600;
+        margin-bottom: .9rem;
+    }
+
+        .wp-alert a {
+            color: inherit;
+            font-weight: 800;
+        }
+
+    @@media (max-width: 860px) {
+        .wp-left {
+            display: none;
+        }
+
+        .wp-right {
+            width: 100%;
+            border-left: none;
+            padding: 3rem 1.5rem;
+        }
+
+        .blob-tl {
+            width: 180px;
+            height: 360px;
+            top: -100px;
+            left: -70px;
+        }
+
+        .blob-br {
+            width: 160px;
+            height: 320px;
+            bottom: -90px;
+            right: -60px;
+        }
+    }
+</style>
+
+<div class="wp-page">
+    <div class="blob blob-tl"></div>
+    <div class="blob blob-br"></div>
+
+    <!-- ═══ LEFT ═══ -->
+    <div class="wp-left">
+        <div class="wp-left-inner">
+            <div class="brand-row">
+                <div class="brand-book"></div>
+                <div class="brand-name">Read<em>Ease</em></div>
+            </div>
+            <div class="mockup-card">
+                <div class="mockup-eyebrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    Your reading world
+                </div>
+                <h2 class="mockup-headline">Thousands of stories.<br><em>One place.</em></h2>
+                <p class="mockup-sub">Free &amp; premium books across every genre, always available.</p>
+                <div class="book-shelf">
+                    <div class="shelf-book">Fantasy</div>
+                    <div class="shelf-book">Romance</div>
+                    <div class="shelf-book">Sci-Fi</div>
+                    <div class="shelf-book">Mystery</div>
+                    <div class="shelf-book">Horror</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-chip"><div class="stat-chip-num">500+</div><div class="stat-chip-label">Books</div></div>
+                    <div class="stat-chip"><div class="stat-chip-num">20+</div><div class="stat-chip-label">Genres</div></div>
+                    <div class="stat-chip"><div class="stat-chip-num">Free</div><div class="stat-chip-label">Always</div></div>
+                    <div class="stat-chip"><div class="stat-chip-num">AI</div><div class="stat-chip-label">Reader</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ RIGHT ═══ -->
+    <div class="wp-right">
+        <div class="wp-form-wrap">
+            <h1 class="wp-form-title">Log in to ReadEase</h1>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success wp-alert">@TempData["SuccessMessage"]</div>
+            }
+            @if (TempData["WarningMessage"] != null)
+            {
+                <div class="alert alert-warning wp-alert">@Html.Raw(TempData["WarningMessage"])</div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger wp-alert">@TempData["ErrorMessage"]</div>
+            }
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger wp-alert"></div>
+
+            <!-- Google -->
+            <a asp-action="GoogleLogin" class="btn-wp-social">
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                Log in with Google
+            </a>
+
+            <div class="wp-divider">or</div>
+
+            <button type="button" class="btn-wp-email" id="emailToggleBtn" onclick="toggleEmail()">
+                Log in with email
+            </button>
+
+            <div class="email-form-box" id="emailFormBox">
+                <form asp-action="Login" method="post" style="margin-top:.6rem">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="wp-label">Email address</label>
+                        <input asp-for="Email" class="wp-input" placeholder="you@example.com" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.38rem;">
+                            <label class="wp-label mb-0">Password</label>
+                            <a asp-action="ForgotPassword" style="font-size:.74rem;font-weight:700;color:#f26522;text-decoration:none;">Forgot?</a>
+                        </div>
+                        <div class="pw-wrap">
+                            <input asp-for="Password" type="password" class="wp-input"
+                                   placeholder="Your password"
+                                   autocomplete="current-password"
+                                   id="pwField" />
+                            <input type="checkbox" id="pwCheck"
+                                   onchange="document.getElementById('pwField').type=this.checked?'text':'password';document.getElementById('pwLabel').textContent=this.checked?'Hide':'Show'"
+                                   style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;" />
+                            <label for="pwCheck" id="pwLabel"
+                                   style="position:absolute!important;right:.85rem!important;top:50%!important;
+                                          transform:translateY(-50%)!important;cursor:pointer!important;
+                                          font-size:.75rem!important;font-weight:800!important;color:#888!important;
+                                          font-family:'Nunito',sans-serif!important;background:#fff!important;
+                                          padding:2px 6px!important;border-radius:4px!important;
+                                          z-index:9999!important;user-select:none!important;line-height:1!important;
+                                          display:block!important;visibility:visible!important;">Show</label>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <button type="submit" class="btn-wp-submit">Log In →</button>
+                </form>
+            </div>
+
+            <a asp-action="ForgotPassword" class="wp-forgot" id="forgotLink">Forgot password?</a>
+
+            <div class="wp-signup-row">
+                Don't have an account? <a asp-action="Register">Sign up</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleEmail() {
+            try {
+                var box  = document.getElementById('emailFormBox');
+                var btn  = document.getElementById('emailToggleBtn');
+                var fl   = document.getElementById('forgotLink');
+                var open = box.classList.toggle('open');
+                btn.textContent  = open ? '✕ Close email form' : 'Log in with email';
+                fl.style.display = open ? 'none' : 'block';
+                if (open) box.querySelector('input').focus();
+            } catch(e) {}
+        }
+
+        try {
+            window.addEventListener('DOMContentLoaded', function () {
+                var hasAlert  = document.querySelector('.alert-danger, .alert-warning');
+                var hasValErr = document.querySelector('[data-valmsg-for], .field-validation-error');
+                if (hasAlert || hasValErr) toggleEmail();
+            });
+        } catch(e) {}
+    </script>
+}

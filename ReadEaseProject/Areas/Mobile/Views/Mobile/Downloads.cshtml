@@ -1,0 +1,741 @@
+@{
+    ViewData["Title"] = "Downloads";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+}
+
+<style>
+    /* MAUI: downloads page header spacing */
+    body.maui-host .dl-page-header {
+        padding-top: max(1rem, env(safe-area-inset-top, 1rem));
+    }
+
+    .lib-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .lib-title { font-family: 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 900; color: var(--re-text); }
+    .lib-filter-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: var(--re-surface); border: 1.5px solid var(--re-border); color: var(--re-muted); cursor: pointer; transition: all .15s; }
+    .lib-filter-btn:hover { border-color: var(--re-orange); color: var(--re-orange); }
+    .lib-tabs { display: flex; gap: 0; border-bottom: 1.5px solid var(--re-border); margin-bottom: 1.35rem; }
+    .lib-tab { flex: 1; text-align: center; padding: .65rem .5rem; font-family: 'Nunito', sans-serif; font-size: .82rem; font-weight: 800; color: var(--re-muted); border: none; background: none; cursor: pointer; text-decoration: none !important; display: flex; align-items: center; justify-content: center; gap: .35rem; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: color .18s, border-color .18s; white-space: nowrap; }
+    .lib-tab.active { color: var(--re-orange); border-bottom-color: var(--re-orange); }
+    .lib-tab:not(.active):hover { color: var(--re-text); }
+
+    .dl-subtitle {
+        font-size: .75rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .dl-premium-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        background: linear-gradient(135deg, rgba(242,101,34,.15), rgba(251,191,36,.1));
+        border: 1px solid rgba(242,101,34,.25);
+        color: var(--re-orange);
+        font-size: .65rem;
+        font-weight: 800;
+        padding: .35rem .75rem;
+        border-radius: 99px;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    /* Downloaded book cards */
+    .dl-book-card {
+        display: flex;
+        gap: .9rem;
+        padding: .95rem 1rem;
+        border-radius: 16px;
+        border: 1px solid var(--re-border);
+        margin-bottom: .6rem;
+        background: var(--re-surface);
+        transition: background .15s, border-color .15s, transform .15s;
+        text-decoration: none !important;
+        cursor: pointer;
+    }
+
+        .dl-book-card:hover {
+            background: var(--re-surface-2);
+            border-color: rgba(242,101,34,.25);
+            transform: translateX(2px);
+        }
+
+    .dl-book-cover {
+        width: 60px;
+        aspect-ratio: 2/3;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,.4);
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .dl-book-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dl-book-title {
+        font-size: .92rem;
+        font-weight: 800;
+        color: var(--re-text);
+        line-height: 1.3;
+        margin-bottom: .2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dl-book-author {
+        font-size: .72rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-bottom: .35rem;
+    }
+
+    .dl-book-meta {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin-top: auto;
+    }
+
+    .dl-chapter-count {
+        font-size: .65rem;
+        font-weight: 800;
+        background: rgba(242,101,34,.12);
+        color: var(--re-orange);
+        padding: .2rem .5rem;
+        border-radius: 99px;
+    }
+
+    .dl-offline-ready {
+        font-size: .65rem;
+        font-weight: 700;
+        color: #22c55e;
+        display: flex;
+        align-items: center;
+        gap: .2rem;
+    }
+
+    .dl-delete-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(239,68,68,.1);
+        border: none;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background .15s;
+    }
+
+        .dl-delete-btn:hover {
+            background: rgba(239,68,68,.2);
+        }
+
+    /* Upgrade banner for non-PremiumPlus */
+    .dl-upgrade-banner {
+        background: linear-gradient(135deg, rgba(242,101,34,.12), rgba(251,191,36,.08));
+        border: 1.5px dashed rgba(242,101,34,.3);
+        border-radius: 16px;
+        padding: 1.25rem 1rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .dl-upgrade-icon {
+        font-size: 2rem;
+        margin-bottom: .75rem;
+    }
+
+    .dl-upgrade-title {
+        font-size: .95rem;
+        font-weight: 800;
+        color: var(--re-text);
+        margin-bottom: .35rem;
+    }
+
+    .dl-upgrade-text {
+        font-size: .75rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .dl-upgrade-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: var(--re-orange);
+        color: #fff;
+        font-size: .78rem;
+        font-weight: 800;
+        padding: .65rem 1.25rem;
+        border-radius: 99px;
+        text-decoration: none !important;
+        transition: transform .15s, box-shadow .15s;
+    }
+
+        .dl-upgrade-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(242,101,34,.3);
+        }
+
+    /* How to download section */
+    .dl-howto {
+        background: var(--re-surface-2);
+        border: 1px solid var(--re-border);
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .dl-howto-title {
+        font-size: .75rem;
+        font-weight: 800;
+        color: var(--re-muted);
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        margin-bottom: .75rem;
+    }
+
+    .dl-howto-step {
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        font-size: .78rem;
+        color: var(--re-text);
+        margin-bottom: .6rem;
+    }
+
+        .dl-howto-step:last-child {
+            margin-bottom: 0;
+        }
+
+    .dl-howto-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(242,101,34,.15);
+        color: var(--re-orange);
+        font-size: .7rem;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Empty state */
+    .dl-empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Search/Filter bar */
+    .dl-search-wrap {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    .dl-search-input {
+        width: 100%;
+        padding: .75rem 1rem .75rem 2.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--re-border);
+        background: var(--re-surface-2);
+        color: var(--re-text);
+        font-size: .88rem;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 600;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    .dl-search-input:focus {
+        border-color: rgba(242,101,34,.4);
+        box-shadow: 0 0 0 3px rgba(242,101,34,.1);
+    }
+    .dl-search-input::placeholder {
+        color: var(--re-muted);
+    }
+    .dl-search-icon {
+        position: absolute;
+        left: .85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--re-muted);
+        pointer-events: none;
+    }
+    .dl-search-clear {
+        position: absolute;
+        right: .75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--re-muted);
+        cursor: pointer;
+        padding: .25rem;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    .dl-search-clear.visible {
+        display: flex;
+    }
+    .dl-search-clear:hover {
+        color: var(--re-text);
+    }
+    .dl-results-count {
+        font-size: .72rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-bottom: .75rem;
+        margin-top: -.25rem;
+    }
+    .dl-no-results {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--re-muted);
+    }
+    .dl-no-results-icon {
+        font-size: 2.5rem;
+        margin-bottom: .75rem;
+        opacity: .6;
+    }
+</style>
+
+<div class="lib-header">
+    <div class="lib-title">My Library</div>
+    <button class="lib-filter-btn" title="Filter">
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    </button>
+</div>
+<div class="lib-tabs">
+    <a class="lib-tab" href="/Mobile/Ongoing">Reading</a>
+    <a class="lib-tab active" href="/Mobile/Downloads">Downloaded</a>
+    <a class="lib-tab" href="/Mobile/Completed">Finished</a>
+</div>
+
+<!-- How to download (shown for Premium++ users who can download) -->
+@if (ViewBag.CanDownload == true)
+{
+    <div id="howToSection" class="dl-howto">
+        <div class="dl-howto-title">How to Download</div>
+        <div class="dl-howto-step">
+            <div class="dl-howto-num">1</div>
+            <div>Go to any book and tap the <strong>Download</strong> button</div>
+        </div>
+        <div class="dl-howto-step">
+            <div class="dl-howto-num">2</div>
+            <div>Chapters save to your device automatically</div>
+        </div>
+        <div class="dl-howto-step">
+            <div class="dl-howto-num">3</div>
+            <div>Read anytime — even without internet!</div>
+        </div>
+    </div>
+}
+
+<!-- Search/Filter bar -->
+<div class="dl-search-wrap" id="searchWrap" style="display:none;">
+    <svg class="dl-search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="dl-search-input" id="searchInput" placeholder="Search downloaded books..." autocomplete="off">
+    <button class="dl-search-clear" id="searchClear" title="Clear search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+</div>
+<div class="dl-results-count" id="resultsCount"></div>
+
+<!-- Downloaded books list (populated by MAUI local storage) -->
+<div id="downloadsList">
+    <!-- Empty state - shown by default, hidden when books exist -->
+    <div id="emptyState" class="mob-empty">
+        <div class="dl-empty-icon">📚</div>
+        <div class="mob-empty-title">No downloads yet</div>
+        <div class="mob-empty-sub">
+            @(ViewBag.CanDownload == true ? "Download books to read them offline" : "Upgrade to Premium++ to download books for offline reading")
+        </div>
+        <a class="mob-empty-btn" href="/Mobile/Home">Browse Library</a>
+    </div>
+
+    <!-- No results state - shown when search returns nothing -->
+    <div id="noResultsState" class="dl-no-results" style="display:none;">
+        <div class="dl-no-results-icon">🔍</div>
+        <div style="font-weight:700;color:var(--re-text);margin-bottom:.35rem;">No books found</div>
+        <div style="font-size:.78rem;">Try a different search term</div>
+    </div>
+
+    <!-- Books will be injected here by JavaScript from MAUI local storage -->
+</div>
+
+<!-- Upgrade banner for non-PremiumPlus users -->
+@if (ViewBag.CanDownload != true)
+{
+    <div id="upgradeBanner" class="dl-upgrade-banner">
+        <div class="dl-upgrade-icon">⭐</div>
+        <div class="dl-upgrade-title">Upgrade to Premium++</div>
+        <div class="dl-upgrade-text">Download unlimited chapters and read offline<br />— perfect for commutes and travel!</div>
+        <a class="dl-upgrade-btn" href="/Mobile/Subscribe">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 8.26L22 9.27l-5 4.14 1.18 6.02L12 16.77l-6.18 3.66L7 13.41l-5-4.14 6.91-1.01L12 2z" /></svg>
+            Upgrade Now
+        </a>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Downloads page — accepts data from MAUI via direct JS injection OR web localStorage
+        // MAUI calls window.__pushDownloadedBooks(jsonData) after page loads
+        // Web loads from localStorage directly
+
+        // Call MAUI native code via the JS bridge (window.MauiBridge injected by CustomWebViewHandler).
+        // Replaces the old hidden-iframe trick which silently fails on modern Android.
+        function callMaui(scheme, retries = 10) {
+            if (window.MauiBridge && typeof window.MauiBridge.postMessage === 'function') {
+                window.MauiBridge.postMessage(scheme);
+            } else if (retries > 0) {
+                // Android: MauiBridge not ready yet, wait and retry
+                console.log('[callMaui] MauiBridge not ready, retrying... (' + retries + ' left)');
+                setTimeout(function() { callMaui(scheme, retries - 1); }, 100);
+            } else {
+                // Final fallback: try window.location (works on iOS WebKit, may fail on Android)
+                console.warn('[callMaui] MauiBridge not available after retries, falling back to window.location');
+                window.location.href = scheme;
+            }
+        }
+
+        // Detect if running inside MAUI WebView
+        function isMauiWebView() {
+            // Most reliable: MAUI injects this after page load
+            if (window.isMauiApp === true) return true;
+            var ua = navigator.userAgent || '';
+            // Check for Android WebView patterns (MAUI uses Android WebView)
+            var isAndroidWv = /wv/.test(ua) ||
+                (/Android/.test(ua) && !/Chrome\/[.\d]+/.test(ua)) ||
+                (/Android/.test(ua) && /Version\//.test(ua));
+            // Check for MAUI-injected cookie (set by WebViewHostPage)
+            var hasMauiCookie = document.cookie.indexOf('MobileAuth=') !== -1;
+            // Check for iOS WebView
+            var isIosWv = !!window.webkit?.messageHandlers;
+            return isAndroidWv || hasMauiCookie || isIosWv;
+        }
+
+        // Flag so MAUI knows this function exists and can call it
+        window.__downloadsPageReady = true;
+
+        // Books deleted in this session — filtered out of every render to prevent race-condition reappearance
+        window.__deletedBookIds = new Set();
+
+        // Helper: get books saved in localStorage (from saveBookMetadata on Detail page)
+        function getStorageBooks() {
+            try {
+                const downloads = JSON.parse(localStorage.getItem('downloadedBooks') || '[]');
+                return downloads.map(d => ({
+                    bookId: d.book.id,
+                    title: d.book.title,
+                    author: d.book.author,
+                    coverImage: d.book.coverImage,
+                    chapterCount: d.chapters ? d.chapters.length : (d.chapterCount || 0),
+                    downloadedAt: d.downloadedAt
+                }));
+            } catch (e) { return []; }
+        }
+
+        // MAUI calls this to push downloaded books data directly
+        // Always merges with localStorage so books pending MAUI save are never lost
+        window.__pushDownloadedBooks = function(booksJson) {
+            try {
+                const mauiBooks = typeof booksJson === 'string' ? JSON.parse(booksJson) : booksJson;
+                console.log('[Downloads] Received', mauiBooks && mauiBooks.length, 'books from MAUI');
+                const merged = mergeBooks(mauiBooks || [], getStorageBooks())
+                    .filter(b => !window.__deletedBookIds.has(String(b.bookId)));
+                window.renderDownloadedBooks(merged);
+            } catch (e) {
+                console.warn('[Downloads] __pushDownloadedBooks error:', e);
+                window.renderDownloadedBooks([]);
+            }
+        };
+
+        // Request MAUI to send data (via hidden iframe)
+        function requestDownloadedBooks() {
+            callMaui('readease://downloads/list');
+        }
+
+        // Load downloads from localStorage (for web browser)
+        function loadDownloadsFromStorage() {
+            // If user cannot download (not Premium++), clear stale data and show empty
+            var canDownload = @(ViewBag.CanDownload == true ? "true" : "false");
+            if (!canDownload) {
+                try { localStorage.removeItem('downloadedBooks'); } catch(e) {}
+                window.renderDownloadedBooks([]);
+                return;
+            }
+            try {
+                const downloads = JSON.parse(localStorage.getItem('downloadedBooks') || '[]');
+                // Transform to the format expected by renderDownloadedBooks
+                const books = downloads.map(d => ({
+                    bookId: d.book.id,
+                    title: d.book.title,
+                    author: d.book.author,
+                    coverImage: d.book.coverImage,
+                    chapterCount: d.chapters ? d.chapters.length : (d.chapterCount || 0),
+                    downloadedAt: d.downloadedAt
+                }));
+                console.log('[Downloads] Loaded', books.length, 'books from localStorage');
+                window.renderDownloadedBooks(books);
+            } catch (e) {
+                console.warn('[Downloads] Error loading from localStorage:', e);
+                window.renderDownloadedBooks([]);
+            }
+        }
+
+        // Store all downloaded books for search/filter
+        window.__allDownloadedBooks = [];
+
+        // Called by MAUI to render downloaded books
+        window.renderDownloadedBooks = function(books) {
+            const container = document.getElementById('downloadsList');
+            const emptyState = document.getElementById('emptyState');
+            const howToSection = document.getElementById('howToSection');
+            const searchWrap = document.getElementById('searchWrap');
+
+            // If user cannot download, never render books (security check)
+            var canDownload = @(ViewBag.CanDownload == true ? "true" : "false");
+            if (!canDownload) {
+                books = [];
+                try { localStorage.removeItem('downloadedBooks'); } catch(e) {}
+            }
+
+            if (!books || books.length === 0) {
+                emptyState.style.display = 'flex';
+                if (searchWrap) searchWrap.style.display = 'none';
+                return;
+            }
+
+            // DEDUPLICATE: Keep only unique books by bookId (keep newest)
+            const seen = new Map();
+            books.forEach(book => {
+                const existing = seen.get(book.bookId);
+                if (!existing || new Date(book.downloadedAt || 0) > new Date(existing.downloadedAt || 0)) {
+                    seen.set(book.bookId, book);
+                }
+            });
+            const uniqueBooks = Array.from(seen.values());
+
+            // Store for search
+            window.__allDownloadedBooks = uniqueBooks;
+
+            // Hide empty state and how-to, show search
+            emptyState.style.display = 'none';
+            if (howToSection) howToSection.style.display = 'none';
+            if (searchWrap) searchWrap.style.display = 'block';
+
+            // Render all books
+            renderBookList(uniqueBooks);
+        };
+
+        // Render a list of books (used for both full list and search results)
+        function renderBookList(books) {
+            const container = document.getElementById('downloadsList');
+            const noResults = document.getElementById('noResultsState');
+            const resultsCount = document.getElementById('resultsCount');
+
+            // Remove existing book cards (but keep empty/no-results states)
+            const existingCards = container.querySelectorAll('.dl-book-card');
+            existingCards.forEach(c => c.remove());
+
+            if (books.length === 0) {
+                noResults.style.display = 'block';
+                resultsCount.textContent = '';
+                return;
+            }
+
+            noResults.style.display = 'none';
+            resultsCount.textContent = books.length + (books.length === 1 ? ' book' : ' books');
+
+            // Render books
+            let html = '';
+            books.forEach(book => {
+                html += `
+                    <div class="dl-book-card" data-book-id="${book.bookId}" data-title="${escapeHtml(book.title || '').toLowerCase()}" data-author="${escapeHtml(book.author || '').toLowerCase()}" onclick="openDownloadedBook('${book.bookId}')">
+                        <div class="dl-book-cover" style="${book.coverImage ? `background-image: url('${book.coverImage}'); background-size: cover;` : ''}">
+                            ${!book.coverImage ? '📖' : ''}
+                        </div>
+                        <div class="dl-book-info">
+                            <div class="dl-book-title">${escapeHtml(book.title)}</div>
+                            <div class="dl-book-author">by ${escapeHtml(book.author)}</div>
+                            <div class="dl-book-meta">
+                                <span class="dl-chapter-count">${book.chapterCount > 0 ? book.chapterCount + ' chapters' : 'Downloaded'}</span>
+                                <span class="dl-offline-ready">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Ready offline
+                                </span>
+                            </div>
+                        </div>
+                        <button class="dl-delete-btn" onclick="event.stopPropagation(); deleteDownloadedBook('${book.bookId}')" title="Remove download">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                `;
+            });
+
+            container.insertAdjacentHTML('afterbegin', html);
+        }
+
+        // Search/filter functionality
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchClear = document.getElementById('searchClear');
+            if (!searchInput) return;
+
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                searchClear.classList.toggle('visible', query.length > 0);
+                filterBooks(query);
+            });
+
+            searchClear.addEventListener('click', () => {
+                searchInput.value = '';
+                searchClear.classList.remove('visible');
+                filterBooks('');
+                searchInput.focus();
+            });
+        }
+
+        function filterBooks(query) {
+            if (!query) {
+                renderBookList(window.__allDownloadedBooks);
+                return;
+            }
+
+            const filtered = window.__allDownloadedBooks.filter(book => {
+                const title = (book.title || '').toLowerCase();
+                const author = (book.author || '').toLowerCase();
+                return title.includes(query) || author.includes(query);
+            });
+
+            renderBookList(filtered);
+        }
+
+        function openDownloadedBook(bookId) {
+            if (isMauiWebView()) {
+                // MAUI: use custom scheme for reliable interception → opens offline book from local storage
+                callMaui('readease://downloads/open?id=' + encodeURIComponent(bookId));
+            } else {
+                // Web: navigate to the Read page (requires internet)
+                window.location.href = '/Mobile/Read/' + encodeURIComponent(bookId);
+            }
+        }
+
+        async function deleteDownloadedBook(bookId) {
+            if (!confirm('Remove this download? You can re-download anytime.')) return;
+
+            // Block this book from re-appearing via any in-flight MAUI push
+            window.__deletedBookIds.add(String(bookId));
+
+            // Optimistic UI removal
+            const card = document.querySelector(`[data-book-id="${bookId}"]`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(-20px)';
+                card.style.transition = 'all 0.25s ease';
+            }
+
+            // Always remove from localStorage immediately (prevents ghost downloads on refresh)
+            try {
+                const downloads = JSON.parse(localStorage.getItem('downloadedBooks') || '[]');
+                const filtered = downloads.filter(d => d.book.id !== bookId);
+                localStorage.setItem('downloadedBooks', JSON.stringify(filtered));
+            } catch(e) {}
+
+            if (isMauiWebView()) {
+                // Signal MAUI to delete from native storage too
+                callMaui('readease://downloads/delete?id=' + encodeURIComponent(bookId));
+            }
+
+            // Remove card after animation
+            if (card) {
+                setTimeout(() => {
+                    card.remove();
+                    // Show empty state if no more cards
+                    const remaining = document.querySelectorAll('.dl-book-card');
+                    if (remaining.length === 0) {
+                        const empty = document.getElementById('emptyState');
+                        if (empty) empty.style.display = 'flex';
+                    }
+                }, 280);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Merge books from MAUI and localStorage (fixes missing downloads)
+        function mergeBooks(mauiBooks, storageBooks) {
+            const merged = new Map();
+
+            // Add MAUI books first
+            (mauiBooks || []).forEach(book => {
+                merged.set(book.bookId, book);
+            });
+
+            // Merge localStorage books (prefer newer)
+            (storageBooks || []).forEach(book => {
+                const existing = merged.get(book.bookId);
+                if (!existing) {
+                    merged.set(book.bookId, book);
+                }
+                // If same book exists in both, keep the one with more chapters or newer date
+            });
+
+            return Array.from(merged.values());
+        }
+
+        // Called by MAUI when a background download completes — refresh this page in real-time
+        window.setDownloadSuccess = function() {
+            console.log('[Downloads] MAUI download complete — refreshing list');
+            if (isMauiWebView()) {
+                // Re-request MAUI data; __pushDownloadedBooks will auto-merge with localStorage
+                setTimeout(() => requestDownloadedBooks(), 400);
+            } else {
+                loadDownloadsFromStorage();
+            }
+        };
+
+        // Initialize — load data based on platform
+        document.addEventListener('DOMContentLoaded', () => {
+            setupSearch();
+
+            var canDownload = @(ViewBag.CanDownload == true ? "true" : "false");
+
+            if (!canDownload) {
+                // Free/Premium users: clear stale data, show empty state
+                try { localStorage.removeItem('downloadedBooks'); } catch(e) {}
+                window.renderDownloadedBooks([]);
+            } else if (isMauiWebView()) {
+                // MAUI: request data via custom scheme
+                setTimeout(() => requestDownloadedBooks(), 300);
+
+                // __pushDownloadedBooks already merges MAUI + localStorage, no extra merge needed
+            } else {
+                // Web: load from localStorage directly
+                console.log('[Downloads] Web mode - loading from localStorage');
+                loadDownloadsFromStorage();
+            }
+        });
+    </script>
+}

@@ -1,0 +1,636 @@
+@{
+    ViewData["Title"] = "Login";
+    var returnUrl = (string?)ViewBag.ReturnUrl ?? "/Mobile/Home";
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+    :root {
+        --re-orange: #C8860A;
+        --re-orange-dark: #9E6808;
+    }
+
+    body {
+        background: #FAF6EF;
+        font-family: 'Nunito', sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .login-wrap {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: max(2rem, env(safe-area-inset-top, 2rem)) 1.35rem max(2rem, env(safe-area-inset-bottom, 2rem));
+        position: relative;
+        overflow: hidden;
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+    }
+
+        .login-wrap::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 340px;
+            height: 340px;
+            background: radial-gradient(circle, rgba(200,134,10,.14) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .login-wrap::after {
+            content: '';
+            position: fixed;
+            bottom: -10%;
+            right: -10%;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(200,134,10,.07) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+    .login-logo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .5rem;
+        text-decoration: none !important;
+        margin-bottom: 2.25rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .login-logo-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: transparent;
+        border: 2px dashed #C8860A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        box-shadow: 0 4px 16px rgba(200,134,10,.2);
+        transition: transform .2s;
+    }
+
+    .login-logo:hover .login-logo-icon {
+        transform: scale(1.04) rotate(-2deg);
+    }
+
+    .login-logo-text {
+        display: flex;
+        align-items: baseline;
+        gap: 0;
+    }
+
+    .login-logo-read {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #C8860A;
+        letter-spacing: -.02em;
+    }
+
+    .login-logo-ease {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #C8860A;
+        letter-spacing: -.02em;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 400px;
+        background: #FFFCF7;
+        border: 1px solid #E4D8C4;
+        border-radius: 24px;
+        padding: 2rem 1.5rem;
+        box-shadow: 0 12px 40px rgba(44,26,14,.12), 0 4px 12px rgba(44,26,14,.08);
+        position: relative;
+        z-index: 1;
+    }
+
+    .login-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: var(--re-text);
+        margin-bottom: .3rem;
+    }
+
+    .login-sub {
+        font-size: .82rem;
+        color: rgba(44,26,14,.45);
+        font-weight: 600;
+        margin-bottom: 1.75rem;
+    }
+
+    .login-err {
+        background: rgba(239,68,68,.12);
+        border: 1px solid rgba(239,68,68,.3);
+        color: #fc8181;
+        font-size: .82rem;
+        font-weight: 700;
+        padding: .7rem 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.1rem;
+        display: none;
+        animation: errShake .35s ease;
+    }
+
+        .login-err.show {
+            display: block;
+        }
+
+    @@keyframes errShake {
+        0%, 100% {
+            transform: translateX(0);
+        }
+
+        20% {
+            transform: translateX(-5px);
+        }
+
+        60% {
+            transform: translateX(4px);
+        }
+    }
+
+    .mob-field {
+        margin-bottom: 1.1rem;
+    }
+
+        .mob-field label {
+            display: block;
+            font-size: .7rem;
+            font-weight: 800;
+            color: rgba(44,26,14,.45);
+            margin-bottom: .4rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+    .mob-input {
+        width: 100%;
+        background: #F5EFE3;
+        border: 1.5px solid #E4D8C4;
+        border-radius: 12px;
+        padding: .8rem 1rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .95rem;
+        font-weight: 600;
+        color: #2C1A0E;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+        -webkit-appearance: none;
+    }
+
+        .mob-input:focus {
+            border-color: #C8860A;
+            box-shadow: 0 0 0 3px rgba(200,134,10,.2);
+            background: #FAF6EF;
+        }
+
+        .mob-input::placeholder {
+            color: #A08060;
+        }
+
+    .login-submit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 100%;
+        background: #C8860A;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: .9rem 1.35rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: 1rem;
+        font-weight: 900;
+        cursor: pointer;
+        transition: background .18s, box-shadow .18s, transform .15s;
+        margin-top: .5rem;
+        box-shadow: 0 5px 18px rgba(200,134,10,.35);
+        letter-spacing: .01em;
+    }
+
+        .login-submit:hover:not(:disabled) {
+            background: #9E6808;
+            box-shadow: 0 8px 24px rgba(200,134,10,.45);
+            transform: translateY(-1px);
+        }
+
+        .login-submit:active:not(:disabled) {
+            transform: scale(.97);
+        }
+
+        .login-submit:disabled {
+            opacity: .7;
+            cursor: not-allowed;
+        }
+
+    .login-divider {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        margin: 1.35rem 0;
+        font-size: .72rem;
+        font-weight: 700;
+        color: rgba(44,26,14,.2);
+    }
+
+        .login-divider::before, .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E4D8C4;
+        }
+
+    .login-footer {
+        text-align: center;
+        font-size: .82rem;
+        font-weight: 600;
+        color: rgba(44,26,14,.4);
+    }
+
+        .login-footer a {
+            color: var(--re-orange) !important;
+            text-decoration: none !important;
+            font-weight: 800;
+            transition: color .15s;
+        }
+
+            .login-footer a:hover {
+                color: #ff7a35 !important;
+            }
+
+    /* ── Custom Google Button ── */
+    .google-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #F5EFE3;
+        border: 1.5px solid #E4D8C4;
+        border-radius: 12px;
+        padding: .78rem 1rem;
+        cursor: pointer;
+        transition: background .18s, border-color .18s;
+        text-decoration: none !important;
+    }
+
+        .google-btn:hover {
+            background: #FAF6EF;
+            border-color: #C8860A;
+        }
+
+        .google-btn:active {
+            transform: scale(.97);
+        }
+
+    .google-btn-label {
+        font-family: 'Nunito', sans-serif;
+        font-size: .95rem;
+        font-weight: 800;
+        color: #2C1A0E;
+        flex: 1;
+        text-align: center;
+    }
+
+    .spin-sm {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2.5px solid rgba(255,255,255,.25);
+        border-top-color: var(--re-text);
+        border-radius: 50%;
+        animation: spin .6s linear infinite;
+        vertical-align: middle;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<div class="login-wrap">
+    <!-- Logo -->
+    <a href="/Mobile/Home" class="login-logo">
+        <div class="login-logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="32" height="32" style="color:#C8860A;flex-shrink:0;vertical-align:middle;">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+        </div>
+        <div class="login-logo-text">
+            <span class="login-logo-read">Read</span><span class="login-logo-ease">Ease</span>
+        </div>
+    </a>
+
+    <!-- Card -->
+    <div class="login-card">
+        <div class="login-title">Welcome back </div>
+        <div class="login-sub">Sign in to continue reading</div>
+
+        <div class="login-err" id="loginErr"></div>
+
+        <div class="mob-field">
+            <label>Email</label>
+            <input type="email" id="loginEmail" class="mob-input"
+                   placeholder="your@email.com" autocomplete="email" />
+        </div>
+
+        <div class="mob-field" style="margin-bottom:.25rem;">
+            <label>Password</label>
+            <input type="password" id="loginPass" class="mob-input"
+                   placeholder="••••••••" autocomplete="current-password" />
+        </div>
+
+        <div style="text-align:right;margin-bottom:1.25rem;">
+            <a href="/Mobile/ForgotPassword"
+               style="font-size:.75rem;font-weight:700;color:#A08060;text-decoration:none;">
+                Forgot password?
+            </a>
+        </div>
+
+        <button class="login-submit" id="loginBtn" onclick="doLogin()">Sign In</button>
+
+        <div class="login-divider">or</div>
+
+        <!--
+            FIX: Google Sign-In button now always uses the server-side OAuth flow
+            via /Mobile/Auth/ExternalLogin. This is intercepted by OnNavigating in
+            WebViewHostPage.xaml.cs and opened in Chrome Custom Tabs — which Google
+            allows. The old GSI One Tap approach ran inside the WebView and was
+            blocked by Google with "disallowed_useragent" / Error 403.
+        -->
+        <!-- Google Sign-In: Uses server-side OAuth flow.
+             OnNavigating in WebViewHostPage.xaml.cs intercepts this URL and opens Chrome Custom Tabs.
+             The onclick handler is removed to ensure simple href navigation. -->
+        <a class="google-btn" id="googleBtn" href="/Auth/ExternalLogin?provider=Google&mobile=true">
+            <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+                <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.3 6.6 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.2-2.6-.4-3.9z" />
+                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.5 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.3 6.6 29.4 4 24 4c-7.7 0-14.4 4.4-17.7 10.7z" />
+                <path fill="#4CAF50" d="M24 44c5.2 0 10-1.9 13.7-5.1l-6.3-5.4C29.4 35.1 26.8 36 24 36c-5.3 0-9.6-3.1-11.3-7.5l-6.5 5C9.4 39.4 16.2 44 24 44z" />
+                <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.3 5.4C37 38.1 44 33 44 24c0-1.3-.2-2.6-.4-3.9z" />
+            </svg>
+            <span class="google-btn-label">Continue with Google</span>
+        </a>
+
+        <div class="login-footer" style="margin-top:1.5rem;">
+            Don't have an account? <a href="/Mobile/Register">Create one</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Detect MAUI WebView ───────────────────────────────────────────────────
+        // Android WebViews have "wv" in the user agent string.
+        // We use this to decide whether to use the server-side OAuth flow
+        // (which gets intercepted by OnNavigating and opened in Chrome Custom Tabs)
+        // vs the GSI One Tap flow (which works fine in a real browser).
+        const ua = navigator.userAgent || '';
+        const isMauiWebView = /wv/.test(ua) ||
+            (/Android/.test(ua) && !/Chrome\/[.\d]+/.test(ua)) ||
+            (/Android/.test(ua) && /Version\//.test(ua));
+
+        console.log('User agent:', ua);
+        console.log('Is MAUI WebView:', isMauiWebView);
+
+        // ── Google button click handler ───────────────────────────────────────────
+        function handleGoogleBtnClick(event) {
+            if (isMauiWebView) {
+                // Let the <a href> navigate normally — OnNavigating in
+                // WebViewHostPage.xaml.cs will intercept it and open Chrome Custom Tabs.
+                // DO NOT call event.preventDefault() here.
+                console.log('MAUI WebView detected: letting href navigate for interception');
+                return;
+            }
+
+            // In a real browser: prevent the href redirect and use GSI One Tap instead.
+            event.preventDefault();
+            triggerGoogleSignInBrowser();
+        }
+
+        // ── Email/password login ──────────────────────────────────────────────────
+        async function doLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass  = document.getElementById('loginPass').value;
+            const btn   = document.getElementById('loginBtn');
+            const errEl = document.getElementById('loginErr');
+
+            errEl.classList.remove('show');
+
+            if (!email || !pass) {
+                errEl.textContent = 'Please fill in all fields.';
+                errEl.classList.add('show');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spin-sm"></span> Signing in…';
+
+            try {
+                const res  = await fetch('/Areas/Mobile/api/Auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password: pass })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errEl.textContent = data.message || 'Invalid credentials.';
+                    errEl.classList.add('show');
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                    return;
+                }
+
+                const expires = new Date(data.expiration).toUTCString();
+                document.cookie = 'MobileAuthToken=' + encodeURIComponent(data.token) + ';expires=' + expires + ';path=/;SameSite=Lax';
+                document.cookie = 'MobileAuth=true;expires=' + expires + ';path=/;SameSite=Lax';
+
+                btn.innerHTML = '✓ Success!';
+                setTimeout(() => window.location.href = '@returnUrl', 400);
+            } catch (e) {
+                errEl.textContent = 'Something went wrong. Please try again.';
+                errEl.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
+
+        // ── GSI One Tap (web browser only, not used in MAUI WebView) ─────────────
+        let googleClientId = null;
+        let googleScriptLoaded = false;
+        let googleInitError = null;
+
+        async function initGoogleSignInBrowser() {
+            if (isMauiWebView) return; // Skip entirely in WebView
+
+            try {
+                googleInitError = null;
+
+                if (window.google?.accounts?.id && googleClientId) {
+                    console.log('Google already initialized');
+                    return;
+                }
+
+                if (!googleClientId) {
+                    console.log('Fetching Google Client ID...');
+                    const res = await fetch('/Areas/Mobile/Api/Auth/google-client-id');
+                    if (!res.ok) {
+                        googleInitError = 'API Error: ' + res.status;
+                        return;
+                    }
+
+                    const text = await res.text();
+                    if (text.trim().startsWith('<')) {
+                        googleInitError = 'API returned HTML (not JSON)';
+                        return;
+                    }
+
+                    const data = JSON.parse(text);
+                    googleClientId = data.clientId;
+
+                    if (!googleClientId) {
+                        googleInitError = 'No Client ID in config';
+                        return;
+                    }
+                    console.log('Got Client ID:', googleClientId.substring(0, 10) + '...');
+                }
+
+                if (!googleScriptLoaded) {
+                    console.log('Loading Google script...');
+                    await loadGoogleScript();
+                }
+
+                if (window.google?.accounts?.id) {
+                    console.log('Initializing Google Sign-In...');
+                    google.accounts.id.initialize({
+                        client_id: googleClientId,
+                        callback: handleGoogleCredential,
+                        auto_select: false,
+                        cancel_on_tap_outside: true,
+                        itp_support: false,
+                        use_fedcm_for_prompt: false
+                    });
+                    google.accounts.id.renderButton(
+                        document.getElementById('googleButtonHidden'),
+                        { theme: 'filled_black', size: 'large' }
+                    );
+                    console.log('Google Sign-In initialized successfully!');
+                }
+            } catch (e) {
+                googleInitError = 'Error: ' + e.message;
+                console.error('Failed to initialize Google Sign-In:', e);
+            }
+        }
+
+        function triggerGoogleSignInBrowser() {
+            if (window.google?.accounts?.id) {
+                google.accounts.id.disableAutoSelect();
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        console.log('One Tap not displayed:', notification.getNotDisplayedReason());
+                    }
+                });
+            } else {
+                const errEl = document.getElementById('loginErr');
+                errEl.textContent = googleInitError || 'Google Sign-In not ready. Please try again.';
+                errEl.classList.add('show');
+                initGoogleSignInBrowser();
+            }
+        }
+
+        function loadGoogleScript() {
+            return new Promise((resolve, reject) => {
+                if (window.google?.accounts?.id) {
+                    googleScriptLoaded = true;
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                script.onload = () => {
+                    googleScriptLoaded = true;
+                    console.log('Google script loaded successfully');
+                    resolve();
+                };
+                script.onerror = (e) => {
+                    googleInitError = 'Failed to load Google script (network?)';
+                    reject(new Error('Failed to load Google script'));
+                };
+                document.head.appendChild(script);
+
+                setTimeout(() => {
+                    if (!googleScriptLoaded) {
+                        googleInitError = 'Google script load timeout (15s)';
+                        reject(new Error('Google script load timeout'));
+                    }
+                }, 15000);
+            });
+        }
+
+        async function handleGoogleCredential(response) {
+            const errEl = document.getElementById('loginErr');
+            errEl.classList.remove('show');
+
+            try {
+                if (!response.credential) {
+                    throw new Error('No credential received from Google');
+                }
+
+                const res = await fetch('/Areas/Mobile/Api/Auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idToken: response.credential })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.message || 'Google authentication failed');
+                }
+
+                const expires = new Date(data.expiration).toUTCString();
+                document.cookie = 'MobileAuthToken=' + encodeURIComponent(data.token) + ';expires=' + expires + ';path=/;SameSite=Lax';
+                document.cookie = 'MobileAuth=true;expires=' + expires + ';path=/;SameSite=Lax';
+
+                window.location.href = '@returnUrl';
+            } catch (e) {
+                errEl.textContent = e.message || 'Google Sign-In failed. Please try again.';
+                errEl.classList.add('show');
+            }
+        }
+
+        // Only init GSI in real browsers, skip in MAUI WebView
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isMauiWebView) {
+                initGoogleSignInBrowser();
+            } else {
+                console.log('MAUI WebView: Skipping GSI init. Google auth will use Chrome Custom Tabs.');
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+    </script>
+}

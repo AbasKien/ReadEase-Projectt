@@ -1,0 +1,1360 @@
+﻿@model ReadEase.ViewModels.Library.BookDetailViewModel
+@using ReadEase.ViewModels.Library.Partials
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var currentUserRoleVal = Model.IsAdmin ? "Admin" : (Model.IsBookAuthor ? "Author" : "User");
+
+    var overviewVm = new OverviewPanelViewModel
+    {
+        Description = Model.Description,
+        Category = Model.Category
+    };
+
+    var detailsVm = new DetailsPanelViewModel
+    {
+        Title = Model.Title,
+        Author = Model.Author,
+        Category = Model.Category,
+        IsFree = Model.IsFree,
+        ChapterCount = Model.ChapterCount,
+        AverageRating = Model.AverageRating,
+        RatingCount = Model.RatingCount
+    };
+
+    var reviewsVm = new ReviewsPanelViewModel
+    {
+        IsBookAuthor = Model.IsBookAuthor,
+        AverageRating = Model.AverageRating,
+        RatingCount = Model.RatingCount,
+        Reviews = Model.Reviews
+    };
+
+    // ── Tier flags passed from LibraryController.Detail via ViewBag ──────
+    var now = DateTime.UtcNow;
+    var isPremPlus = (bool)(ViewBag.IsPremiumPlus ?? false);
+    var isPrem = (bool)(ViewBag.IsPremium ?? false);
+    var isBypass = (bool)(ViewBag.IsBypassGate ?? false);
+}
+
+<link rel="stylesheet" href="~/css/Bookdetails.css" asp-append-version="true" />
+<style>
+    .dh-hero-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 2rem;
+        max-width: 1120px;
+        margin: .75rem auto 0;
+        padding: 2.25rem 2.5rem;
+        background: #fff;
+        border-radius: 22px;
+        border: 1.5px solid #ede9e2;
+        box-shadow: 0 4px 30px rgba(0,0,0,.06);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .dh-hero-card::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(242,101,34,.07) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    .dh-cover-wrap {
+        flex-shrink: 0;
+        filter: drop-shadow(0 20px 40px rgba(0,0,0,.22));
+        transition: transform .36s cubic-bezier(.34,1.56,.64,1);
+        width: 175px;
+        position: relative;
+        z-index: 1;
+    }
+
+        .dh-cover-wrap:hover {
+            transform: translateY(-6px) rotate(.4deg) scale(1.02);
+        }
+
+    .dh-cover {
+        width: 175px;
+        height: 260px;
+        object-fit: cover;
+        border-radius: 12px;
+        display: block;
+    }
+
+    .dh-cover-placeholder {
+        width: 175px;
+        height: 260px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+    }
+
+    .dh-hero-info {
+        flex: 1;
+        min-width: 0;
+        padding-top: .2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .dh-breadcrumb {
+        font-size: .65rem;
+        font-weight: 700;
+        font-family: 'Nunito', sans-serif;
+        color: #c0bdd0;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: .5rem;
+    }
+
+        .dh-breadcrumb a {
+            color: #b0adbf;
+            text-decoration: none;
+        }
+
+            .dh-breadcrumb a:hover {
+                color: #f26522;
+            }
+
+    .dh-title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        font-weight: 900;
+        color: #1a1a2e;
+        line-height: 1.15;
+        margin-bottom: .3rem;
+    }
+
+    .dh-author {
+        font-size: .88rem;
+        font-weight: 600;
+        font-family: 'Nunito', sans-serif;
+        color: #9994a8;
+        margin-bottom: 1.4rem;
+    }
+
+        .dh-author a {
+            color: #f26522;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+            .dh-author a:hover {
+                text-decoration: underline;
+            }
+
+    .dh-stats-row {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin-bottom: 1.1rem;
+        background: #f7f6f3;
+        border-radius: 12px;
+        padding: .6rem 0;
+        width: fit-content;
+        border: 1px solid #ede9e2;
+    }
+
+    .dh-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: .1rem 1.1rem;
+        gap: 2px;
+    }
+
+        .dh-stat:first-child {
+            padding-left: 1rem;
+        }
+
+    .dh-stat-divider {
+        width: 1px;
+        background: #e0dbd3;
+        align-self: stretch;
+        margin: .1rem 0;
+    }
+
+    .dh-stat-icon {
+        display: none;
+    }
+
+    .dh-stat-label {
+        font-size: .58rem;
+        font-weight: 900;
+        font-family: 'Nunito', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #b0adbf;
+    }
+
+    .dh-stat-value {
+        font-size: .92rem;
+        font-weight: 900;
+        font-family: 'Nunito', sans-serif;
+        color: #1a1a2e;
+    }
+
+    .dh-rating-row {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .dh-stars .hs {
+        font-size: .95rem;
+        color: #dddae8;
+    }
+
+        .dh-stars .hs.on {
+            color: #f59e0b;
+        }
+
+    .dh-avg {
+        font-size: .95rem;
+        font-weight: 900;
+        font-family: 'Nunito', sans-serif;
+        color: #1a1a2e;
+    }
+
+    .dh-sep {
+        color: #dddae8;
+        font-size: .8rem;
+    }
+
+    .dh-cnt {
+        font-size: .76rem;
+        font-weight: 600;
+        font-family: 'Nunito', sans-serif;
+        color: #b0adbf;
+    }
+
+    .dh-cta-row {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .9rem;
+        flex-wrap: wrap;
+    }
+
+    .dh-btn-read {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: #1a1a2e;
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        font-size: .9rem;
+        font-weight: 800;
+        padding: .72rem 1.75rem;
+        border-radius: 50px;
+        text-decoration: none;
+        border: none;
+        box-shadow: 0 4px 18px rgba(26,26,46,.25);
+        transition: all .2s;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+        .dh-btn-read::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -80%;
+            width: 55%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+            transform: skewX(-18deg);
+            transition: left .5s ease;
+        }
+
+        .dh-btn-read:hover {
+            background: #f26522;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px rgba(242,101,34,.38);
+        }
+
+            .dh-btn-read:hover::after {
+                left: 135%;
+            }
+
+    .dh-btn-download {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: #fff;
+        border: 1.5px solid #e0dbd3;
+        color: #555;
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        font-weight: 800;
+        padding: .7rem 1.4rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+        transition: all .2s;
+    }
+
+        .dh-btn-download:hover {
+            border-color: #f26522;
+            color: #f26522;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(242,101,34,.14);
+        }
+
+    .dh-btn-fav {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 1.5px solid #e0dbd3;
+        background: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .2s;
+        flex-shrink: 0;
+        padding: 0;
+        line-height: 1;
+        box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+
+        .dh-btn-fav:hover, .dh-btn-fav.active {
+            border-color: #fca5a5;
+            background: #fff5f5;
+        }
+
+    .dh-btn-locked {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .7rem 1.4rem;
+        font-size: .88rem;
+        font-weight: 700;
+        font-family: 'Nunito', sans-serif;
+        background: #edecea;
+        color: #9994a8;
+        border: 1.5px solid #e0dbd3;
+        border-radius: 50px;
+    }
+
+    .dh-btn-subscribe {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .7rem 1.4rem;
+        font-size: .88rem;
+        font-weight: 800;
+        font-family: 'Nunito', sans-serif;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(217,119,6,.28);
+        transition: all .2s;
+    }
+
+        .dh-btn-subscribe:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(217,119,6,.4);
+            color: #fff;
+        }
+
+    .dh-badge-row {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        flex-wrap: wrap;
+    }
+
+    .dh-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        font-size: .68rem;
+        font-weight: 800;
+        font-family: 'Nunito', sans-serif;
+        padding: .28rem .75rem;
+        border-radius: 50px;
+        letter-spacing: .02em;
+        text-decoration: none;
+    }
+
+    .dh-badge-free {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .dh-badge-premium {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .dh-badge-ai {
+        background: linear-gradient(135deg, #f26522, #d97706);
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(242,101,34,.25);
+    }
+
+    .dh-badge-ai-locked {
+        background: transparent;
+        color: #b0adbf;
+        border: 1.5px dashed #e0dbd3;
+        transition: all .2s;
+    }
+
+        .dh-badge-ai-locked:hover {
+            border-color: #f26522;
+            color: #f26522;
+        }
+
+    .dh-progress-strip {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 2.5rem;
+        position: relative;
+    }
+
+    .dh-progress-track {
+        height: 3px;
+        background: #e8e3dc;
+        border-radius: 0 0 12px 12px;
+        overflow: hidden;
+    }
+
+    .dh-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f26522, #ff8c5a);
+        border-radius: 0 0 12px 12px;
+        transition: width .6s cubic-bezier(.34,1,.64,1);
+    }
+
+    .dh-progress-label {
+        position: absolute;
+        right: 2.5rem;
+        top: 6px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .6rem;
+        font-weight: 900;
+        color: #b0adbf;
+        letter-spacing: .03em;
+    }
+
+    .apc-wattpad-wrap {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .8rem 0 1rem;
+    }
+
+    .apc-wattpad-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .55rem;
+        text-decoration: none;
+        transition: opacity .18s;
+    }
+
+        .apc-wattpad-link:hover {
+            opacity: .75;
+        }
+
+    .apc-bubble {
+        position: relative;
+        flex-shrink: 0;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        overflow: hidden;
+        transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    .apc-wattpad-link:hover .apc-bubble {
+        transform: scale(1.08);
+    }
+
+    .apc-bubble::before {
+        display: none;
+    }
+
+    .apc-bubble-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        z-index: 1;
+    }
+
+    .apc-bubble-ph {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f26522, #c94812);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .72rem;
+        font-weight: 900;
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        z-index: 1;
+    }
+
+    .apc-username {
+        font-family: 'Nunito', sans-serif;
+        font-size: .86rem;
+        font-weight: 700;
+        color: #3c3a52;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+        transition: color .18s;
+    }
+
+    .apc-wattpad-link:hover .apc-username {
+        color: #f26522;
+    }
+
+    .apc-follow-pill {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .7rem;
+        padding: .28rem .8rem;
+        border-radius: 50px;
+        border: 1.5px solid rgba(242,101,34,.45);
+        background: transparent;
+        color: #f26522;
+        cursor: pointer;
+        transition: all .18s;
+    }
+
+        .apc-follow-pill:hover {
+            background: #f26522;
+            color: #fff;
+            border-color: #f26522;
+        }
+
+        .apc-follow-pill.following {
+            background: rgba(242,101,34,.08);
+        }
+
+            .apc-follow-pill.following:hover {
+                background: #fef2f2;
+                color: #ef4444;
+                border-color: #ef4444;
+            }
+
+    .ch-list {
+        display: flex;
+        flex-direction: column;
+        gap: .55rem;
+    }
+
+    .ch-list-item {
+        display: flex;
+        align-items: stretch;
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        transition: box-shadow .2s, border-color .2s, transform .2s;
+    }
+
+        .ch-list-item:hover {
+            box-shadow: 0 6px 24px rgba(0,0,0,.1);
+            border-color: #f26522;
+            transform: translateY(-2px);
+        }
+
+        .ch-list-item.ch-locked {
+            opacity: .7;
+        }
+
+            .ch-list-item.ch-locked .ch-read-link {
+                cursor: default;
+                pointer-events: none;
+            }
+
+    .ch-read-link {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        flex: 1;
+        min-width: 0;
+        padding: .85rem 1.1rem;
+        text-decoration: none !important;
+        color: inherit !important;
+        transition: background .15s;
+    }
+
+        .ch-read-link:hover {
+            background: #fff9f6;
+        }
+
+    .ch-num {
+        font-family: 'Nunito', sans-serif;
+        font-size: .68rem;
+        font-weight: 900;
+        color: #c0bdd0;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: 40px;
+    }
+
+    .ch-title-text {
+        font-family: 'Nunito', sans-serif;
+        font-size: .9rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Unlock info shown under the title when chapter is locked */
+    .ch-unlock-label {
+        font-family: 'Nunito', sans-serif;
+        font-size: .68rem;
+        font-weight: 700;
+        color: #c2410c;
+        margin-top: .2rem;
+    }
+
+    .ch-unlock-sub {
+        font-family: 'Nunito', sans-serif;
+        font-size: .62rem;
+        font-weight: 600;
+        color: #b0adbf;
+        margin-top: .1rem;
+    }
+
+    .ch-status-badge {
+        font-family: 'Nunito', sans-serif;
+        font-size: .6rem;
+        font-weight: 900;
+        padding: .15rem .55rem;
+        border-radius: 99px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        border: 1.5px solid;
+    }
+
+        .ch-status-badge.last-read {
+            background: #fff9f6;
+            color: #f26522;
+            border-color: rgba(242,101,34,.3);
+        }
+
+        .ch-status-badge.completed {
+            background: #f0fdf4;
+            color: #15803d;
+            border-color: #bbf7d0;
+        }
+
+    .ch-lock-icon {
+        font-size: .8rem;
+        flex-shrink: 0;
+    }
+
+    .ch-dl-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 .9rem;
+        border-left: 1.5px solid #f0ede9;
+        flex-shrink: 0;
+        background: transparent;
+        transition: background .15s;
+        text-decoration: none !important;
+    }
+
+        .ch-dl-wrap:hover {
+            background: #fff3ed;
+        }
+
+    .ch-dl-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(242,101,34,.3);
+        background: rgba(242,101,34,.08);
+        color: #f26522;
+        font-size: .8rem;
+        text-decoration: none !important;
+        flex-shrink: 0;
+        transition: all .2s;
+        pointer-events: none;
+    }
+
+    .ch-dl-wrap:hover .ch-dl-btn {
+        background: #f26522;
+        color: #fff;
+        border-color: #f26522;
+        transform: scale(1.1);
+        box-shadow: 0 3px 10px rgba(242,101,34,.35);
+    }
+
+    @@media (max-width: 640px) {
+        .dh-hero-card {
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 1.25rem;
+            gap: 1.5rem;
+        }
+
+        .dh-hero-info {
+            text-align: center;
+        }
+
+        .dh-stats-row {
+            margin: 0 auto 1rem;
+        }
+
+        .dh-cta-row, .dh-badge-row, .dh-rating-row {
+            justify-content: center;
+        }
+
+        .dh-genre-section {
+            text-align: center;
+        }
+        .dh-genre-chips {
+            justify-content: center;
+        }
+
+        /* Mobile back button - visible on dark hero */
+        .dh-back-bar {
+            padding: 1rem 1.25rem .5rem !important;
+            position: relative;
+            z-index: 100 !important;
+        }
+        .dh-page .dh-back-bar .wp-back-btn {
+            background: #fff !important;
+            border-color: #fff !important;
+            color: #1a1a2e !important;
+            box-shadow: 0 3px 15px rgba(0,0,0,.35) !important;
+            padding: .5rem .85rem !important;
+            font-weight: 800 !important;
+        }
+
+        .dh-progress-strip {
+            padding: 0 1.25rem;
+        }
+
+        .dh-progress-label {
+            right: 1.25rem;
+        }
+    }
+
+    /* ── Genre Section ── */
+    .dh-genre-section {
+        margin-bottom: 1.1rem;
+    }
+    .dh-genre-label {
+        font-size: .58rem;
+        font-weight: 900;
+        font-family: 'Nunito', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #b0adbf;
+        margin-bottom: .45rem;
+    }
+    .dh-genre-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+    }
+
+    .dh-genre-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: .35rem .8rem;
+        background: #f7f6f3;
+        border: 1.5px solid #ede9e2;
+        border-radius: 99px;
+        font-size: .72rem;
+        font-weight: 700;
+        font-family: 'Nunito', sans-serif;
+        color: #555;
+        letter-spacing: .2px;
+        transition: all .15s;
+    }
+    .dh-genre-chip:hover {
+        border-color: #f26522;
+        color: #f26522;
+        background: rgba(242,101,34,.06);
+    }
+
+    .dh-genre-more {
+        background: transparent;
+        border-style: dashed;
+        color: #b0adbf;
+    }
+</style>
+
+<div class="dh-page">
+
+    <div class="dh-back-bar">
+        <a asp-controller="Library" asp-action="Index" class="wp-back-btn">← Library</a>
+    </div>
+
+    <div class="dh-hero-card">
+
+        <div class="dh-cover-wrap">
+            @if (!string.IsNullOrEmpty(Model.CoverImage))
+            {
+                <img class="dh-cover" src="@Model.CoverImage" alt="@Model.Title" />
+            }
+            else
+            {
+                <div class="dh-cover-placeholder">📚</div>
+            }
+        </div>
+
+        <div class="dh-hero-info">
+
+            <div class="dh-breadcrumb">
+                An edition of <a href="#">@Model.Title.ToUpper()</a>
+            </div>
+
+            <div class="dh-title">@Model.Title</div>
+
+            <div class="dh-author">
+                by <a asp-controller="Library" asp-action="Index"
+                      asp-route-search="@Model.Author">@Model.Author</a>
+            </div>
+
+            <div class="dh-stats-row">
+                <div class="dh-stat">
+                    <span class="dh-stat-icon">⭐</span>
+                    <span class="dh-stat-label">Rating</span>
+                    <span class="dh-stat-value" id="heroAvg">@Model.AverageRating.ToString("0.0")</span>
+                </div>
+                <div class="dh-stat-divider"></div>
+                <div class="dh-stat">
+                    <span class="dh-stat-icon">🗳️</span>
+                    <span class="dh-stat-label">Votes</span>
+                    <span class="dh-stat-value" id="heroCnt">@Model.RatingCount</span>
+                </div>
+                <div class="dh-stat-divider"></div>
+                <div class="dh-stat">
+                    <span class="dh-stat-icon">📑</span>
+                    <span class="dh-stat-label">Chapters</span>
+                    <span class="dh-stat-value">@Model.ChapterCount</span>
+                </div>
+            </div>
+
+            <div class="dh-genre-section">
+                <div class="dh-genre-label">Genres</div>
+                <div class="dh-genre-chips">
+                    @{
+                        var genres = Model.Category?.Split(',').Select(g => g.Trim()).Where(g => !string.IsNullOrEmpty(g)).ToList() ?? new List<string>();
+                    }
+                    @foreach (var genre in genres.Take(5))
+                    {
+                        <span class="dh-genre-chip">@genre</span>
+                    }
+                    @if (genres.Count > 5)
+                    {
+                        <span class="dh-genre-chip dh-genre-more">+@(genres.Count - 5)</span>
+                    }
+                </div>
+            </div>
+
+            <div class="dh-rating-row" id="heroStars">
+                <div class="dh-stars">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <span class="hs @(i <= Math.Round(Model.AverageRating) ? "on" : "")">★</span>
+                    }
+                </div>
+                <span class="dh-avg">@Model.AverageRating.ToString("0.0")</span>
+                <span class="dh-sep">·</span>
+                <span class="dh-cnt">@Model.RatingCount rating@(Model.RatingCount != 1 ? "s" : "")</span>
+            </div>
+
+            @* ══ CTA ROW ══ *@
+            <div class="dh-cta-row">
+
+                @* Read: any subscriber OR free book *@
+                @if (Model.CanRead)
+                {
+                    <a asp-controller="Library" asp-action="Read"
+                       asp-route-id="@Model.Id" class="dh-btn-read">
+                        📖 Start reading
+                    </a>
+                }
+                else
+                {
+                    <div class="dh-btn-locked">🔒 Premium Required</div>
+                    <a asp-controller="Subscription" asp-action="Index"
+                       class="dh-btn-subscribe">⭐ Subscribe to Read</a>
+                }
+
+                @* Download full book: PremiumPlus ONLY *@
+                @if (Model.CanDownload)
+                {
+                    <a asp-controller="Library" asp-action="DownloadBook"
+                       asp-route-id="@Model.Id"
+                       class="dh-btn-download"
+                       title="Download full book">
+                        ⬇️ Download
+                    </a>
+                }
+                else
+                {
+                    <span class="dh-btn-download"
+                          title="@(Model.CanRead ? "Upgrade to Premium++ to download" : "Subscribe to download")"
+                          style="opacity:.45;cursor:not-allowed;pointer-events:none;user-select:none;">
+                        🔒 Download
+                    </span>
+                }
+
+                @* Favourite *@
+                <button class="dh-btn-fav @(Model.IsFavorite ? "active" : "")"
+                        id="favBtn"
+                        data-id="@Model.Id"
+                        title="@(Model.IsFavorite ? "Remove from Favorites" : "Add to Favorites")"
+                        aria-label="@(Model.IsFavorite ? "Remove from Favorites" : "Add to Favorites")">
+                    <span aria-hidden="true">@(Model.IsFavorite ? "❤️" : "🤍")</span>
+                </button>
+
+            </div>
+
+            <div class="dh-badge-row">
+                @if (Model.IsFree)
+                {
+                    <span class="dh-badge dh-badge-free">🆓 Free</span>
+                }
+                else
+                {
+                    <span class="dh-badge dh-badge-premium">⭐ Premium</span>
+                }
+
+                @if (Model.IsStoryComplete)
+                {
+                    <span class="dh-badge" style="background:#dcfce7;color:#15803d;">✅ Completed</span>
+                }
+                else if (Model.ChapterCount > 0)
+                {
+                    <span class="dh-badge" style="background:#fff7ed;color:#c2410c;">✏️ Ongoing</span>
+                }
+
+                @if (Model.CanUseAiRead)
+                {
+                    <span class="dh-badge dh-badge-ai">🤖 AI Read Enabled</span>
+                }
+                else
+                {
+                    <a asp-controller="Subscription" asp-action="Index"
+                       class="dh-badge dh-badge-ai-locked"
+                       title="Upgrade to Premium++ for AI Read">
+                        🔒 AI Read — Premium++ Only
+                    </a>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    @* Progress strip *@
+    @if (Model.ChapterCount > 0 && Model.UserProgressPercent > 0)
+    {
+        <div class="dh-progress-strip">
+            <div class="dh-progress-track">
+                <div class="dh-progress-fill" style="width:@Model.UserProgressPercent%"></div>
+            </div>
+            <span class="dh-progress-label">@Model.UserProgressPercent% read</span>
+        </div>
+    }
+
+    <div class="dh-content-area">
+
+        @* Author row *@
+        <div class="apc-wattpad-wrap">
+            <a asp-controller="Posts" asp-action="AuthorProfile"
+               asp-route-authorUserId="@Model.AuthorUserId"
+               class="apc-wattpad-link" title="View @Model.AuthorDisplayName">
+                <div class="apc-bubble">
+                    @if (!string.IsNullOrEmpty(Model.AuthorProfilePhoto))
+                    {
+                        <img class="apc-bubble-img" src="@Model.AuthorProfilePhoto" alt="@Model.AuthorDisplayName" />
+                    }
+                    else
+                    {
+                        <div class="apc-bubble-ph">@Model.AuthorDisplayName[0].ToString().ToUpper()</div>
+                    }
+                </div>
+                <span class="apc-username">@Model.AuthorDisplayName</span>
+            </a>
+
+            @if (!Model.IsBookAuthor)
+            {
+                <button id="detailFollowBtn"
+                        class="apc-follow-pill @(Model.IsFollowingAuthor ? "following" : "")"
+                        onclick="toggleAuthorFollow()">
+                    @(Model.IsFollowingAuthor ? "Following" : "+ Follow")
+                </button>
+            }
+        </div>
+
+        @* Tabs *@
+        <div class="dh-tabs-wrap">
+            <div class="dh-tabs-inner">
+                <a class="dh-tab active" href="#" onclick="switchTab('overview',this);return false;">📖 Overview</a>
+                <a class="dh-tab" href="#" onclick="switchTab('details',this);return false;">📋 Details</a>
+                <a class="dh-tab" href="#" onclick="switchTab('chapters',this);return false;">
+                    📑 Chapters
+                    @if (Model.IsStoryComplete)
+                    {
+                        <span style="background:#dcfce7;color:#15803d;font-size:.55rem;font-weight:900;
+                                                 padding:.05rem .35rem;border-radius:99px;margin-left:.2rem;vertical-align:middle;">
+                            COMPLETE
+                        </span>
+                    }
+                </a>
+                <a class="dh-tab" href="#" onclick="switchTab('reviews',this);return false;">⭐ Reviews</a>
+            </div>
+        </div>
+
+        <div class="dh-content">
+
+            @await Html.PartialAsync("overviewpanel", overviewVm)
+            @await Html.PartialAsync("detailspanel", detailsVm)
+
+            @* ══════════════════════════════════════════════════════════
+               Chapters panel
+               ══════════════════════════════════════════════════════════ *@
+            <div class="dh-panel" id="panel-chapters">
+
+                @if (Model.IsStoryComplete)
+                {
+                    <div class="story-complete-banner">
+                        <span class="banner-icon">🎉</span>
+                        <div>
+                            <div class="banner-title">Story Complete!</div>
+                            <div class="banner-sub">The author has finished publishing all chapters.</div>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.Chapters.Count == 0)
+                {
+                    <div style="text-align:center;padding:3rem 1rem;color:#c0bdd0;">
+                        <div style="font-size:2.5rem;margin-bottom:.75rem;">📭</div>
+                        <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;color:#9994a8;">No chapters yet</div>
+                        <div style="font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:600;margin-top:.3rem;">Check back soon!</div>
+                    </div>
+                }
+                else
+                {
+                    @* ── Reading Progress ── *@
+                    @if (Model.UserProgressPercent > 0)
+                    {
+                        <div style="background:#fff9f6;border:1.5px solid rgba(242,101,34,.2);border-radius:16px;
+                                                    padding:1rem 1.25rem;margin-bottom:1.1rem;
+                                                    display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+                                                    box-shadow:0 2px 10px rgba(242,101,34,.07);">
+                            <div>
+                                <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.85rem;color:#c2410c;">Your Reading Progress</div>
+                                <div style="font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:600;color:#b0adbf;margin-top:.15rem;">
+                                    Chapter @Model.UserLastChapterRead of @Model.ChapterCount read
+                                </div>
+                            </div>
+                            <div style="flex:1;min-width:100px;">
+                                <div style="background:rgba(242,101,34,.12);border-radius:99px;height:7px;overflow:hidden;">
+                                    <div style="height:100%;width:@Model.UserProgressPercent%;
+                                                                background:linear-gradient(90deg,#f26522,#ff8c5a);
+                                                                border-radius:99px;transition:width .5s cubic-bezier(.34,1,.64,1);">
+                                    </div>
+                                </div>
+                            </div>
+                            <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.95rem;color:#f26522;">
+                                @Model.UserProgressPercent%
+                            </span>
+                            @if (Model.CanRead && Model.UserLastChapterRead < Model.ChapterCount)
+                            {
+                                <a asp-controller="Library" asp-action="Read"
+                                   asp-route-id="@Model.Id"
+                                   asp-route-chapter="@(Model.UserLastChapterRead + 1)"
+                                   class="dh-btn-read"
+                                   style="font-size:.78rem;padding:.5rem 1.1rem;">
+                                    ▶ Continue Ch.@(Model.UserLastChapterRead + 1)
+                                </a>
+                            }
+                        </div>
+                    }
+
+                    @* ── Chapter List ── *@
+                    <div class="ch-list">
+                        @foreach (var ch in Model.Chapters.OrderBy(c => c.ChapterNumber))
+                        {
+                            @* ──────────────────────────────────────────────────────────
+                               Determine whether this chapter is locked for the current user
+                               and what label to show.
+
+                               Rules:
+                                 isBypass (admin/author) → never locked
+                                 isPremPlus              → never locked
+                                 isPrem                  → locked until PremiumUnlocksAt
+                                 free                    → locked until ScheduledAt (IsVisible)
+                               ────────────────────────────────────────────────────────── *@
+                            var chLockedForUser = false;
+                            string? lockLabel = null;
+                            string? lockSub = null;
+
+                            if (!isBypass && !isPremPlus)
+                            {
+                                if (!ch.IsVisible)
+                                {
+                                    // Chapter not yet live for free readers.
+                                    if (isPrem)
+                                    {
+                                        // ── Premium gate ────────────────────────────────────────────
+                                        // Use PremiumUnlocksAt if set; fall back to ScheduledAt so the
+                                        // chapter is NEVER silently unlocked when PremiumUnlocksAt is null.
+                                        var premGate = ch.PremiumUnlocksAt ?? ch.ScheduledAt;
+                                        if (premGate.HasValue && now < premGate.Value)
+                                        {
+                                            chLockedForUser = true;
+                                            var premDt = premGate.Value.ToLocalTime();
+                                            if (ch.PremiumUnlocksAt.HasValue)
+                                            {
+                                                // Early-access window is set — show the premium unlock time
+                                                lockLabel = $"🔓 Unlocks {premDt:MMM d, h:mm tt}";
+                                                lockSub = "Premium early access — 24 hrs before free";
+                                            }
+                                            else
+                                            {
+                                                // No premium window configured — show the free date
+                                                lockLabel = $"🔒 Available {premDt:MMM d, h:mm tt}";
+                                            }
+                                        }
+                                        // else: gate has passed → premium can read even while
+                                        // IsVisible is still false (Hangfire hasn't fired yet)
+                                    }
+                                    else
+                                    {
+                                        // ── Free gate ───────────────────────────────────────────────
+                                        // Always locked until ScheduledAt / IsVisible flips.
+                                        chLockedForUser = true;
+                                        if (ch.ScheduledAt.HasValue)
+                                        {
+                                            var freeDt = ch.ScheduledAt.Value.ToLocalTime();
+                                            lockLabel = $"🔒 Available {freeDt:MMM d, h:mm tt}";
+                                            if (ch.PremiumUnlocksAt.HasValue)
+                                            {
+                                                var premDt2 = ch.PremiumUnlocksAt.Value.ToLocalTime();
+                                                lockSub = $"⭐ Premium gets it {premDt2:MMM d, h:mm tt} · Premium++ reads instantly";
+                                            }
+                                        }
+                                        else
+                                        {
+                                            lockLabel = "🔒 Coming soon";
+                                        }
+                                    }
+                                }
+                                // If IsVisible = true, chapter is fully live → no lock for anyone
+                            }
+
+                            var isRead = ch.ChapterNumber < Model.UserLastChapterRead;
+                            var isCurrent = ch.ChapterNumber == Model.UserLastChapterRead;
+
+                            <div class="ch-list-item @(chLockedForUser ? "ch-locked" : "")">
+
+                                @if (chLockedForUser)
+                                {
+                                    @* ── Locked: static info row, no link ── *@
+                                    <div class="ch-read-link">
+                                        <div class="ch-num">Ch. @ch.ChapterNumber</div>
+                                        <div style="flex:1;min-width:0;">
+                                            <div class="ch-title-text">@ch.Title</div>
+                                            @if (lockLabel is not null)
+                                            {
+                                                <div class="ch-unlock-label">@lockLabel</div>
+                                            }
+                                            @if (lockSub is not null)
+                                            {
+                                                <div class="ch-unlock-sub">@lockSub</div>
+                                            }
+                                        </div>
+                                        <span class="ch-lock-icon">🔒</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @* ── Unlocked: clickable read link ── *@
+                                    <a asp-controller="Library" asp-action="Read"
+                                       asp-route-id="@Model.Id"
+                                       asp-route-chapter="@ch.ChapterNumber"
+                                       class="ch-read-link">
+                                        <div class="ch-num">Ch. @ch.ChapterNumber</div>
+                                        <div class="ch-title-text">@ch.Title</div>
+                                        @if (!Model.CanRead)
+                                        {
+                                            <span class="ch-lock-icon">🔒</span>
+                                        }
+                                        else if (isCurrent)
+                                        {
+                                            <span class="ch-status-badge last-read">Last read</span>
+                                        }
+                                        else if (isRead)
+                                        {
+                                            <span class="ch-status-badge completed">✓</span>
+                                        }
+                                    </a>
+                                }
+
+                                @* Per-chapter download: PremiumPlus only, hidden when chapter is locked *@
+                                @if (Model.CanDownload && !chLockedForUser)
+                                {
+                                    <a asp-controller="Library" asp-action="DownloadChapter"
+                                       asp-route-chapterId="@ch.Id"
+                                       asp-route-bookId="@Model.Id"
+                                       class="ch-dl-wrap"
+                                       title="Download Chapter @ch.ChapterNumber"
+                                       onclick="event.stopPropagation()">
+                                        <span class="ch-dl-btn">⬇</span>
+                                    </a>
+                                }
+
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* You May Also Like *@
+            <div class="dh-panel active" id="panel-similar" style="padding-top:1.5rem;">
+                <div class="rv-section-label">
+                    <span class="rv-section-label-text">You May Also Like</span>
+                    <div class="rv-section-label-line"></div>
+                    <span class="rv-section-label-cnt">Same genre</span>
+                </div>
+
+                @if (Model.SimilarBooks.Count == 0)
+                {
+                    <div style="text-align:center;padding:2rem;color:#c0bdd0;">
+                        <div style="font-size:2rem;margin-bottom:.5rem;">📭</div>
+                        <div style="font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;">No similar books found</div>
+                    </div>
+                }
+                else
+                {
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                        @foreach (var sb in Model.SimilarBooks)
+                        {
+                            <a asp-controller="Library" asp-action="Detail"
+                               asp-route-id="@sb.Id"
+                               style="text-decoration:none;color:inherit;">
+                                <div style="background:#fff;border:1.5px solid #ede9e2;border-radius:16px;
+                                                            overflow:hidden;transition:all .18s;display:flex;flex-direction:column;"
+                                     onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.1)'"
+                                     onmouseout="this.style.transform='';this.style.boxShadow=''">
+                                    @if (!string.IsNullOrEmpty(sb.CoverImage))
+                                    {
+                                        <img src="@sb.CoverImage" style="width:100%;aspect-ratio:2/3;object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+                                        <div style="width:100%;aspect-ratio:2/3;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:2rem;">📚</div>
+                                    }
+                                    <div style="padding:.65rem .75rem;">
+                                        <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@sb.Title</div>
+                                        <div style="font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:600;color:#9994a8;margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@sb.Author</div>
+                                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.4rem;">
+                                            <span style="font-family:'Nunito',sans-serif;font-size:.7rem;font-weight:800;color:#f26522;">⭐ @sb.AverageRating.ToString("0.0")</span>
+                                            @if (sb.IsFree)
+                                            {
+                                                <span style="font-family:'Nunito',sans-serif;font-size:.62rem;font-weight:800;background:#dcfce7;color:#15803d;padding:.1rem .4rem;border-radius:10px;">FREE</span>
+                                            }
+                                            else
+                                            {
+                                                <span style="font-family:'Nunito',sans-serif;font-size:.62rem;font-weight:800;background:#fef3c7;color:#d97706;padding:.1rem .4rem;border-radius:10px;">PRO</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+
+                <div style="text-align:center;">
+                    @{
+                        var firstGenre = genres.FirstOrDefault() ?? "books";
+                    }
+                    <a asp-controller="Library" asp-action="Index"
+                       asp-route-category="@firstGenre"
+                       class="dh-browse-more">
+                        Browse more @firstGenre →
+                    </a>
+                </div>
+            </div>
+
+            @await Html.PartialAsync("reviewspanel", reviewsVm)
+
+        </div>
+    </div>
+
+</div>
+
+<div id="dh-toast"></div>
+
+<script>
+    const bookId             = '@Model.Id';
+    const bookCategory       = '@Html.Raw((genres.FirstOrDefault() ?? "").Replace("'", "\\'"))';
+    const bookAllGenres      = '@Html.Raw(Model.Category.Replace("'", "\\'"))';
+    const currentUser        = '@(User.Identity?.Name ?? "")';
+    const currentUserRole    = '@currentUserRoleVal';
+    const isBookAuthor       = @(Model.IsBookAuthor ? "true" : "false");
+    const authorDisplayName  = '@Html.Raw(Model.AuthorDisplayName.Replace("'", "&#39;"))';
+    const authorProfilePhoto = '@(Model.AuthorProfilePhoto ?? "")';
+    const authorUserId       = '@Model.AuthorUserId';
+
+    async function toggleAuthorFollow() {
+        const btn = document.getElementById('detailFollowBtn');
+        if (!btn) return;
+        btn.disabled = true;
+        try {
+            const res = await fetch('/Posts/ToggleFollow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ followedId: authorUserId })
+            });
+            const data = await res.json();
+            btn.classList.toggle('following', data.isFollowing);
+            btn.textContent = data.isFollowing ? 'Following' : '+ Follow';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+
+<script src="~/js/Bookdetails.js" asp-append-version="true"></script>

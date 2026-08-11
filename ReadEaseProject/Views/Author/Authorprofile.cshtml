@@ -1,0 +1,1250 @@
+﻿@model ReadEase.ViewModels.Author.AuthorProfileViewModel
+@{
+    ViewData["Title"] = Model.AuthorName + " — Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ══ PAGE SHELL ══════════════════════════════════════════════════════════ */
+    .ap-page {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 0 1rem 4rem;
+    }
+
+    /* ══ HERO BANNER ══════════════════════════════════════════════════════════ */
+    .ap-hero {
+        width: 100%;
+        min-height: 240px;
+        position: relative;
+        border-radius: 0 0 24px 24px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f26522 0%, #e0541a 60%, #c94812 100%);
+        margin-bottom: 0;
+    }
+
+    .ap-hero-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        z-index: 0;
+    }
+
+    .ap-hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,.42);
+        z-index: 1;
+    }
+
+    /* ══ PROFILE CARD (overlaps hero) ════════════════════════════════════════ */
+    .ap-card {
+        position: relative;
+        z-index: 2;
+        margin: -68px 1rem 0;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 8px 40px rgba(0,0,0,.10);
+        padding: 0 0 1rem;
+    }
+
+    .ap-card-top {
+        display: flex;
+        align-items: flex-end;
+        gap: 1.2rem;
+        padding: 0 1.5rem;
+        margin-top: -44px;
+        flex-wrap: wrap;
+    }
+
+    .ap-avatar-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .ap-avatar, .ap-avatar-ph {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 16px rgba(0,0,0,.18);
+        display: block;
+    }
+
+    .ap-avatar {
+        object-fit: cover;
+    }
+
+    .ap-avatar-ph {
+        background: linear-gradient(135deg, #f26522, #c94812);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 900;
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .ap-card-meta {
+        flex: 1;
+        padding-top: 56px;
+        min-width: 180px;
+    }
+
+    .ap-name {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        line-height: 1.2;
+    }
+
+    .ap-role-badge {
+        display: inline-block;
+        font-family: 'Nunito', sans-serif;
+        font-size: .65rem;
+        font-weight: 800;
+        background: linear-gradient(90deg,#f26522,#e0541a);
+        color: #fff;
+        padding: .2rem .65rem;
+        border-radius: 50px;
+        margin-top: .3rem;
+        letter-spacing: .4px;
+    }
+
+    .ap-actions {
+        display: flex;
+        gap: .6rem;
+        align-items: center;
+        margin-left: auto;
+        padding-top: 56px;
+        flex-shrink: 0;
+    }
+
+    .ap-btn-follow {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .82rem;
+        padding: .55rem 1.4rem;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(90deg, #f26522, #e0541a);
+        color: #fff;
+        box-shadow: 0 3px 12px rgba(242,101,34,.3);
+        transition: all .18s;
+    }
+
+        .ap-btn-follow:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(242,101,34,.35);
+        }
+
+        .ap-btn-follow.following {
+            background: #fff;
+            color: #f26522;
+            border: 2px solid #f26522;
+            box-shadow: none;
+        }
+
+    .ap-btn-visit {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .82rem;
+        padding: .55rem 1.2rem;
+        border-radius: 50px;
+        border: 2px solid #ede9e2;
+        background: #fff;
+        color: #555;
+        cursor: pointer;
+        transition: all .18s;
+        text-decoration: none;
+    }
+
+        .ap-btn-visit:hover {
+            border-color: #f26522;
+            color: #f26522;
+        }
+
+    /* ══ STATS ROW ════════════════════════════════════════════════════════════ */
+    .ap-stats {
+        display: flex;
+        gap: 0;
+        padding: 1rem 1.5rem .5rem;
+        border-top: 1.5px solid #f5f0eb;
+        margin-top: 1rem;
+    }
+
+    .ap-stat {
+        flex: 1;
+        text-align: center;
+        padding: .3rem 0;
+        border-right: 1px solid #f0ede8;
+    }
+
+        .ap-stat:last-child {
+            border-right: none;
+        }
+
+    .ap-stat-val {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        line-height: 1;
+    }
+
+    .ap-stat-lbl {
+        font-size: .62rem;
+        font-weight: 800;
+        color: #b0adbf;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        margin-top: .15rem;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    /* ══ TABS ═════════════════════════════════════════════════════════════════ */
+    .ap-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid #f0ede8;
+        margin: .5rem 1.5rem 0;
+        overflow-x: auto;
+    }
+
+    .ap-tab {
+        font-family: 'Nunito', sans-serif;
+        font-size: .82rem;
+        font-weight: 800;
+        padding: .75rem 1.2rem;
+        border: none;
+        background: none;
+        color: #9994a8;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: color .15s, border-color .15s;
+        white-space: nowrap;
+    }
+
+        .ap-tab.active {
+            color: #f26522;
+            border-bottom-color: #f26522;
+        }
+
+        .ap-tab:hover:not(.active) {
+            color: #555;
+        }
+
+    /* ══ TAB PANELS ══════════════════════════════════════════════════════════ */
+    .ap-panel {
+        display: none;
+        padding: 1.25rem 1.5rem;
+    }
+
+        .ap-panel.active {
+            display: block;
+        }
+
+    /* ══ POST CARD ═══════════════════════════════════════════════════════════ */
+    .post-compose {
+        background: #fff9f6;
+        border: 2px solid rgba(242,101,34,.15);
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        gap: .75rem;
+        align-items: flex-start;
+    }
+
+    .post-compose-avatar, .post-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .post-compose-ph, .post-avatar-ph {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,#f26522,#c94812);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .95rem;
+        font-weight: 900;
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        flex-shrink: 0;
+    }
+
+    .post-compose-inner {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: .6rem;
+    }
+
+    .post-compose-input {
+        width: 100%;
+        border: 1.5px solid #ede9e2;
+        border-radius: 12px;
+        padding: .7rem 1rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .85rem;
+        resize: none;
+        background: #fff;
+        color: #1a1a2e;
+        transition: border-color .15s;
+        outline: none;
+    }
+
+        .post-compose-input:focus {
+            border-color: #f26522;
+        }
+
+    .post-compose-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .post-char-count {
+        font-size: .72rem;
+        color: #c0bdd0;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .post-submit-btn {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .78rem;
+        padding: .45rem 1.2rem;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(90deg,#f26522,#e0541a);
+        color: #fff;
+        transition: all .15s;
+    }
+
+        .post-submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(242,101,34,.3);
+        }
+
+        .post-submit-btn:disabled {
+            opacity: .5;
+            cursor: default;
+            transform: none;
+        }
+
+    .post-card {
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 16px;
+        padding: 1rem 1.1rem;
+        margin-bottom: .85rem;
+        transition: box-shadow .15s;
+    }
+
+        .post-card:hover {
+            box-shadow: 0 4px 18px rgba(0,0,0,.06);
+        }
+
+    .post-header {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        margin-bottom: .7rem;
+    }
+
+    .post-author-link {
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .post-meta {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .post-author-name {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .85rem;
+        color: #1a1a2e;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .post-time {
+        font-size: .7rem;
+        color: #b0adbf;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 600;
+    }
+
+    .post-delete-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #d1c8c0;
+        font-size: .8rem;
+        padding: .25rem .4rem;
+        border-radius: 8px;
+        transition: color .15s, background .15s;
+        margin-left: auto;
+    }
+
+        .post-delete-btn:hover {
+            color: #e74c3c;
+            background: #fef2f2;
+        }
+
+    .post-content {
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        color: #2a2a3e;
+        line-height: 1.6;
+        margin-bottom: .85rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        padding-top: .6rem;
+        border-top: 1px solid #f5f0eb;
+    }
+
+    .post-action-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .78rem;
+        font-weight: 700;
+        color: #9994a8;
+        padding: .3rem .5rem;
+        border-radius: 8px;
+        transition: all .15s;
+    }
+
+        .post-action-btn:hover {
+            color: #f26522;
+            background: rgba(242,101,34,.06);
+        }
+
+        .post-action-btn.liked {
+            color: #e74c3c;
+        }
+
+            .post-action-btn.liked:hover {
+                color: #c0392b;
+                background: rgba(231,76,60,.06);
+            }
+
+    /* Comments */
+    .comments-section {
+        margin-top: .85rem;
+    }
+
+    .comment-list {
+        display: flex;
+        flex-direction: column;
+        gap: .6rem;
+        margin-bottom: .6rem;
+    }
+
+    /* Top-level comment */
+    .comment-item {
+        display: flex;
+        gap: .55rem;
+        align-items: flex-start;
+    }
+
+    .comment-bubble {
+        background: #f8f5f2;
+        border-radius: 12px;
+        padding: .55rem .8rem;
+        flex: 1;
+    }
+
+    .comment-author {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .78rem;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        flex-wrap: wrap;
+    }
+
+    .comment-reply-tag {
+        font-size: .68rem;
+        font-weight: 700;
+        color: #f26522;
+        background: rgba(242,101,34,.1);
+        padding: .08rem .45rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .comment-text {
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        color: #3a3a4e;
+        line-height: 1.5;
+        margin-top: .18rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .comment-foot {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        margin-top: .3rem;
+    }
+
+    .comment-time {
+        font-size: .65rem;
+        color: #c0bdd0;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .comment-reply-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: .68rem;
+        font-weight: 800;
+        color: #9994a8;
+        font-family: 'Nunito', sans-serif;
+        padding: 0;
+        transition: color .15s;
+    }
+
+        .comment-reply-btn:hover {
+            color: #f26522;
+        }
+
+    .comment-del {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: .68rem;
+        color: #d1c8c0;
+        padding: 0;
+        transition: color .15s;
+        margin-left: auto;
+    }
+
+        .comment-del:hover {
+            color: #e74c3c;
+        }
+
+    /* Replies branch */
+    .replies-list {
+        margin-left: 1.6rem;
+        margin-top: .5rem;
+        border-left: 2px solid #f0ede8;
+        padding-left: .85rem;
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .reply-item {
+        display: flex;
+        gap: .5rem;
+        align-items: flex-start;
+    }
+
+    .reply-bubble {
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 12px;
+        padding: .5rem .75rem;
+        flex: 1;
+    }
+
+    /* Toggle replies button */
+    .toggle-replies-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 800;
+        color: #f26522;
+        padding: .2rem 0;
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        transition: opacity .15s;
+        margin-top: .3rem;
+    }
+
+        .toggle-replies-btn:hover {
+            opacity: .75;
+        }
+
+    /* Inline reply input */
+    .reply-compose {
+        display: flex;
+        gap: .5rem;
+        align-items: center;
+        margin-top: .5rem;
+        margin-left: 1.6rem;
+    }
+
+    .comment-input {
+        flex: 1;
+        border: 1.5px solid #ede9e2;
+        border-radius: 50px;
+        padding: .45rem .9rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        outline: none;
+        transition: border-color .15s;
+    }
+
+        .comment-input:focus {
+            border-color: #f26522;
+        }
+
+    .comment-send-btn {
+        background: #f26522;
+        border: none;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: .8rem;
+        transition: background .15s, transform .12s;
+        flex-shrink: 0;
+    }
+
+        .comment-send-btn:hover {
+            background: #e0541a;
+            transform: scale(1.08);
+        }
+
+    /* ══ FOLLOWING LIST ══════════════════════════════════════════════════════ */
+    .following-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: .85rem;
+    }
+
+    .following-card {
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 16px;
+        padding: 1.1rem .9rem;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition: all .15s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .5rem;
+    }
+
+        .following-card:hover {
+            border-color: #f26522;
+            box-shadow: 0 4px 16px rgba(242,101,34,.1);
+            transform: translateY(-2px);
+        }
+
+    .following-avatar, .following-avatar-ph {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+    }
+
+    .following-avatar {
+        object-fit: cover;
+    }
+
+    .following-avatar-ph {
+        background: linear-gradient(135deg,#f26522,#c94812);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .following-name {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .82rem;
+        color: #1a1a2e;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .following-role {
+        font-size: .65rem;
+        font-weight: 800;
+        background: rgba(242,101,34,.1);
+        color: #f26522;
+        padding: .15rem .55rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .following-books {
+        font-size: .7rem;
+        color: #b0adbf;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 600;
+    }
+
+    /* ══ BOOKS GRID ══════════════════════════════════════════════════════════ */
+    .ap-books-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: .85rem;
+    }
+
+    .ap-book-card {
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 14px;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        transition: all .15s;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .ap-book-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,.09);
+            border-color: var(--re-orange);
+        }
+
+    .ap-book-cover {
+        width: 100%;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+    }
+
+    .ap-book-cover-ph {
+        width: 100%;
+        aspect-ratio: 2/3;
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+
+    .ap-book-info {
+        padding: .6rem .7rem;
+    }
+
+    .ap-book-title {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .8rem;
+        color: #1a1a2e;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ap-book-cat {
+        font-size: .68rem;
+        color: #9994a8;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 600;
+        margin-top: .1rem;
+    }
+
+    /* ══ EMPTY STATE ══════════════════════════════════════════════════════════ */
+    .ap-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #c0bdd0;
+    }
+
+    .ap-empty-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto .6rem;
+        color: #c0bdd0;
+    }
+
+    .ap-empty-text {
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        font-weight: 700;
+    }
+</style>
+
+<div class="ap-page">
+
+    @* ── Back bar ── *@
+    <div style="padding:.75rem 0 .25rem;">
+        <a onclick="history.back()" style="font-family:'Nunito',sans-serif;font-size:.82rem;
+           font-weight:700;color:#9994a8;text-decoration:none;cursor:pointer;">
+            ← Back
+        </a>
+    </div>
+
+    @* ══ HERO ══ *@
+    <div class="ap-hero">
+        @if (!string.IsNullOrEmpty(Model.CoverPhoto))
+        {
+            <img class="ap-hero-bg" src="@Model.CoverPhoto" alt="cover" />
+            <div class="ap-hero-overlay"></div>
+        }
+    </div>
+
+    @* ══ PROFILE CARD ══ *@
+    <div class="ap-card">
+
+        <div class="ap-card-top">
+            @* Avatar *@
+            <div class="ap-avatar-wrap">
+                @if (!string.IsNullOrEmpty(Model.ProfilePhoto))
+                {
+                    <img class="ap-avatar" src="@Model.ProfilePhoto" alt="@Model.AuthorName" />
+                }
+                else
+                {
+                    <div class="ap-avatar-ph">@Model.AuthorName[0].ToString().ToUpper()</div>
+                }
+            </div>
+
+            @* Name + badge *@
+            <div class="ap-card-meta">
+                <div class="ap-name">@Model.AuthorName</div>
+                <span class="ap-role-badge">✍️ Author</span>
+            </div>
+
+            @* Action buttons *@
+            @if (!Model.IsOwnProfile)
+            {
+                <div class="ap-actions">
+                    <button id="followBtn"
+                            class="ap-btn-follow @(Model.IsFollowing ? "following" : "")"
+                            onclick="toggleFollow()">
+                        @(Model.IsFollowing ? "✓ Following" : "+ Follow")
+                    </button>
+                    <a asp-controller="Library" asp-action="Index"
+                       asp-route-author="@Model.AuthorName"
+                       class="ap-btn-visit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        Visit Books
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="ap-actions">
+                    <a asp-controller="User" asp-action="Profile" class="ap-btn-visit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Edit Profile
+                    </a>
+                </div>
+            }
+        </div>
+
+        @* Stats *@
+        <div class="ap-stats">
+            <div class="ap-stat">
+                <div class="ap-stat-val">@Model.TotalBooks</div>
+                <div class="ap-stat-lbl">Books</div>
+            </div>
+            <div class="ap-stat">
+                <div class="ap-stat-val">@Model.TotalReads</div>
+                <div class="ap-stat-lbl">Reads</div>
+            </div>
+            <div class="ap-stat">
+                <div class="ap-stat-val" id="followersCount">@Model.FollowersCount</div>
+                <div class="ap-stat-lbl">Followers</div>
+            </div>
+            <div class="ap-stat">
+                <div class="ap-stat-val">@Model.FollowingCount</div>
+                <div class="ap-stat-lbl">Following</div>
+            </div>
+        </div>
+
+        @* Tabs *@
+        <div class="ap-tabs">
+            <button class="ap-tab active" onclick="switchTab('conversations', this)" style="display:inline-flex;align-items:center;gap:.35rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Conversations
+            </button>
+            <button class="ap-tab" onclick="switchTab('following', this)" style="display:inline-flex;align-items:center;gap:.35rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Following
+            </button>
+            <button class="ap-tab" onclick="switchTab('books', this)" style="display:inline-flex;align-items:center;gap:.35rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                Books
+            </button>
+        </div>
+    </div>
+
+    @* ══ CONVERSATIONS TAB ══ *@
+    <div class="ap-panel active" id="tab-conversations">
+
+        @* ── Compose box — visible to ALL logged-in users ── *@
+        <div class="post-compose">
+            @* Current viewer's avatar (we don't have it here, use a generic placeholder) *@
+            <div class="post-compose-ph" id="viewerAvatar" style="background:linear-gradient(135deg,#667eea,#764ba2);">✍</div>
+            <div class="post-compose-inner">
+                <textarea class="post-compose-input" id="postInput"
+                          rows="2" maxlength="1000"
+                          placeholder="Write to @Model.AuthorName..."></textarea>
+                <div class="post-compose-footer">
+                    <span class="post-char-count"><span id="postCharCount">0</span>/1000</span>
+                    <button class="post-submit-btn" onclick="submitPost()" id="postBtn">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="postList">
+            @if (!Model.Posts.Any())
+            {
+                <div class="ap-empty" id="emptyPosts">
+                    <div class="ap-empty-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <div class="ap-empty-text">No conversations yet. Be the first to write!</div>
+                </div>
+            }
+            else
+            {
+                foreach (var post in Model.Posts)
+                {
+                    <div class="post-card" id="post-@post.PostId" data-post-id="@post.PostId">
+                        <div class="post-header">
+                            <a asp-controller="Posts" asp-action="AuthorProfile"
+                               asp-route-authorUserId="@post.AuthorUserId"
+                               class="post-author-link">
+                                @if (!string.IsNullOrEmpty(post.AuthorPhoto))
+                                {
+                                    <img class="post-avatar" src="@post.AuthorPhoto" alt="" />
+                                }
+                                else
+                                {
+                                    <div class="post-avatar-ph">@post.AuthorName[0].ToString().ToUpper()</div>
+                                }
+                                <div class="post-meta">
+                                    <div class="post-author-name">
+                                        @post.AuthorName
+                                        @if (post.AuthorUserId == Model.AuthorUserId)
+                                        {
+                                            <span style="font-size:.6rem;background:linear-gradient(90deg,#f26522,#e0541a);
+                                                                     color:#fff;padding:.1rem .45rem;border-radius:50px;
+                                                                     font-family:'Nunito',sans-serif;font-weight:800;margin-left:.3rem;">
+                                                Author
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="post-time">@post.CreatedAt.ToString("MMM d, yyyy · h:mm tt")</div>
+                                </div>
+                            </a>
+                            @if (post.IsOwnPost)
+                            {
+                                <button class="post-delete-btn"
+                                        onclick="deletePost('@post.PostId')" title="Delete post">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                </button>
+                            }
+                        </div>
+
+                        <div class="post-content">@post.Content</div>
+
+                        <div class="post-actions">
+                            <button class="post-action-btn @(post.IsLikedByCurrentUser ? "liked" : "")"
+                                    onclick="toggleLike('@post.PostId', this)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="@(post.IsLikedByCurrentUser ? "#e74c3c" : "none")" stroke="@(post.IsLikedByCurrentUser ? "#e74c3c" : "currentColor")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                <span class="like-count">@post.LikeCount</span>
+                            </button>
+                            <button class="post-action-btn reply-count-btn" onclick="toggleComments('@post.PostId', this)">
+                                ↩ Reply
+                                @if (post.Comments.Count > 0)
+                                {
+                                    <span style="font-size:.68rem;background:rgba(242,101,34,.12);
+                                                             color:#f26522;padding:.08rem .45rem;border-radius:50px;
+                                                             font-family:'Nunito',sans-serif;font-weight:800;margin-left:.2rem;">
+                                        @post.Comments.Count
+                                    </span>
+                                }
+                            </button>
+                        </div>
+
+                        @* Comments *@
+                        <div class="comments-section" id="comments-@post.PostId" style="display:none;">
+                            <div class="comment-list" id="comment-list-@post.PostId">
+                                @foreach (var c in post.Comments)
+                                {
+                                    <div class="comment-item" id="comment-@c.CommentId">
+                                        @if (!string.IsNullOrEmpty(c.AuthorPhoto))
+                                        {
+                                            <img class="post-avatar" src="@c.AuthorPhoto" alt=""
+                                                 style="width:34px;height:34px;flex-shrink:0;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="post-avatar-ph"
+                                                 style="width:34px;height:34px;font-size:.75rem;flex-shrink:0;">
+                                                @c.AuthorName[0].ToString().ToUpper()
+                                            </div>
+                                        }
+                                        <div style="flex:1;min-width:0;">
+                                            <div class="comment-bubble">
+                                                <div class="comment-author">
+                                                    @c.AuthorName
+                                                    @if (c.AuthorUserId == Model.AuthorUserId)
+                                                    {
+                                                        <span style="font-size:.58rem;background:linear-gradient(90deg,#f26522,#e0541a);color:#fff;padding:.08rem .38rem;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;">Author</span>
+                                                    }
+                                                </div>
+                                                <div class="comment-text">@c.Content</div>
+                                                <div class="comment-foot">
+                                                    <span class="comment-time">@c.CreatedAt.ToString("MMM d · h:mm tt")</span>
+                                                    <button class="comment-reply-btn"
+                                                            onclick="showReplyBox('@c.CommentId', '@Html.Raw(c.AuthorName.Replace("'", "\\'"))')">
+                                                        ↩ Reply
+                                                    </button>
+                                                    @if (c.IsOwnComment)
+                                                    {
+                                                        <button class="comment-del"
+                                                                onclick="deleteComment('@c.CommentId')">
+                                                            ✕
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            @* Replies branch *@
+                                            @if (c.Replies.Any())
+                                            {
+                                                <button class="toggle-replies-btn"
+                                                        onclick="toggleReplies('@c.CommentId', this)">
+                                                    ▼ @c.Replies.Count repl@(c.Replies.Count == 1 ? "y" : "ies")
+                                                </button>
+                                                <div class="replies-list" id="replies-@c.CommentId">
+                                                    @foreach (var r in c.Replies)
+                                                    {
+                                                        <div class="reply-item" id="comment-@r.CommentId">
+                                                            @if (!string.IsNullOrEmpty(r.AuthorPhoto))
+                                                            {
+                                                                <img class="post-avatar" src="@r.AuthorPhoto" alt=""
+                                                                     style="width:28px;height:28px;flex-shrink:0;" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="post-avatar-ph"
+                                                                     style="width:28px;height:28px;font-size:.65rem;flex-shrink:0;">
+                                                                    @r.AuthorName[0].ToString().ToUpper()
+                                                                </div>
+                                                            }
+                                                            <div class="reply-bubble">
+                                                                <div class="comment-author">
+                                                                    @r.AuthorName
+                                                                    @if (r.AuthorUserId == Model.AuthorUserId)
+                                                                    {
+                                                                        <span style="font-size:.58rem;background:linear-gradient(90deg,#f26522,#e0541a);color:#fff;padding:.08rem .38rem;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;">Author</span>
+                                                                    }
+                                                                    @if (!string.IsNullOrEmpty(r.ReplyToName))
+                                                                    {
+                                                                        <span class="comment-reply-tag">↩ @@@r.ReplyToName</span>
+                                                                    }
+                                                                </div>
+                                                                <div class="comment-text">@r.Content</div>
+                                                                <div class="comment-foot">
+                                                                    <span class="comment-time">@r.CreatedAt.ToString("MMM d · h:mm tt")</span>
+                                                                    <button class="comment-reply-btn"
+                                                                            onclick="showReplyBox('@c.CommentId', '@Html.Raw(r.AuthorName.Replace("'", "\\'"))')">
+                                                                        ↩ Reply
+                                                                    </button>
+                                                                    @if (r.IsOwnComment)
+                                                                    {
+                                                                        <button class="comment-del"
+                                                                                onclick="deleteComment('@r.CommentId')">
+                                                                            ✕
+                                                                        </button>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @* Inline reply compose box (hidden by default) *@
+                                            <div class="reply-compose" id="reply-box-@c.CommentId" style="display:none;">
+                                                <input class="comment-input"
+                                                       id="reply-input-@c.CommentId"
+                                                       placeholder="Reply..." maxlength="500" />
+                                                <button class="comment-send-btn"
+                                                        onclick="submitReply('@post.PostId', '@c.CommentId')">
+                                                    ➤
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @* Reply input — hidden, shown when clicking 💬 Reply *@
+                            <div style="display:none;gap:.5rem;align-items:center;margin-top:.5rem;"
+                                 id="comment-input-row-@post.PostId">
+                                <input class="comment-input" id="comment-input-@post.PostId"
+                                       placeholder="Write a reply..." maxlength="500" />
+                                <button class="comment-send-btn"
+                                        onclick="submitComment('@post.PostId')">
+                                    ➤
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    @* ══ FOLLOWING TAB ══ *@
+    <div class="ap-panel" id="tab-following">
+        @if (!Model.Following.Any())
+        {
+            <div class="ap-empty">
+                <div class="ap-empty-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="ap-empty-text">Not following anyone yet.</div>
+            </div>
+        }
+        else
+        {
+            <div class="following-grid">
+                @foreach (var f in Model.Following)
+                {
+                    <a asp-controller="Posts" asp-action="AuthorProfile"
+                       asp-route-authorUserId="@f.UserId"
+                       class="following-card">
+                        @if (!string.IsNullOrEmpty(f.ProfilePhoto))
+                        {
+                            <img class="following-avatar" src="@f.ProfilePhoto" alt="@f.Name" />
+                        }
+                        else
+                        {
+                            <div class="following-avatar-ph">@f.Name[0].ToString().ToUpper()</div>
+                        }
+                        <div class="following-name">@f.Name</div>
+                        <span class="following-role">@f.Role</span>
+                        @if (f.BookCount > 0)
+                        {
+                            <div class="following-books">@f.BookCount book@(f.BookCount != 1 ? "s" : "")</div>
+                        }
+                    </a>
+                }
+            </div>
+        }
+    </div>
+
+    @* ══ BOOKS TAB ══ *@
+    <div class="ap-panel" id="tab-books">
+        @if (!Model.Books.Any())
+        {
+            <div class="ap-empty">
+                <div class="ap-empty-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <div class="ap-empty-text">No published books yet.</div>
+            </div>
+        }
+        else
+        {
+            <div class="ap-books-grid">
+                @foreach (var b in Model.Books)
+                {
+                    <a asp-controller="Library" asp-action="Detail"
+                       asp-route-id="@b.Id" class="ap-book-card">
+                        @if (!string.IsNullOrEmpty(b.CoverImage))
+                        {
+                            <img class="ap-book-cover" src="@b.CoverImage" alt="@b.Title" />
+                        }
+                        else
+                        {
+                            <div class="ap-book-cover-ph">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                            </div>
+                        }
+                        <div class="ap-book-info">
+                            <div class="ap-book-title">@b.Title</div>
+                            <div class="ap-book-cat">@b.Category</div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.3rem;">
+                                <span style="font-family:'Nunito',sans-serif;font-size:.68rem;font-weight:700;color:#9994a8;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:.2rem;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    @b.ReadCount
+                                </span>
+                                @if (b.IsFree)
+                                {
+                                    <span style="font-size:.6rem;font-weight:800;background:#dcfce7;color:#15803d;padding:.1rem .4rem;border-radius:8px;font-family:'Nunito',sans-serif;">FREE</span>
+                                }
+                                else
+                                {
+                                    <span style="font-size:.6rem;font-weight:800;background:#fef3c7;color:#d97706;padding:.1rem .4rem;border-radius:8px;font-family:'Nunito',sans-serif;">PRO</span>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        var authorUserId  = '@Model.AuthorUserId';
+        var currentUserId = '@Model.CurrentUserId';
+        var isOwnProfile  = @(Model.IsOwnProfile ? "true" : "false");
+    </script>
+    <script src="~/js/authorprofile.js" asp-append-version="true"></script>
+}

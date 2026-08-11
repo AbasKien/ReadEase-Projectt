@@ -1,0 +1,523 @@
+@model ReadEase.ViewModels.Author.AuthorProfileViewModel
+@{
+    ViewData["Title"] = Model.AuthorName + " — Profile";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+}
+
+<style>
+    .m-ap-page { font-family: 'Nunito', sans-serif; padding-bottom: 2rem; }
+
+
+    .m-ap-hero { width:100%; height:150px; background:linear-gradient(135deg,var(--re-orange),#E9A520); position:relative; overflow:hidden; }
+    .m-ap-hero-cover { width:100%; height:100%; object-fit:cover; }
+
+    .m-ap-card { background:var(--re-surface,#12202e); border-radius:16px 16px 0 0; margin-top:-30px; position:relative; padding:1rem; }
+    .m-ap-avatar-wrap { margin-top:-50px; margin-bottom:.75rem; }
+    .m-ap-avatar,.m-ap-avatar-ph { width:80px; height:80px; border-radius:50%; border:4px solid var(--re-surface,#12202e); box-shadow:0 4px 12px rgba(0,0,0,.3); display:block; }
+    .m-ap-avatar { object-fit:cover; }
+    .m-ap-avatar-ph { background:linear-gradient(135deg,#f26522,#c94812); display:flex; align-items:center; justify-content:center; font-size:1.75rem; font-weight:900; color: var(--re-text); }
+    .m-ap-name { font-size:1.2rem; font-weight:800; color:var(--re-text,#e8e6f0); margin:0 0 .2rem; }
+    .m-ap-badge { display:inline-block; background:rgba(200,134,10,.15); color:var(--re-orange); font-size:.65rem; font-weight:800; border-radius:8px; padding:.1rem .5rem; margin-bottom:.5rem; }
+
+    .m-ap-stats { display:flex; margin-bottom:1rem; border:1px solid var(--re-border,rgba(255,255,255,.07)); border-radius:12px; overflow:hidden; }
+    .m-ap-stat { flex:1; text-align:center; padding:.65rem .5rem; border-right:1px solid var(--re-border,rgba(255,255,255,.07)); }
+    .m-ap-stat:last-child { border-right:none; }
+    .m-ap-stat-value { font-size:1rem; font-weight:800; color:var(--re-text,#e8e6f0); display:block; }
+    .m-ap-stat-label { font-size:.6rem; color:var(--re-text-muted,#9994a8); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+
+    .m-ap-actions { display:flex; gap:.5rem; margin-bottom:1.25rem; }
+    .m-ap-btn { flex:1; padding:.55rem .75rem; border-radius:10px; font-size:.78rem; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:.3rem; text-decoration:none; }
+    .m-ap-btn-primary { background:var(--re-orange); color: var(--re-text); }
+    .m-ap-btn-secondary { background: var(--re-surface-2); color:var(--re-text-muted,#9994a8); }
+    .m-ap-btn-following { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+
+    .m-ap-tabs { display:flex; border-bottom:1px solid var(--re-border,rgba(255,255,255,.07)); background:var(--re-surface,#12202e); position:sticky; top:0; z-index:10; }
+    .m-ap-tab { flex:1; padding:.75rem .25rem; text-align:center; font-size:.75rem; font-weight:700; color:var(--re-text-muted,#9994a8); border:none; background:none; cursor:pointer; border-bottom:2px solid transparent; }
+    .m-ap-tab.active { color:var(--re-orange); border-bottom-color:var(--re-orange); }
+
+    .m-ap-section { display:none; padding:1rem; }
+    .m-ap-section.active { display:block; }
+    .m-ap-empty { text-align:center; padding:2.5rem 1rem; color:var(--re-text-muted,#9994a8); font-size:.85rem; }
+    .m-ap-empty-icon { font-size:2rem; display:block; margin-bottom:.5rem; }
+
+    /* Write Box */
+    .m-ap-write-box { background:var(--re-surface,#12202e); border:1px solid var(--re-border,rgba(255,255,255,.07)); border-radius:14px; padding:.9rem; margin-bottom:1rem; display:flex; gap:.65rem; align-items:flex-start; }
+    .m-ap-write-avatar { width:38px; height:38px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#f26522,#c94812); display:flex; align-items:center; justify-content:center; font-size:.9rem; font-weight:800; color: var(--re-text); overflow:hidden; }
+    .m-ap-write-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .m-ap-write-body { flex:1; min-width:0; }
+    .m-ap-write-textarea { width:100%; background: var(--re-surface-2); border:1px solid var(--re-border,rgba(255,255,255,.07)); border-radius:10px; padding:.6rem .75rem; color:var(--re-text,#e8e6f0); font-size:.82rem; font-family:inherit; resize:none; min-height:64px; transition:border-color .2s; }
+    .m-ap-write-textarea:focus { outline:none; border-color:#f26522; }
+    .m-ap-write-footer { display:flex; align-items:center; justify-content:space-between; margin-top:.5rem; }
+    .m-ap-write-count { font-size:.65rem; color:var(--re-text-muted,#9994a8); }
+    .m-ap-send-btn { background:#f26522; color: var(--re-text); border:none; border-radius:8px; font-size:.78rem; font-weight:700; padding:.45rem 1rem; cursor:pointer; }
+    .m-ap-send-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* Post Card */
+    .m-ap-post { background:var(--re-surface,#12202e); border:1px solid var(--re-border,rgba(255,255,255,.07)); border-radius:14px; padding:1rem; margin-bottom:.85rem; }
+    .m-ap-post-header { display:flex; align-items:center; gap:.65rem; margin-bottom:.65rem; }
+    .m-ap-post-avatar-img { width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+    .m-ap-post-avatar-ph { width:38px; height:38px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#f26522,#c94812); display:flex; align-items:center; justify-content:center; font-size:.95rem; font-weight:800; color: var(--re-text); }
+    .m-ap-post-meta { flex:1; min-width:0; }
+    .m-ap-post-author { font-size:.85rem; font-weight:800; color:var(--re-text,#e8e6f0); margin:0; }
+    .m-ap-post-time { font-size:.62rem; color:var(--re-text-muted,#9994a8); }
+    .m-ap-post-delete { background:none; border:none; color:var(--re-text-muted,#9994a8); font-size:.8rem; cursor:pointer; padding:.2rem; opacity:.6; }
+    .m-ap-post-content { font-size:.88rem; color:var(--re-text,#e8e6f0); line-height:1.55; margin-bottom:.75rem; white-space:pre-wrap; word-break:break-word; }
+    .m-ap-post-actions { display:flex; gap:.75rem; padding-top:.65rem; border-top:1px solid var(--re-border,rgba(255,255,255,.07)); }
+    .m-ap-post-action { display:flex; align-items:center; gap:.3rem; font-size:.75rem; color:var(--re-text-muted,#9994a8); font-weight:600; background:none; border:none; cursor:pointer; padding:.25rem .5rem; border-radius:6px; }
+    .m-ap-post-action:hover { background: var(--re-surface-2); }
+    .m-ap-post-action.liked { color:#ef4444; }
+
+    /* Comments */
+    .m-ap-comments { margin-top:.75rem; padding-top:.65rem; border-top:1px solid var(--re-border,rgba(255,255,255,.07)); display:none; }
+    .m-ap-comments.open { display:block; }
+    .m-ap-comment { display:flex; gap:.5rem; margin-bottom:.65rem; }
+    .m-ap-comment-avatar { width:30px; height:30px; border-radius:50%; flex-shrink:0; overflow:hidden; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color: var(--re-text); }
+    .m-ap-comment-avatar img { width:100%; height:100%; object-fit:cover; }
+    .m-ap-comment-body { flex:1; min-width:0; }
+    .m-ap-comment-bubble { background: var(--re-surface-2); border-radius:10px; padding:.45rem .65rem; font-size:.78rem; }
+    .m-ap-comment-name { font-weight:800; color:var(--re-text,#e8e6f0); font-size:.75rem; margin-bottom:.1rem; }
+    .m-ap-comment-reply-pill { display:inline-block; font-size:.62rem; color:#f26522; font-weight:700; margin-bottom:.1rem; }
+    .m-ap-comment-text { color:var(--re-text-muted,#9994a8); line-height:1.4; word-break:break-word; }
+    .m-ap-comment-actions { display:flex; gap:.75rem; margin-top:.2rem; padding-left:.2rem; align-items:center; }
+    .m-ap-comment-act { background:none; border:none; color:var(--re-text-muted,#9994a8); font-size:.67rem; font-weight:700; cursor:pointer; padding:0; }
+    .m-ap-comment-time { font-size:.6rem; color:var(--re-text-muted,#9994a8); }
+    .m-ap-comment-del { color:#ef4444 !important; }
+    .m-ap-nested { margin-left:1.5rem; margin-top:.4rem; }
+    .m-ap-comment-form { display:flex; gap:.4rem; margin-top:.65rem; align-items:flex-start; }
+    .m-ap-comment-input { flex:1; background: var(--re-surface-2); border:1px solid var(--re-border,rgba(255,255,255,.07)); border-radius:8px; padding:.4rem .6rem; color:var(--re-text,#e8e6f0); font-size:.78rem; font-family:inherit; resize:none; }
+    .m-ap-comment-input:focus { outline:none; border-color:#f26522; }
+    .m-ap-comment-send { background:#f26522; border:none; border-radius:8px; color: var(--re-text); font-size:.72rem; font-weight:700; padding:.38rem .7rem; cursor:pointer; white-space:nowrap; }
+    .m-ap-reply-wrap { display:none; margin-top:.35rem; }
+    .m-ap-reply-wrap.open { display:flex; gap:.4rem; align-items:flex-start; }
+    .m-ap-reply-indicator { font-size:.65rem; color:#f26522; font-weight:700; margin-bottom:.2rem; }
+
+    /* Books */
+    .m-ap-books { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; }
+    .m-ap-book-card { background:var(--re-surface,#12202e); border:1px solid var(--re-border,rgba(255,255,255,.07)); border-radius:10px; overflow:hidden; text-decoration:none; }
+    .m-ap-book-cover { width:100%; aspect-ratio:2/3; object-fit:cover; }
+    .m-ap-book-cover-ph { width:100%; aspect-ratio:2/3; display:flex; align-items:center; justify-content:center; font-size:1.5rem; background:linear-gradient(135deg,#667eea,#764ba2); }
+    .m-ap-book-info { padding:.5rem; }
+    .m-ap-book-title { font-size:.75rem; font-weight:700; color:var(--re-text,#e8e6f0); margin:0 0 .2rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .m-ap-book-meta { font-size:.6rem; color:var(--re-text-muted,#9994a8); }
+
+    /* Following */
+    .m-ap-following-item { display:flex; align-items:center; gap:.65rem; padding:.75rem; background:var(--re-surface,#12202e); border:1px solid var(--re-border,rgba(255,255,255,.07)); border-radius:10px; margin-bottom:.5rem; text-decoration:none; }
+    .m-ap-following-avatar { width:42px; height:42px; border-radius:50%; object-fit:cover; }
+    .m-ap-following-avatar-ph { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; font-size:.95rem; font-weight:700; color: var(--re-text); }
+    .m-ap-following-info { flex:1; }
+    .m-ap-following-name { font-size:.85rem; font-weight:700; color:var(--re-text,#e8e6f0); margin:0; }
+    .m-ap-following-role { font-size:.62rem; color:var(--re-text-muted,#9994a8); }
+</style>
+
+<div class="m-ap-page">
+
+    <div class="mob-page-header">
+        <a href="javascript:history.back()" class="mob-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        </a>
+        <div class="mob-page-title">Author Profile</div>
+    </div>
+
+    <div class="m-ap-hero">
+        @if (!string.IsNullOrEmpty(Model.CoverPhoto))
+        {
+            <img src="@Model.CoverPhoto" class="m-ap-hero-cover" alt="cover" />
+        }
+    </div>
+
+    <div class="m-ap-card">
+        <div class="m-ap-avatar-wrap">
+            @if (!string.IsNullOrEmpty(Model.ProfilePhoto))
+            {
+                <img src="@Model.ProfilePhoto" class="m-ap-avatar" alt="@Model.AuthorName" />
+            }
+            else
+            {
+                <div class="m-ap-avatar-ph">@(Model.AuthorName.Length > 0 ? Model.AuthorName[0].ToString().ToUpper() : "?")</div>
+            }
+        </div>
+        <h1 class="m-ap-name">@Model.AuthorName</h1>
+        <span class="m-ap-badge">Author</span>
+        <div class="m-ap-stats">
+            <div class="m-ap-stat"><span class="m-ap-stat-value">@Model.TotalBooks</span><span class="m-ap-stat-label">Books</span></div>
+            <div class="m-ap-stat"><span class="m-ap-stat-value">@Model.TotalReads</span><span class="m-ap-stat-label">Reads</span></div>
+            <div class="m-ap-stat"><span class="m-ap-stat-value">@Model.FollowersCount</span><span class="m-ap-stat-label">Followers</span></div>
+            <div class="m-ap-stat"><span class="m-ap-stat-value">@Model.FollowingCount</span><span class="m-ap-stat-label">Following</span></div>
+        </div>
+        <div class="m-ap-actions">
+            @if (Model.IsOwnProfile)
+            {
+                <a href="/Mobile/Profile" class="m-ap-btn m-ap-btn-secondary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg> Edit Profile</a>
+            }
+            else
+            {
+                <button class="m-ap-btn @(Model.IsFollowing ? "m-ap-btn-following" : "m-ap-btn-primary")" id="followBtn" data-author-id="@Model.AuthorUserId">
+                    @(Model.IsFollowing ? "✓ Following" : "+ Follow")
+                </button>
+            }
+           
+        </div>
+    </div>
+
+    <div class="m-ap-tabs">
+        <button class="m-ap-tab active" data-tab="posts">Conversations</button>
+        <button class="m-ap-tab" data-tab="books">Books</button>
+        <button class="m-ap-tab" data-tab="following">Following</button>
+    </div>
+
+    <!-- Conversations -->
+    <div class="m-ap-section active" id="posts-section">
+        <div class="m-ap-write-box">
+            <div class="m-ap-write-avatar">
+                @{
+                    var myName = User.Identity?.Name ?? "Me";
+                }
+                @(myName.Length > 0 ? myName[0].ToString().ToUpper() : "M")
+            </div>
+            <div class="m-ap-write-body">
+                <textarea class="m-ap-write-textarea" id="postTextarea"
+                    placeholder="Write to @Model.AuthorName..."
+                    maxlength="1000" rows="2" oninput="updatePostCount()"></textarea>
+                <div class="m-ap-write-footer">
+                    <span class="m-ap-write-count" id="postCount">0/1000</span>
+                    <button class="m-ap-send-btn" id="postSendBtn" onclick="submitPost()" disabled>Send</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="postsFeed">
+            @if (!Model.Posts.Any())
+            {
+                <div class="m-ap-empty">
+                    <span class="m-ap-empty-icon"></span>
+                    No conversations yet. Be the first to write!
+                </div>
+            }
+            else
+            {
+                @foreach (var post in Model.Posts)
+                {
+                    <div class="m-ap-post" id="post-@post.PostId">
+                        <div class="m-ap-post-header">
+                            @if (!string.IsNullOrEmpty(post.AuthorPhoto))
+                            {
+                                <img src="@post.AuthorPhoto" class="m-ap-post-avatar-img" alt="" />
+                            }
+                            else
+                            {
+                                <div class="m-ap-post-avatar-ph">@(post.AuthorName.Length > 0 ? post.AuthorName[0].ToString().ToUpper() : "?")</div>
+                            }
+                            <div class="m-ap-post-meta">
+                                <p class="m-ap-post-author">@post.AuthorName</p>
+                                <span class="m-ap-post-time">@post.CreatedAt.ToString("MMM dd, yyyy · h:mm tt")</span>
+                            </div>
+                            @if (post.IsOwnPost)
+                            {
+                                <button class="m-ap-post-delete" onclick="deletePost('@post.PostId')" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> width="13" height="13" style="color:currentColor;flex-shrink:0;vertical-align:middle;"<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                            }
+                        </div>
+
+                        <div class="m-ap-post-content">@post.Content</div>
+
+                        <div class="m-ap-post-actions">
+                            <button class="m-ap-post-action @(post.IsLikedByCurrentUser ? "liked" : "")" id="likeBtn-@post.PostId" onclick="toggleLike('@post.PostId')">
+                                <span>@(post.IsLikedByCurrentUser ? "♥" : "♡")</span>
+                                <span id="likeCount-@post.PostId">@post.LikeCount</span>
+                            </button>
+                            <button class="m-ap-post-action" onclick="toggleComments('@post.PostId')">
+                                <span id="commentCount-@post.PostId">@(post.Comments?.Count ?? 0)</span> Reply
+                            </button>
+                        </div>
+
+                        <div class="m-ap-comments" id="comments-@post.PostId">
+                            <div id="commentsList-@post.PostId">
+                                @if (post.Comments?.Any() == true)
+                                {
+                                    @foreach (var comment in post.Comments)
+                                    {
+                                        <div class="m-ap-comment" id="comment-@comment.CommentId">
+                                            <div class="m-ap-comment-avatar">
+                                                @if (!string.IsNullOrEmpty(comment.AuthorPhoto))
+                                                { <img src="@comment.AuthorPhoto" alt="" /> }
+                                                else
+                                                { @(comment.AuthorName.Length > 0 ? comment.AuthorName[0].ToString().ToUpper() : "?") }
+                                            </div>
+                                            <div class="m-ap-comment-body">
+                                                <div class="m-ap-comment-bubble">
+                                                    <div class="m-ap-comment-name">@comment.AuthorName</div>
+                                                    @if (!string.IsNullOrEmpty(comment.ReplyToName))
+                                                    { <div class="m-ap-comment-reply-pill">↩ @@@comment.ReplyToName</div> }
+                                                    <div class="m-ap-comment-text">@comment.Content</div>
+                                                </div>
+                                                <div class="m-ap-comment-actions">
+                                                    <button class="m-ap-comment-act" onclick="openReplyForm('@post.PostId','@comment.CommentId','@comment.AuthorName')">↩ Reply</button>
+                                                    <span class="m-ap-comment-time">@comment.CreatedAt.ToString("MMM dd")</span>
+                                                    @if (comment.IsOwnComment)
+                                                    { <button class="m-ap-comment-act m-ap-comment-del" onclick="deleteComment('@comment.CommentId','@post.PostId')">Delete</button> }
+                                                </div>
+                                                @if (comment.Replies?.Any() == true)
+                                                {
+                                                    <div class="m-ap-nested">
+                                                        @foreach (var reply in comment.Replies)
+                                                        {
+                                                            <div class="m-ap-comment" id="comment-@reply.CommentId">
+                                                                <div class="m-ap-comment-avatar">
+                                                                    @if (!string.IsNullOrEmpty(reply.AuthorPhoto))
+                                                                    { <img src="@reply.AuthorPhoto" alt="" /> }
+                                                                    else
+                                                                    { @(reply.AuthorName.Length > 0 ? reply.AuthorName[0].ToString().ToUpper() : "?") }
+                                                                </div>
+                                                                <div class="m-ap-comment-body">
+                                                                    <div class="m-ap-comment-bubble">
+                                                                        <div class="m-ap-comment-name">@reply.AuthorName</div>
+                                                                        @if (!string.IsNullOrEmpty(reply.ReplyToName))
+                                                                        { <div class="m-ap-comment-reply-pill">↩ @@@reply.ReplyToName</div> }
+                                                                        <div class="m-ap-comment-text">@reply.Content</div>
+                                                                    </div>
+                                                                    <div class="m-ap-comment-actions">
+                                                                        <button class="m-ap-comment-act" onclick="openReplyForm('@post.PostId','@comment.CommentId','@reply.AuthorName')">↩ Reply</button>
+                                                                        <span class="m-ap-comment-time">@reply.CreatedAt.ToString("MMM dd")</span>
+                                                                        @if (reply.IsOwnComment)
+                                                                        { <button class="m-ap-comment-act m-ap-comment-del" onclick="deleteComment('@reply.CommentId','@post.PostId')">Delete</button> }
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                                <div class="m-ap-reply-wrap" id="replyWrap-@comment.CommentId">
+                                                    <div class="m-ap-comment-avatar" style="width:26px;height:26px;font-size:.6rem;flex-shrink:0;"></div>
+                                                    <div style="flex:1;min-width:0;">
+                                                        <div class="m-ap-reply-indicator" id="replyIndicator-@comment.CommentId"></div>
+                                                        <div style="display:flex;gap:.4rem;">
+                                                            <textarea class="m-ap-comment-input" id="replyInput-@comment.CommentId" placeholder="Write a reply..." rows="1" maxlength="500"></textarea>
+                                                            <button class="m-ap-comment-send" onclick="submitReply('@post.PostId','@comment.CommentId')">Send</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            <div class="m-ap-comment-form">
+                                <div class="m-ap-comment-avatar" style="flex-shrink:0;"></div>
+                                <textarea class="m-ap-comment-input" id="commentInput-@post.PostId" placeholder="Write a comment..." rows="1" maxlength="500"></textarea>
+                                <button class="m-ap-comment-send" onclick="submitComment('@post.PostId')">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Books -->
+    <div class="m-ap-section" id="books-section">
+        @if (!Model.Books.Any())
+        {
+            <div class="m-ap-empty"><span class="m-ap-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="36" height="36" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>No books published yet.</div>
+        }
+        else
+        {
+            <div class="m-ap-books">
+                @foreach (var book in Model.Books)
+                {
+                    <a href="/Mobile/Detail/@book.Id" class="m-ap-book-card">
+                        @if (!string.IsNullOrEmpty(book.CoverImage))
+                        { <img src="@book.CoverImage" class="m-ap-book-cover" alt="@book.Title" /> }
+                        else
+                        { <div class="m-ap-book-cover-ph"></div> }
+                        <div class="m-ap-book-info">
+                            <p class="m-ap-book-title">@book.Title</p>
+                            <p class="m-ap-book-meta">@(book.IsFree ? "Free" : "Premium") · @book.ReadCount</p>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Following -->
+    <div class="m-ap-section" id="following-section">
+        @if (!Model.Following.Any())
+        {
+            <div class="m-ap-empty"><span class="m-ap-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="36" height="36" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Not following anyone yet.</div>
+        }
+        else
+        {
+            @foreach (var user in Model.Following)
+            {
+                <a href="/Mobile/AuthorProfile?authorUserId=@user.UserId" class="m-ap-following-item">
+                    @if (!string.IsNullOrEmpty(user.ProfilePhoto))
+                    { <img src="@user.ProfilePhoto" class="m-ap-following-avatar" alt="" /> }
+                    else
+                    { <div class="m-ap-following-avatar-ph">@(user.Name.Length > 0 ? user.Name[0].ToString().ToUpper() : "?")</div> }
+                    <div class="m-ap-following-info">
+                        <p class="m-ap-following-name">@user.Name</p>
+                        <p class="m-ap-following-role">@user.Role · @user.BookCount books</p>
+                    </div>
+                </a>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var wallOwnerId = '@Model.AuthorUserId';
+
+    document.querySelectorAll('.m-ap-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var t = this.dataset.tab;
+            document.querySelectorAll('.m-ap-tab').forEach(function(x) { x.classList.remove('active'); });
+            document.querySelectorAll('.m-ap-section').forEach(function(x) { x.classList.remove('active'); });
+            this.classList.add('active');
+            document.getElementById(t + '-section').classList.add('active');
+        });
+    });
+
+    var followBtn = document.getElementById('followBtn');
+    if (followBtn) {
+        followBtn.addEventListener('click', async function() {
+            var authorId = this.dataset.authorId;
+            try {
+                var res = await mobileApi('/Areas/Mobile/api/Posts/toggle-follow', {
+                    method: 'POST',
+                    body: JSON.stringify({ followedId: authorId })
+                });
+                if (res.ok) {
+                    var d = await res.json();
+                    this.className = 'm-ap-btn ' + (d.isFollowing ? 'm-ap-btn-following' : 'm-ap-btn-primary');
+                    this.textContent = d.isFollowing ? '\u2713 Following' : '+ Follow';
+                    showToast(d.isFollowing ? 'Now following!' : 'Unfollowed');
+                }
+            } catch(e) { showToast('Something went wrong'); }
+        });
+    }
+
+    function updatePostCount() {
+        var ta = document.getElementById('postTextarea');
+        var n = ta.value.length;
+        document.getElementById('postCount').textContent = n + '/1000';
+        document.getElementById('postSendBtn').disabled = n === 0;
+    }
+
+    async function submitPost() {
+        var ta = document.getElementById('postTextarea');
+        var text = ta.value.trim();
+        if (!text) return;
+        var btn = document.getElementById('postSendBtn');
+        btn.disabled = true;
+        try {
+            var res = await mobileApi('/Areas/Mobile/api/Posts/create', {
+                method: 'POST',
+                body: JSON.stringify({ content: text, wallOwnerId: wallOwnerId })
+            });
+            if (!res.ok) throw new Error();
+            ta.value = '';
+            updatePostCount();
+            showToast('Posted!');
+            setTimeout(function() { location.reload(); }, 800);
+        } catch(e) { showToast('Failed to post'); btn.disabled = false; }
+    }
+
+    async function deletePost(postId) {
+        if (!confirm('Delete this post?')) return;
+        try {
+            var res = await mobileApi('/Areas/Mobile/api/Posts/' + postId, { method: 'DELETE' });
+            if (!res.ok) throw new Error();
+            var el = document.getElementById('post-' + postId);
+            if (el) { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(function() { el.remove(); }, 300); }
+            showToast('Post deleted');
+        } catch(e) { showToast('Failed to delete'); }
+    }
+
+    async function toggleLike(postId) {
+        try {
+            var res = await mobileApi('/Areas/Mobile/api/Posts/' + postId + '/like', { method: 'POST' });
+            if (!res.ok) throw new Error();
+            var d = await res.json();
+            var btn = document.getElementById('likeBtn-' + postId);
+            var cnt = document.getElementById('likeCount-' + postId);
+            if (btn) {
+                btn.classList.toggle('liked', d.isLiked);
+                btn.querySelector('span').textContent = d.isLiked ? '\u2764\uFE0F' : '\uD83E\uDD0D';
+            }
+            if (cnt) cnt.textContent = d.likeCount;
+        } catch(e) { showToast('Failed to like'); }
+    }
+
+    function toggleComments(postId) {
+        var el = document.getElementById('comments-' + postId);
+        if (el) el.classList.toggle('open');
+    }
+
+    async function submitComment(postId) {
+        var ta = document.getElementById('commentInput-' + postId);
+        var text = ta ? ta.value.trim() : '';
+        if (!text) return;
+        try {
+            var res = await mobileApi('/Areas/Mobile/api/Posts/' + postId + '/comment', {
+                method: 'POST',
+                body: JSON.stringify({ content: text })
+            });
+            if (!res.ok) throw new Error();
+            ta.value = '';
+            showToast('Comment posted!');
+            setTimeout(function() { location.reload(); }, 600);
+        } catch(e) { showToast('Failed to post comment'); }
+    }
+
+    function openReplyForm(postId, commentId, replyToName) {
+        document.querySelectorAll('.m-ap-reply-wrap.open').forEach(function(x) {
+            if (x.id !== 'replyWrap-' + commentId) x.classList.remove('open');
+        });
+        var wrap = document.getElementById('replyWrap-' + commentId);
+        if (!wrap) return;
+        wrap.classList.toggle('open');
+        if (wrap.classList.contains('open')) {
+            var ind = document.getElementById('replyIndicator-' + commentId);
+            if (ind) ind.textContent = '\u21B3 Replying to ' + replyToName;
+            wrap.dataset.replyToName = replyToName;
+            wrap.dataset.parentCommentId = commentId;
+            var ta = document.getElementById('replyInput-' + commentId);
+            if (ta) ta.focus();
+            var comments = document.getElementById('comments-' + postId);
+            if (comments) comments.classList.add('open');
+        }
+    }
+
+    async function submitReply(postId, commentId) {
+        var ta = document.getElementById('replyInput-' + commentId);
+        var wrap = document.getElementById('replyWrap-' + commentId);
+        var text = ta ? ta.value.trim() : '';
+        if (!text) return;
+        var replyToName = wrap ? wrap.dataset.replyToName : '';
+        try {
+            var res = await mobileApi('/Areas/Mobile/api/Posts/' + postId + '/comment', {
+                method: 'POST',
+                body: JSON.stringify({ content: text, parentCommentId: commentId, replyToName: replyToName })
+            });
+            if (!res.ok) throw new Error();
+            ta.value = '';
+            if (wrap) wrap.classList.remove('open');
+            showToast('Reply posted!');
+            setTimeout(function() { location.reload(); }, 600);
+        } catch(e) { showToast('Failed to post reply'); }
+    }
+
+    async function deleteComment(commentId, postId) {
+        if (!confirm('Delete this comment?')) return;
+        try {
+            var res = await mobileApi('/Areas/Mobile/api/Posts/comments/' + commentId, { method: 'DELETE' });
+            if (!res.ok) throw new Error();
+            var el = document.getElementById('comment-' + commentId);
+            if (el) { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(function() { el.remove(); }, 300); }
+            var cnt = document.getElementById('commentCount-' + postId);
+            if (cnt) cnt.textContent = Math.max(0, parseInt(cnt.textContent) - 1);
+            showToast('Deleted');
+        } catch(e) { showToast('Failed to delete'); }
+    }
+</script>
+}

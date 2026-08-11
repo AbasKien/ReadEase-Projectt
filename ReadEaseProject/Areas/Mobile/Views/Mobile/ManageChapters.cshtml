@@ -1,0 +1,541 @@
+@model ReadEase.ViewModels.Author.ManageChaptersViewModel
+@{
+    ViewData["Title"] = "Manage Chapters";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+    var chapters = Model?.Chapters ?? new List<ReadEase.ViewModels.Author.ChapterListItem>();
+}
+
+@if (Model is null)
+{
+    <div class="mob-empty">
+        <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        <div class="mob-empty-title">Book not found</div>
+        <a class="mob-empty-btn" href="/Mobile/Write">Back to Write</a>
+    </div>
+    return;
+}
+
+<style>
+    /* ── MAUI WebView Compatibility ── */
+    /* Ensure content starts below status bar and doesn't clip */
+    body.maui-host .re-main {
+        padding-top: 0 !important;
+    }
+    .mc-head {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .mc-back {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--re-surface-2);
+        border: 1px solid var(--re-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--re-text);
+        text-decoration: none !important;
+        font-size: .9rem;
+        flex-shrink: 0;
+        transition: background .15s;
+    }
+
+        .mc-back:hover {
+            background: rgba(255,255,255,.1);
+            color: var(--re-text);
+        }
+
+    .mc-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: var(--re-text);
+        line-height: 1.25;
+    }
+
+    .mc-sub {
+        font-size: .72rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-top: .1rem;
+    }
+
+    .ch-card {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 14px;
+        padding: .85rem 1rem;
+        margin-bottom: .6rem;
+        transition: border-color .18s, background .18s;
+    }
+
+        .ch-card:hover {
+            border-color: rgba(242,101,34,.25);
+            background: rgba(242,101,34,.04);
+        }
+
+    .ch-num {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: rgba(242,101,34,.12);
+        border: 1px solid rgba(242,101,34,.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .72rem;
+        font-weight: 900;
+        color: var(--re-orange);
+        flex-shrink: 0;
+    }
+
+    .ch-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ch-name {
+        font-size: .88rem;
+        font-weight: 800;
+        color: var(--re-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ch-meta {
+        font-size: .68rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-top: .15rem;
+    }
+
+    .ch-actions {
+        display: flex;
+        gap: .4rem;
+        flex-shrink: 0;
+    }
+
+    .ch-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--re-surface-2);
+        border: 1px solid var(--re-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: .85rem;
+        transition: all .15s;
+    }
+
+        .ch-btn:hover {
+            background: rgba(255,255,255,.1);
+        }
+
+        .ch-btn.del:hover {
+            background: rgba(239,68,68,.15);
+            border-color: rgba(239,68,68,.3);
+        }
+
+    .mc-form-card {
+        background: var(--re-surface);
+        border: 1.5px solid var(--re-border);
+        border-radius: 18px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .mc-form-card.editing {
+            border-color: rgba(242,101,34,.4);
+            box-shadow: 0 0 0 3px rgba(242,101,34,.08);
+        }
+
+    .mc-form-title {
+        font-size: .9rem;
+        font-weight: 900;
+        color: var(--re-text);
+        margin-bottom: 1rem;
+    }
+
+    .mc-textarea {
+        width: 100%;
+        background: rgba(255,255,255,.04);
+        border: 1.5px solid rgba(255,255,255,.07);
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        font-weight: 600;
+        color: var(--re-text);
+        outline: none;
+        resize: vertical;
+        min-height: 180px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .mc-textarea:focus {
+            border-color: rgba(242,101,34,.4);
+            box-shadow: 0 0 0 3px rgba(242,101,34,.1);
+        }
+
+        .mc-textarea::placeholder {
+            color: var(--re-border);
+        }
+
+    /* Spinner shown while fetching chapter content */
+    .mc-loading-overlay {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: .6rem;
+        padding: 1.5rem;
+        color: var(--re-muted);
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+        .mc-loading-overlay.show {
+            display: flex;
+        }
+
+    .mc-spin {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,.1);
+        border-top-color: var(--re-orange);
+        border-radius: 50%;
+        animation: mcSpin .65s linear infinite;
+        flex-shrink: 0;
+    }
+
+    @@keyframes mcSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .mc-status {
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        font-size: .82rem;
+        font-weight: 700;
+        margin-bottom: .85rem;
+        display: none;
+    }
+
+    .mc-status-err {
+        background: rgba(239,68,68,.1);
+        border: 1px solid rgba(239,68,68,.25);
+        color: #fca5a5;
+    }
+
+    .mc-status-ok {
+        background: rgba(34,197,94,.1);
+        border: 1px solid rgba(34,197,94,.25);
+        color: #86efac;
+    }
+
+    .mc-form-actions {
+        display: flex;
+        gap: .65rem;
+        margin-top: .85rem;
+    }
+
+    .mc-btn-cancel {
+        flex: 1;
+        padding: .75rem;
+        border-radius: var(--radius-sm);
+        background: var(--re-surface-2);
+        border: 1.5px solid var(--re-border);
+        color: var(--re-text);
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: background .15s;
+    }
+
+        .mc-btn-cancel:hover {
+            background: rgba(255,255,255,.1);
+        }
+
+    .empty-chapters {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--re-muted);
+    }
+
+    .empty-ch-icon {
+        font-size: 2.2rem;
+        line-height: 1;
+        margin-bottom: .5rem;
+    }
+
+    .empty-ch-label {
+        font-size: .85rem;
+        font-weight: 700;
+    }
+</style>
+
+<!-- Header -->
+<div class="mc-head">
+    <a class="mc-back" href="/Mobile/Write">←</a>
+    <div>
+        <div class="mc-title">@Model.BookTitle</div>
+        <div class="mc-sub">Manage Chapters · @chapters.Count chapter@(chapters.Count != 1 ? "s" : "")</div>
+    </div>
+</div>
+
+<div class="mc-status" id="mcStatus"></div>
+
+<!-- Add / Edit form -->
+<div class="mc-form-card" id="addForm">
+    <div class="mc-form-title" id="formTitle">Add New Chapter</div>
+
+    <!-- Spinner shown while fetching content from the API -->
+    <div class="mc-loading-overlay" id="contentLoader">
+        <div class="mc-spin"></div>
+        Loading chapter content…
+    </div>
+
+    <!-- Form fields — hidden behind the spinner while loading -->
+    <div id="formFields">
+        <div class="mob-field">
+            <label>Chapter Title <span style="color:var(--re-orange)">*</span></label>
+            <input class="mob-input" id="chTitle" type="text" placeholder="e.g. The Beginning" />
+        </div>
+        <div class="mob-field" style="margin-bottom:.5rem;">
+            <label>Content <span style="color:var(--re-orange)">*</span></label>
+            <textarea class="mc-textarea" id="chContent" placeholder="Write your chapter content here…"></textarea>
+        </div>
+        <div class="mob-field" id="scheduleField" style="margin-bottom:.5rem;">
+            <label><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Schedule Release <span style="color:var(--re-muted);font-weight:600;">(optional — leave empty to publish now)</span></label>
+            <input class="mob-input" id="chScheduledAt" type="datetime-local" />
+            <div style="font-size:.68rem;color:var(--re-muted);font-weight:600;margin-top:.35rem;line-height:1.5;">
+                 <strong style="color:var(--re-orange);">Premium++</strong> reads instantly &nbsp;·&nbsp;
+                 <strong style="color:var(--re-orange);">Premium</strong> gets it 24 h early &nbsp;·&nbsp;
+                🆓 Free readers get it at your scheduled time
+            </div>
+        </div>
+        <div class="mc-form-actions">
+            <button class="mc-btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;">Cancel</button>
+            <button class="mob-btn-orange" id="chSubmitBtn" onclick="submitChapter()" style="flex:1;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Publish Chapter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Chapter list -->
+<div class="mob-sec-head">
+    <div class="mob-sec-title">All Chapters</div>
+    <span class="mob-sec-badge">@chapters.Count</span>
+</div>
+
+<div id="chaptersList">
+    @if (chapters.Any())
+    {
+        foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
+        {
+            <div class="ch-card"
+                 data-chapter-id="@ch.Id"
+                 data-chapter-title="@Html.Encode(ch.Title)"
+                 data-chapter-number="@ch.ChapterNumber">
+                <div class="ch-num">@ch.ChapterNumber</div>
+                <div class="ch-info">
+                    <div class="ch-name">@ch.Title</div>
+                    <div class="ch-meta">Chapter @ch.ChapterNumber · @ch.PublishedAt.ToString("MMM d, yyyy")</div>
+                </div>
+                <div class="ch-actions">
+                    <button class="ch-btn edit-btn" title="Edit chapter"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
+                    <button class="ch-btn del delete-btn" title="Delete chapter"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-chapters">
+            <div class="empty-ch-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="empty-ch-label">No chapters yet. Add your first one above!</div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        const BOOK_ID = '@Model.BookId';
+        let editingId = null;
+
+        // ── Status banner ──────────────────────────────────────────────────
+        function showStatus(msg, type) {
+            const el = document.getElementById('mcStatus');
+            if (!el) return;
+            el.textContent = msg;
+            el.className = 'mc-status mc-status-' + type;
+            el.style.display = 'block';
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(() => el.style.display = 'none', 4000);
+        }
+
+        // ── Toggle loading spinner vs form fields ──────────────────────────
+        function setFormLoading(loading) {
+            document.getElementById('contentLoader').classList.toggle('show', loading);
+            document.getElementById('formFields').style.display = loading ? 'none' : 'block';
+        }
+
+        // ── Submit (publish new or save edit) ──────────────────────────────
+        async function submitChapter() {
+            const title   = document.getElementById('chTitle').value.trim();
+            const content = document.getElementById('chContent').value.trim();
+            const btn     = document.getElementById('chSubmitBtn');
+
+            if (!title)   { showStatus('Chapter title is required.', 'err'); return; }
+            if (!content) { showStatus('Chapter content cannot be empty.', 'err'); return; }
+
+            btn.disabled = true;
+            const originalText = btn.textContent;
+            btn.textContent = editingId ? 'Saving…' : 'Publishing…';
+
+            try {
+                let url, method, body;
+
+                if (editingId) {
+                    url    = '/Areas/Mobile/api/Chapters/edit';
+                    method = 'PUT';
+                    body   = JSON.stringify({ ChapterId: editingId, Title: title, Content: content });
+                } else {
+                    // Build scheduledAt — only for new chapters
+                    const rawSchedule = document.getElementById('chScheduledAt')?.value;
+                    let scheduledAt = null;
+                    if (rawSchedule) {
+                        // datetime-local gives local time; convert to UTC ISO string
+                        scheduledAt = new Date(rawSchedule).toISOString();
+                    }
+                    url    = '/Areas/Mobile/api/Chapters/publish';
+                    method = 'POST';
+                    body   = JSON.stringify({ BookId: BOOK_ID, Title: title, Content: content, ScheduledAt: scheduledAt });
+                }
+
+                const res  = await mobileApi(url, { method, body });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Request failed');
+
+                showStatus(editingId ? 'Chapter updated!' : 'Chapter published!', 'ok');
+                cancelEdit();
+                setTimeout(() => location.reload(), 1000);
+
+            } catch (e) {
+                showStatus(e.message || 'Something went wrong.', 'err');
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // ── Edit: fetch full chapter content then pre-fill the form ────────
+        async function editChapter(id, title) {
+            editingId = id;
+
+            // Hide schedule input — scheduling only makes sense for new chapters
+            const schedField = document.getElementById('scheduleField');
+            if (schedField) schedField.style.display = 'none';
+
+            document.getElementById('addForm').classList.add('editing');
+            document.getElementById('formTitle').textContent   = 'Edit Chapter';
+            document.getElementById('chSubmitBtn').textContent = 'Save Changes';
+            document.getElementById('cancelBtn').style.display = 'block';
+            document.getElementById('addForm').scrollIntoView({ behavior: 'smooth' });
+
+            // Show spinner while we load the content
+            setFormLoading(true);
+
+            try {
+                // GET /Areas/Mobile/api/Chapters/single/{chapterId}
+                // Returns the full chapter object including Content field
+                const res = await mobileApi('/Areas/Mobile/api/Chapters/single/' + id);
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || 'Failed to load chapter');
+                }
+
+                const chapter = await res.json();
+
+                // Pre-fill both fields — mirrors the web view behaviour
+                document.getElementById('chTitle').value   = chapter.title   ?? chapter.Title   ?? title;
+                document.getElementById('chContent').value = chapter.content ?? chapter.Content ?? '';
+
+            } catch (e) {
+                console.error('editChapter error:', e);
+                // Fall back gracefully — title at least is known
+                document.getElementById('chTitle').value   = title;
+                document.getElementById('chContent').value = '';
+                showStatus('Could not load chapter content — please type it manually.', 'err');
+            } finally {
+                setFormLoading(false);
+            }
+        }
+
+        // ── Cancel: reset to "Add New" state ──────────────────────────────
+        function cancelEdit() {
+            editingId = null;
+            document.getElementById('chTitle').value           = '';
+            document.getElementById('chContent').value         = '';
+            const schedField = document.getElementById('scheduleField');
+            if (schedField) { schedField.style.display = 'block'; }
+            const schedInput = document.getElementById('chScheduledAt');
+            if (schedInput) schedInput.value = '';
+            document.getElementById('formTitle').textContent   = 'Add New Chapter';
+            document.getElementById('chSubmitBtn').textContent = 'Publish Chapter';
+            document.getElementById('cancelBtn').style.display = 'none';
+            document.getElementById('addForm').classList.remove('editing');
+            setFormLoading(false);
+        }
+        // ── Delete chapter ─────────────────────────────────────────────────
+        async function deleteChapter(id, title) {
+            if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+
+            try {
+                const res = await mobileApi('/Areas/Mobile/api/Chapters/' + id, { method: 'DELETE' });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || 'Failed to delete');
+                }
+
+                document.querySelector(`.ch-card[data-chapter-id="${id}"]`)?.remove();
+                showStatus(' Chapter deleted.', 'ok');
+
+            } catch (e) {
+                showStatus(e.message || 'Something went wrong.', 'err');
+            }
+        }
+
+        // ── Event delegation (works for any dynamically added cards too) ───
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.ch-btn');
+            if (!btn) return;
+
+            const card  = btn.closest('.ch-card');
+            if (!card) return;
+
+            const id    = card.dataset.chapterId;
+            const title = card.dataset.chapterTitle;
+            if (!id || !title) return;
+
+            if (btn.classList.contains('edit-btn'))   editChapter(id, title);
+            if (btn.classList.contains('delete-btn')) deleteChapter(id, title);
+        });
+    </script>
+}

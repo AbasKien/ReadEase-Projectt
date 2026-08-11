@@ -1,0 +1,672 @@
+﻿@model ReadEase.ViewModels.Auth.VerifyOtpViewModel
+@{
+    ViewData["Title"] = "Verify Email";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body > nav, footer, .re-main > .container {
+        display: none !important;
+    }
+
+    .re-main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .wp-page {
+        min-height: 100vh;
+        background: #fff;
+        display: flex;
+        align-items: stretch;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .blob-tl {
+        width: 280px;
+        height: 580px;
+        top: -160px;
+        left: -110px;
+        border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        animation: morph1 9s ease-in-out infinite;
+    }
+
+    .blob-br {
+        width: 260px;
+        height: 520px;
+        bottom: -160px;
+        right: -100px;
+        border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        animation: morph2 11s ease-in-out infinite;
+    }
+
+    @@keyframes morph1 {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60% / 55% 45% 58% 42%;
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38% / 40% 58% 42% 60%;
+        }
+    }
+
+    @@keyframes morph2 {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42% / 45% 55% 40% 60%;
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55% / 55% 45% 62% 38%;
+        }
+    }
+
+    /* ── LEFT PANEL ── */
+    .wp-left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem 3rem 3.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .wp-left-inner {
+        max-width: 460px;
+        width: 100%;
+    }
+
+    .brand-row {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        margin-bottom: 3rem;
+    }
+
+    .brand-book {
+        width: 36px;
+        height: 42px;
+        background: #f26522;
+        border-radius: 4px 6px 6px 4px;
+        position: relative;
+        box-shadow: 0 4px 14px rgba(242,101,34,.38);
+        flex-shrink: 0;
+    }
+
+        .brand-book::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: rgba(0,0,0,.18);
+        }
+
+        .brand-book::after {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 14px;
+            height: 13px;
+            background: linear-gradient(#fff,#fff) 0 0 / 14px 2px no-repeat, linear-gradient(#fff,#fff) 0 5px / 14px 2px no-repeat, linear-gradient(#fff,#fff) 0 10px / 9px 2px no-repeat;
+            opacity: .88;
+        }
+
+    .brand-name {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        letter-spacing: -.025em;
+        line-height: 1;
+    }
+
+        .brand-name em {
+            color: #f26522;
+            font-style: normal;
+        }
+
+    /* Info card (left) */
+    .info-card {
+        background: #f8f5f0;
+        border-radius: 22px;
+        padding: 2.25rem 2rem;
+        box-shadow: 0 8px 40px rgba(0,0,0,.08);
+        border: 1px solid #ede8e0;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(242,101,34,.1) 0%, transparent 65%);
+        }
+
+    .info-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(242,101,34,.1);
+        border: 1px solid rgba(242,101,34,.25);
+        border-radius: 20px;
+        padding: .2rem .75rem;
+        font-size: .67rem;
+        font-weight: 800;
+        color: #c84f10;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin-bottom: .9rem;
+    }
+
+    .info-headline {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        line-height: 1.2;
+        margin-bottom: .5rem;
+    }
+
+        .info-headline em {
+            color: #f26522;
+            font-style: normal;
+        }
+
+    .info-sub {
+        font-size: .88rem;
+        color: #6b6878;
+        font-weight: 600;
+        margin-bottom: 1.6rem;
+    }
+
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        background: #fff;
+        border: 1px solid #ede8e0;
+        border-radius: 14px;
+        padding: .85rem 1rem;
+        margin-bottom: .65rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+        .tip-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .tip-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(242,101,34,.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #f26522;
+        flex-shrink: 0;
+    }
+
+    .tip-title {
+        font-size: .85rem;
+        font-weight: 800;
+        color: #1a1a2e;
+        margin-bottom: .1rem;
+    }
+
+    .tip-sub {
+        font-size: .73rem;
+        color: #9994a8;
+        font-weight: 600;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .wp-right {
+        width: 460px;
+        flex-shrink: 0;
+        background: #fff;
+        border-left: 1px solid #f0ece6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .wp-form-wrap {
+        width: 100%;
+        max-width: 360px;
+        text-align: center;
+    }
+
+    .otp-icon-wrap {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(242,101,34,.1);
+        border: 2px solid rgba(242,101,34,.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 1.25rem;
+    }
+
+    .wp-form-title {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        margin-bottom: .35rem;
+        letter-spacing: -.02em;
+    }
+
+    .wp-form-sub {
+        font-size: .88rem;
+        color: #6b6878;
+        font-weight: 600;
+        margin-bottom: 1.75rem;
+        line-height: 1.6;
+    }
+
+        .wp-form-sub strong {
+            color: #f26522;
+            font-weight: 800;
+        }
+
+    /* OTP digit boxes */
+    .otp-boxes {
+        display: flex;
+        gap: .55rem;
+        justify-content: center;
+        margin-bottom: .85rem;
+    }
+
+    .otp-box {
+        width: 50px;
+        height: 60px;
+        border: 2px solid #e0dbd3;
+        border-radius: 12px;
+        font-size: 1.6rem;
+        font-weight: 900;
+        text-align: center;
+        font-family: 'Nunito', sans-serif;
+        color: #1a1a2e;
+        background: #fafaf8;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+        caret-color: #f26522;
+    }
+
+        .otp-box:focus {
+            border-color: #f26522;
+            box-shadow: 0 0 0 3px rgba(242,101,34,.13);
+            background: #fff;
+        }
+
+        .otp-box.filled {
+            border-color: #f26522;
+            background: rgba(242,101,34,.04);
+        }
+
+        .otp-box.error {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220,38,38,.1);
+            animation: shake .35s ease;
+        }
+
+    @@keyframes shake {
+        0%, 100% {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-4px);
+        }
+
+        75% {
+            transform: translateX(4px);
+        }
+    }
+
+    .otp-timer {
+        font-size: .82rem;
+        color: #9994a8;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+    }
+
+        .otp-timer .timer-val {
+            color: #f26522;
+            font-weight: 900;
+        }
+
+            .otp-timer .timer-val.expired {
+                color: #dc2626;
+            }
+
+    .btn-wp-submit {
+        width: 100%;
+        padding: .82rem 1rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .93rem;
+        font-weight: 800;
+        background: #f26522;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background .2s, transform .15s, box-shadow .2s, opacity .2s;
+        box-shadow: 0 4px 14px rgba(242,101,34,.3);
+        margin-bottom: 1.1rem;
+    }
+
+        .btn-wp-submit:hover:not(:disabled) {
+            background: #d9541a;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px rgba(242,101,34,.4);
+        }
+
+        .btn-wp-submit:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+    .resend-row {
+        font-size: .86rem;
+        color: #6b6878;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+        .resend-row a {
+            color: #f26522;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+            .resend-row a:hover {
+                text-decoration: underline;
+            }
+
+    .wp-back-row {
+        font-size: .84rem;
+        color: #9994a8;
+        font-weight: 600;
+    }
+
+        .wp-back-row a {
+            color: #6b6878;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+            .wp-back-row a:hover {
+                color: #f26522;
+            }
+
+    .wp-alert {
+        border-radius: 10px;
+        padding: .65rem 1rem;
+        font-size: .85rem;
+        font-weight: 600;
+        margin-bottom: .9rem;
+        text-align: left;
+    }
+
+    @@media (max-width: 860px) {
+        .wp-left {
+            display: none;
+        }
+
+        .wp-right {
+            width: 100%;
+            border-left: none;
+            padding: 3rem 1.5rem;
+        }
+
+        .blob-tl {
+            width: 180px;
+            height: 360px;
+            top: -100px;
+            left: -70px;
+        }
+
+        .blob-br {
+            width: 160px;
+            height: 320px;
+            bottom: -90px;
+            right: -60px;
+        }
+    }
+</style>
+
+<div class="wp-page">
+    <div class="blob blob-tl"></div>
+    <div class="blob blob-br"></div>
+
+    <!-- ═══ LEFT ═══ -->
+    <div class="wp-left">
+        <div class="wp-left-inner">
+            <div class="brand-row">
+                <div class="brand-book"></div>
+                <div class="brand-name">Read<em>Ease</em></div>
+            </div>
+            <div class="info-card">
+                <div class="info-eyebrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Almost there
+                </div>
+                <h2 class="info-headline">One step to<br><em>unlock reading.</em></h2>
+                <p class="info-sub">Enter the 6-digit code we sent to verify your account.</p>
+
+                <div class="tip-item">
+                    <div class="tip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
+                    <div>
+                        <div class="tip-title">Check your inbox</div>
+                        <div class="tip-sub">Look for an email from ReadEase</div>
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                    </div>
+                    <div>
+                        <div class="tip-title">Check spam / junk folder</div>
+                        <div class="tip-sub">Sometimes it ends up there</div>
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div>
+                        <div class="tip-title">Code expires in 10 minutes</div>
+                        <div class="tip-sub">Request a new one if it expires</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ RIGHT ═══ -->
+    <div class="wp-right">
+        <div class="wp-form-wrap">
+
+            <div class="otp-icon-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f26522" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <h1 class="wp-form-title">Verify your email</h1>
+            <p class="wp-form-sub">
+                We sent a 6-digit code to<br>
+                <strong>@Model.Email</strong>
+            </p>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success wp-alert">@TempData["SuccessMessage"]</div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger wp-alert" id="errorAlert">@TempData["ErrorMessage"]</div>
+            }
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger wp-alert"></div>
+
+            <form asp-action="VerifyOtp" method="post" id="otpForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Email" />
+                <input type="hidden" asp-for="Otp" id="otpHidden" />
+
+                <div class="otp-boxes" id="otpBoxes">
+                    <input class="otp-box" type="text" inputmode="numeric" maxlength="1" data-index="0" autocomplete="one-time-code" />
+                    <input class="otp-box" type="text" inputmode="numeric" maxlength="1" data-index="1" autocomplete="off" />
+                    <input class="otp-box" type="text" inputmode="numeric" maxlength="1" data-index="2" autocomplete="off" />
+                    <input class="otp-box" type="text" inputmode="numeric" maxlength="1" data-index="3" autocomplete="off" />
+                    <input class="otp-box" type="text" inputmode="numeric" maxlength="1" data-index="4" autocomplete="off" />
+                    <input class="otp-box" type="text" inputmode="numeric" maxlength="1" data-index="5" autocomplete="off" />
+                </div>
+
+                <div class="otp-timer">
+                    Code expires in <span class="timer-val" id="timerVal">10:00</span>
+                </div>
+
+                <button type="submit" class="btn-wp-submit" id="submitBtn" disabled>
+                    Verify Email →
+                </button>
+            </form>
+
+            <div class="resend-row">
+                Didn't receive it?
+                <a asp-action="ResendOtp" asp-route-email="@Model.Email" id="resendLink">Resend code</a>
+            </div>
+
+            <div class="wp-back-row">
+                Wrong email? <a asp-action="Register">Go back to sign up</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var boxes     = Array.from(document.querySelectorAll('.otp-box'));
+            var hidden    = document.getElementById('otpHidden');
+            var submitBtn = document.getElementById('submitBtn');
+            var timerEl   = document.getElementById('timerVal');
+            var errorAlert = document.getElementById('errorAlert');
+            var isExpired = false;
+
+            /* ── OTP input behaviour ── */
+            boxes.forEach(function (box, i) {
+
+                box.addEventListener('input', function (e) {
+                    var val = e.target.value.replace(/\D/g, '');
+                    e.target.value = val ? val.slice(-1) : '';
+                    e.target.classList.toggle('filled', !!e.target.value);
+                    if (val && i < 5) boxes[i + 1].focus();
+                    syncHidden();
+                });
+
+                box.addEventListener('keydown', function (e) {
+                    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                        boxes[i - 1].focus();
+                        boxes[i - 1].value = '';
+                        boxes[i - 1].classList.remove('filled');
+                        syncHidden();
+                    }
+                    /* Allow only digits and control keys */
+                    if (!/^\d$/.test(e.key) &&
+                        !['Backspace','Tab','ArrowLeft','ArrowRight','Delete'].includes(e.key) &&
+                        !e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                    }
+                });
+
+                box.addEventListener('paste', function (e) {
+                    e.preventDefault();
+                    var pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+                    pasted.split('').forEach(function (ch, j) {
+                        if (boxes[j]) {
+                            boxes[j].value = ch;
+                            boxes[j].classList.add('filled');
+                        }
+                    });
+                    var next = Math.min(pasted.length, 5);
+                    boxes[next].focus();
+                    syncHidden();
+                });
+
+                box.addEventListener('focus', function () {
+                    e.target && box.select && box.select();
+                });
+            });
+
+            function syncHidden() {
+                var code = boxes.map(function (b) { return b.value; }).join('');
+                hidden.value = code;
+                submitBtn.disabled = (code.length < 6 || isExpired);
+            }
+
+            /* ── Shake effect on error ── */
+            if (errorAlert) {
+                boxes.forEach(function (b) { b.classList.add('error'); });
+                setTimeout(function () {
+                    boxes.forEach(function (b) { b.classList.remove('error'); });
+                }, 400);
+            }
+
+            /* ── Countdown timer ── */
+            var secs = 600;
+            var timer = setInterval(function () {
+                secs--;
+                var m = String(Math.floor(secs / 60)).padStart(2, '0');
+                var s = String(secs % 60).padStart(2, '0');
+                timerEl.textContent = m + ':' + s;
+
+                if (secs <= 60) timerEl.style.color = '#dc2626';
+
+                if (secs <= 0) {
+                    clearInterval(timer);
+                    isExpired = true;
+                    timerEl.textContent = 'Expired';
+                    timerEl.classList.add('expired');
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Code expired';
+                }
+            }, 1000);
+
+            /* Focus first empty box on load */
+            var firstEmpty = boxes.find(function (b) { return !b.value; });
+            if (firstEmpty) firstEmpty.focus();
+
+        }());
+    </script>
+}

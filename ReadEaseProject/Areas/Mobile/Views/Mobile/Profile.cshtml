@@ -1,0 +1,119 @@
+@model ReadEase.ViewModels.Profile.ProfileViewModel
+@{
+    ViewData["Title"] = "Profile";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+    var profilePhoto = Model.ProfilePhoto;
+    var userName = Model.Name;
+    var userRole = Model.Role;
+    var isSubscribed = Model.IsSubscribed == true;
+}
+
+<style>
+    body.maui-host .prof-hero { padding-top: 1.25rem !important; }
+
+    .prof-hero {
+        display: flex; flex-direction: column; align-items: center;
+        padding: max(1.75rem, env(safe-area-inset-top, 1.75rem)) 1rem 1.5rem;
+        text-align: center; width: calc(100% + 2rem);
+        margin-left: -1rem; margin-right: -1rem; margin-top: -.25rem; margin-bottom: 1.5rem;
+        background: linear-gradient(180deg, rgba(200,134,10,.12) 0%, transparent 100%);
+        border-bottom: 1px solid var(--re-border); position: relative; overflow: hidden;
+    }
+    .prof-hero::before { content: ''; position: absolute; top: -30%; left: 50%; transform: translateX(-50%); width: 200px; height: 200px; background: radial-gradient(circle, rgba(200,134,10,.15) 0%, transparent 65%); pointer-events: none; }
+    .prof-avatar-wrap { position: relative; margin-bottom: 1rem; }
+    .prof-avatar { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #C8860A, #E9A520); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; color: var(--re-text); overflow: hidden; border: 3px solid rgba(200,134,10,.35); box-shadow: 0 0 0 5px rgba(200,134,10,.1), 0 8px 28px rgba(44,26,14,.15); }
+    .prof-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .prof-online-dot { position: absolute; bottom: 4px; right: 4px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; border: 3px solid var(--re-bg); box-shadow: 0 0 6px rgba(34,197,94,.5); }
+    .prof-name { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--re-text); margin-bottom: .3rem; }
+    .prof-role { display: inline-block; background: rgba(200,134,10,.12); color: var(--re-orange); font-size: .68rem; font-weight: 900; padding: .22rem .8rem; border-radius: 99px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; border: 1px solid rgba(200,134,10,.2); }
+    .prof-sub-badge { display: inline-flex; align-items: center; gap: .35rem; background: rgba(200,134,10,.12); border: 1px solid rgba(200,134,10,.25); color: var(--re-orange); font-size: .72rem; font-weight: 800; padding: .25rem .85rem; border-radius: 99px; }
+
+    .prof-section { margin-bottom: 1.1rem; }
+    .prof-section-title { font-size: .62rem; font-weight: 900; color: var(--re-muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .55rem; padding: 0 .25rem; }
+    .prof-item { display: flex; align-items: center; gap: .9rem; padding: .9rem 1rem; background: var(--re-surface); border: 1px solid var(--re-border); border-radius: 14px; margin-bottom: .45rem; text-decoration: none !important; color: var(--re-text) !important; transition: border-color .18s, box-shadow .18s, transform .15s; cursor: pointer; -webkit-appearance: none; width: 100%; text-align: left; font-family: 'Nunito', sans-serif; font-size: inherit; min-height: 56px; }
+    .prof-item:hover { border-color: rgba(200,134,10,.35); box-shadow: var(--shadow-sm); transform: translateX(2px); }
+    .prof-item-icon { width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: var(--re-surface-2); display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid var(--re-border); }
+    .prof-item-text { flex: 1; min-width: 0; }
+    .prof-item-label { font-size: .88rem; font-weight: 800; color: var(--re-text); }
+    .prof-item-desc { font-size: .7rem; color: var(--re-muted); font-weight: 600; margin-top: .05rem; }
+    .prof-item-arrow { color: var(--re-border); font-size: 1rem; font-weight: 900; flex-shrink: 0; }
+    .prof-item.danger .prof-item-label { color: #C0392B; }
+    .prof-item.danger .prof-item-icon { background: rgba(192,57,43,.1); border-color: rgba(192,57,43,.15); }
+    .prof-item.danger:hover { border-color: rgba(192,57,43,.3); box-shadow: none; }
+    .prof-version { text-align: center; font-size: .7rem; color: var(--re-border); font-weight: 600; padding: .75rem .5rem 0; }
+</style>
+
+<div class="prof-hero" style="padding-top: max(2.5rem, env(safe-area-inset-top, 2.5rem));">
+    <div class="prof-avatar-wrap">
+        <div class="prof-avatar">
+            @if (!string.IsNullOrEmpty(profilePhoto)) { <img src="@profilePhoto" alt="avatar" /> }
+            else { @(userName.Length > 0 ? userName[0].ToString().ToUpper() : "?") }
+        </div>
+        <div class="prof-online-dot"></div>
+    </div>
+    <div class="prof-name">@userName</div>
+    <span class="prof-role">@userRole</span>
+    @if (isSubscribed) { <div class="prof-sub-badge">Premium Member</div> }
+</div>
+
+<div class="prof-section">
+    <div class="prof-section-title">Account</div>
+    <a class="prof-item" href="/Mobile/EditProfile">
+        <div class="prof-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="prof-item-text"><div class="prof-item-label">Edit Profile</div><div class="prof-item-desc">Name, photo, password</div></div>
+        <span class="prof-item-arrow">›</span>
+    </a>
+    <a class="prof-item" href="/Mobile/Subscribe">
+        <div class="prof-item-icon" style="background:rgba(200,134,10,.12);border-color:rgba(200,134,10,.2);color:var(--re-orange);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="prof-item-text">
+            @if (isSubscribed) { <div class="prof-item-label" style="color:var(--re-orange);">My Plan</div><div class="prof-item-desc">View or manage your subscription</div> }
+            else { <div class="prof-item-label" style="color:var(--re-orange);">Go Premium</div><div class="prof-item-desc">Unlock all books &amp; AI features</div> }
+        </div>
+        <span class="prof-item-arrow">›</span>
+    </a>
+</div>
+
+<div class="prof-section">
+    <div class="prof-section-title">Reading</div>
+    <a class="prof-item" href="/Mobile/Ongoing">
+        <div class="prof-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="prof-item-text"><div class="prof-item-label">Ongoing Books</div><div class="prof-item-desc">Books you're currently reading</div></div>
+        <span class="prof-item-arrow">›</span>
+    </a>
+    <a class="prof-item" href="/Mobile/Completed">
+        <div class="prof-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <div class="prof-item-text"><div class="prof-item-label">Completed Books</div><div class="prof-item-desc">Your reading history</div></div>
+        <span class="prof-item-arrow">›</span>
+    </a>
+    <a class="prof-item" href="/Mobile/Favorites">
+        <div class="prof-item-icon" style="background:rgba(200,50,80,.1);border-color:rgba(200,50,80,.15);color:#e05070;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <div class="prof-item-text"><div class="prof-item-label">My Favorites</div><div class="prof-item-desc">Books you love</div></div>
+        <span class="prof-item-arrow">›</span>
+    </a>
+</div>
+
+@if (User.IsInRole("Author") || User.IsInRole("Admin"))
+{
+    <div class="prof-section">
+        <div class="prof-section-title">Writing</div>
+        <a class="prof-item" href="/Mobile/Write">
+            <div class="prof-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
+            <div class="prof-item-text"><div class="prof-item-label">My Books</div><div class="prof-item-desc">Manage your published works</div></div>
+            <span class="prof-item-arrow">›</span>
+        </a>
+        <a class="prof-item" href="/Mobile/Dashboard">
+            <div class="prof-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+            <div class="prof-item-text"><div class="prof-item-label">Author Dashboard</div><div class="prof-item-desc">Stats &amp; analytics</div></div>
+            <span class="prof-item-arrow">›</span>
+        </a>
+    </div>
+}
+
+<div class="prof-section">
+    <a class="prof-item danger" href="/Mobile/Logout" onclick="return confirm('Sign out of ReadEase?')">
+        <div class="prof-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+        <div class="prof-item-text"><div class="prof-item-label">Sign Out</div><div class="prof-item-desc">Log out of ReadEase</div></div>
+    </a>
+</div>
+
+<div class="prof-version">ReadEase Mobile · v1.0</div>

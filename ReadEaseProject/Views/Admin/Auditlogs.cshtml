@@ -1,0 +1,833 @@
+﻿@model ReadEase.ViewModels.AuditLog.AuditLogFilterViewModel
+@{
+    ViewData["Title"] = "Audit Logs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string ActionBadgeStyle(string action) => action switch
+    {
+        var a when a.Contains("Login") => "background:#dcfce7;color:#15803d;",
+        var a when a.Contains("Logout") => "background:#f3f4f6;color:#6b7280;",
+        var a when a.Contains("Delete") || a.Contains("Reject") => "background:#fee2e2;color:#dc2626;",
+        var a when a.Contains("Approve") => "background:#dcfce7;color:#15803d;",
+        var a when a.Contains("Create") || a.Contains("Publish") || a.Contains("Register") => "background:#dbeafe;color:#1d4ed8;",
+        var a when a.Contains("Edit") || a.Contains("Update") => "background:#fef3c7;color:#92400e;",
+        var a when a.Contains("Opened") || a.Contains("View") => "background:#e0f2fe;color:#0369a1;",
+        var a when a.Contains("Restore") => "background:#d1fae5;color:#065f46;",
+        var a when a.Contains("Subscri") => "background:#ede9fe;color:#6d28d9;",
+        _ => "background:#f3f4f6;color:#374151;"
+    };
+    string RoleBadgeStyle(string role) => role switch
+    {
+        "Admin" => "background:#fee2e2;color:#991b1b;",
+        "Author" => "background:#dcfce7;color:#15803d;",
+        _ => "background:#dbeafe;color:#1d4ed8;"
+    };
+}
+
+<style>
+    .re-blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+        opacity: .06;
+    }
+
+    .re-blob-tl {
+        width: 320px;
+        height: 640px;
+        top: -180px;
+        left: -120px;
+        border-radius: 38% 62% 55% 45%/42% 38% 62% 58%;
+        animation: blobA 9s ease-in-out infinite;
+    }
+
+    .re-blob-br {
+        width: 300px;
+        height: 580px;
+        bottom: -180px;
+        right: -110px;
+        border-radius: 55% 45% 38% 62%/60% 42% 58% 40%;
+        animation: blobB 11s ease-in-out infinite;
+    }
+
+    @@keyframes blobA {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45%/42% 38% 62% 58%
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60%/55% 45% 58% 42%
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38%/40% 58% 42% 60%
+        }
+    }
+
+    @@keyframes blobB {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62%/60% 42% 58% 40%
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42%/45% 55% 40% 60%
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55%/55% 45% 62% 38%
+        }
+    }
+
+    .re-hero {
+        background: linear-gradient(135deg,#7f1d1d 0%,#991b1b 55%,#450a0a 100%);
+        border-radius: 20px;
+        padding: 2.25rem 2.5rem;
+        margin-bottom: 1.75rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .re-hero::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle,rgba(255,255,255,.08) 0%,transparent 65%);
+            pointer-events: none;
+        }
+
+    .re-hero-inner {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .re-hero-title {
+        font-family: 'Nunito',sans-serif;
+        font-size: 1.9rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.1;
+        margin: 0;
+    }
+
+    .re-hero-sub {
+        font-size: .88rem;
+        color: rgba(255,255,255,.5);
+        font-weight: 600;
+        margin-top: .2rem;
+    }
+
+    .re-btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.15);
+        border-radius: 10px;
+        color: rgba(255,255,255,.8) !important;
+        font-family: 'Nunito',sans-serif;
+        font-weight: 700;
+        font-size: .82rem;
+        padding: .45rem 1rem;
+        text-decoration: none !important;
+        transition: background .18s;
+    }
+
+        .re-btn-ghost:hover {
+            background: rgba(255,255,255,.18);
+            color: #fff !important;
+        }
+
+    .btn-export {
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 10px;
+        color: #fff !important;
+        font-size: .82rem;
+        font-weight: 700;
+        padding: .45rem 1rem;
+        cursor: pointer;
+        transition: background .18s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+        .btn-export:hover {
+            background: rgba(255,255,255,.25);
+        }
+
+    .live-bar {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        background: #fff;
+        border: 1px solid #e8e3dc;
+        border-radius: 14px;
+        padding: .75rem 1.25rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+
+    .live-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #22c55e;
+        flex-shrink: 0;
+        animation: pulseG 1.4s ease infinite;
+    }
+
+        .live-dot.paused {
+            background: #f59e0b;
+            animation: none;
+        }
+
+        .live-dot.disconnected {
+            background: #ef4444;
+            animation: none;
+        }
+
+    @@keyframes pulseG {
+        0% {
+            box-shadow: 0 0 0 0 rgba(34,197,94,.5)
+        }
+
+        70% {
+            box-shadow: 0 0 0 7px rgba(34,197,94,0)
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(34,197,94,0)
+        }
+    }
+
+    .live-label {
+        font-family: 'Nunito',sans-serif;
+        font-size: .82rem;
+        font-weight: 800;
+        color: #1a1a2e;
+    }
+
+    .live-count-badge {
+        background: #fff3ed;
+        color: #f26522;
+        font-size: .72rem;
+        font-weight: 800;
+        padding: .18rem .65rem;
+        border-radius: 20px;
+        border: 1px solid #fcd9c3;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .btn-pause {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        background: #f5f3f0;
+        border: 1.5px solid #e0dbd3;
+        border-radius: 8px;
+        color: #4a4660;
+        font-family: 'Nunito',sans-serif;
+        font-size: .78rem;
+        font-weight: 800;
+        padding: .32rem .9rem;
+        cursor: pointer;
+        transition: all .18s;
+    }
+
+        .btn-pause:hover {
+            background: #eee;
+        }
+
+        .btn-pause.paused {
+            background: #fff3ed;
+            border-color: #fcd9c3;
+            color: #c2410c;
+        }
+
+    .filter-card {
+        background: #fff;
+        border: 1px solid #e8e3dc;
+        border-radius: 18px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        position: relative;
+        z-index: 2;
+    }
+
+    .filter-title {
+        font-family: 'Nunito',sans-serif;
+        font-weight: 800;
+        font-size: .88rem;
+        color: #1a1a2e;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .re-label {
+        font-size: .73rem;
+        font-weight: 800;
+        color: #4a4660;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .35rem;
+        display: block;
+    }
+
+    .re-input {
+        border: 1.5px solid #e8e3dc;
+        border-radius: 10px;
+        padding: .55rem .9rem;
+        font-size: .875rem;
+        transition: border-color .18s;
+        font-family: 'Nunito',sans-serif;
+        width: 100%;
+    }
+
+        .re-input:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220,38,38,.1);
+            outline: none;
+        }
+
+    .btn-search {
+        background: #dc2626;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 800;
+        font-size: .875rem;
+        padding: .6rem 1.25rem;
+        transition: background .18s;
+        cursor: pointer;
+        font-family: 'Nunito',sans-serif;
+    }
+
+        .btn-search:hover {
+            background: #b91c1c;
+        }
+
+    .btn-clear {
+        background: #f5f3f0;
+        border: 1.5px solid #e0dbd3;
+        border-radius: 10px;
+        color: #4a4660;
+        font-weight: 700;
+        font-size: .875rem;
+        padding: .55rem .9rem;
+        text-decoration: none;
+        transition: background .15s;
+    }
+
+        .btn-clear:hover {
+            background: #eee;
+        }
+
+    .count-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        background: #fff3ed;
+        color: #f26522;
+        font-size: .78rem;
+        font-weight: 800;
+        padding: .3rem .8rem;
+        border-radius: 20px;
+        border: 1px solid #fcd9c3;
+    }
+
+    .re-table-wrap {
+        background: #fff;
+        border: 1px solid #e8e3dc;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        position: relative;
+        z-index: 2;
+    }
+
+    .re-table thead th {
+        background: #991b1b !important;
+        color: rgba(255,255,255,.82) !important;
+        font-size: .68rem !important;
+        text-transform: uppercase;
+        letter-spacing: .65px;
+        padding: .85rem 1.1rem !important;
+        border: none !important;
+        white-space: nowrap;
+    }
+
+    .re-table td {
+        padding: .78rem 1.1rem !important;
+        vertical-align: middle;
+        font-size: .835rem;
+        border-color: #f0eeea !important;
+    }
+
+    .re-table tbody tr:hover {
+        background: #fef2f2 !important;
+    }
+
+    .log-badge {
+        font-size: .65rem;
+        font-weight: 800;
+        padding: .22rem .6rem;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    .device-cell {
+        max-width: 170px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        color: #6b6878;
+        font-size: .78rem;
+    }
+
+    @@keyframes flashNew {
+        0% {
+            background: #fef9c3
+        }
+
+        60% {
+            background: #fef9c3
+        }
+
+        100% {
+            background: transparent
+        }
+    }
+
+    .log-row-new {
+        animation: flashNew 2.5s ease forwards;
+    }
+
+    .al-empty {
+        text-align: center;
+        padding: 3.5rem 2rem;
+    }
+
+        .al-empty .empty-icon {
+            color: #c0bdd0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto .75rem;
+        }
+
+    #queueToast {
+        position: fixed;
+        bottom: 1.75rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(14px);
+        background: #1a1a2e;
+        color: #fff;
+        padding: .55rem 1.4rem;
+        border-radius: 50px;
+        font-family: 'Nunito',sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        box-shadow: 0 6px 24px rgba(0,0,0,.25);
+        opacity: 0;
+        transition: all .3s cubic-bezier(.34,1.56,.64,1);
+        z-index: 9999;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+        #queueToast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+    .fade-up {
+        animation: fadeUp .45s ease both;
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(18px)
+        }
+
+        to {
+            opacity: 1;
+            transform: none
+        }
+    }
+
+    /* ── PAGINATION ── */
+    .re-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: .75rem;
+        margin-top: 1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .re-page-info {
+        font-family: 'Nunito',sans-serif;
+        font-size: .78rem;
+        font-weight: 700;
+        color: #9994a8;
+    }
+
+    .re-page-btns {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+    }
+
+    .re-page-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        border: 1.5px solid #e8e3dc;
+        background: #fff;
+        font-family: 'Nunito',sans-serif;
+        font-size: .78rem;
+        font-weight: 800;
+        color: #6b6878;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .15s;
+        padding: 0;
+    }
+
+        .re-page-btn:hover:not(:disabled) {
+            border-color: #f26522;
+            color: #f26522;
+            background: #fff3ed;
+        }
+
+        .re-page-btn.active {
+            background: #f26522;
+            border-color: #f26522;
+            color: #fff;
+        }
+
+        .re-page-btn:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+        .re-page-btn.prev-next {
+            width: auto;
+            padding: 0 .65rem;
+            gap: .25rem;
+            font-size: .72rem;
+        }
+</style>
+
+<div class="re-blob re-blob-tl"></div>
+<div class="re-blob re-blob-br"></div>
+
+<div class="re-hero fade-up">
+    <div class="re-hero-inner">
+        <div>
+            <div class="re-hero-title" style="display:flex;align-items:center;gap:.65rem;">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                Audit Logs
+            </div>
+            <div class="re-hero-sub">Track every action across the platform — live</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            @if (Model.Logs.Any())
+            {
+                <button class="btn-export" onclick="exportCSV()" style="display:inline-flex;align-items:center;gap:.4rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export CSV
+                </button>
+            }
+            <a asp-controller="Admin" asp-action="Index" class="re-btn-ghost">← Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<div class="live-bar fade-up" id="liveBar">
+    <div class="live-dot" id="liveDot"></div>
+    <span class="live-label" id="liveLabel">Connecting…</span>
+    <span class="live-count-badge" id="liveCounter"><span id="liveCountNum">@Model.Logs.Count</span> logs</span>
+    <button class="btn-pause" id="pauseBtn" onclick="togglePause()" style="display:inline-flex;align-items:center;gap:.35rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        Pause Live
+    </button>
+</div>
+
+<div class="filter-card fade-up">
+    <div class="filter-title" style="display:flex;align-items:center;gap:.4rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filter Logs
+    </div>
+    <form asp-controller="Admin" asp-action="AuditLogs" method="get" class="row g-2 align-items-end">
+        <div class="col-md-2 col-6">
+            <label class="re-label">Role</label>
+            <select name="role" class="re-input" style="padding:.55rem .9rem;">
+                <option value="">All Roles</option>
+                <option value="Admin" selected="@(Model.Role == "Admin" ? "selected" : null)">Admin</option>
+                <option value="Author" selected="@(Model.Role == "Author" ? "selected" : null)">Author</option>
+                <option value="User" selected="@(Model.Role == "User" ? "selected" : null)">User</option>
+            </select>
+        </div>
+        <div class="col-md-3 col-6">
+            <label class="re-label">Action contains</label>
+            <input type="text" name="actionFilter" value="@Model.Action" class="re-input" placeholder="e.g. Login, BookOpened…" />
+        </div>
+        <div class="col-md-2 col-6">
+            <label class="re-label">From</label>
+            <input type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" class="re-input" />
+        </div>
+        <div class="col-md-2 col-6">
+            <label class="re-label">To</label>
+            <input type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" class="re-input" />
+        </div>
+        <div class="col-md-3 d-flex gap-2 align-items-end">
+            <button type="submit" class="btn-search flex-grow-1" style="display:inline-flex;align-items:center;justify-content:center;gap:.4rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Search
+            </button>
+            <a asp-controller="Admin" asp-action="AuditLogs" class="btn-clear">✕</a>
+        </div>
+    </form>
+</div>
+
+<div class="d-flex align-items-center gap-2 mb-3 fade-up" id="countRow"
+     style="@(Model.Logs.Any() ? "" : "display:none!important;")">
+    <span class="count-pill"><span id="tableCountNum">@Model.Logs.Count</span> log@(Model.Logs.Count != 1 ? "s" : "") loaded</span>
+    @if (Model.Logs.Count == 500)
+    {
+        <span class="text-muted small">— Showing latest 500. Use filters to narrow down.</span>
+    }
+</div>
+
+<div class="re-table-wrap fade-up">
+    @if (!Model.Logs.Any())
+    {
+        <div class="al-empty" id="emptyState">
+            <span class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </span>
+            <div class="fw-bold mb-1" style="font-family:'Nunito',sans-serif;">No audit logs found</div>
+            <div class="text-muted small">Try adjusting your filters or clear them to see all logs.</div>
+        </div>
+    }
+    <div class="table-responsive" id="tableWrap" style="@(!Model.Logs.Any() ? "display:none;" : "")">
+        <table class="table re-table mb-0" id="auditTable">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Record</th>
+                    <th>IP</th>
+                    <th>Device</th>
+                </tr>
+            </thead>
+            <tbody id="logBody">
+                @foreach (var log in Model.Logs)
+                {
+                    <tr>
+                        <td style="white-space:nowrap;">
+                            <span class="fw-bold" style="font-size:.84rem;color:#1a1a2e;">@log.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                            <br /><span style="font-size:.72rem;color:#9994a8;">@log.CreatedAt.ToLocalTime().ToString("HH:mm:ss")</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold" style="font-size:.84rem;">@log.UserName</span>
+                            @if (!string.IsNullOrEmpty(log.UserId))
+                            {
+                                <br />
+                        
+                                <span style="font-size:.65rem;color:#c0bdd0;font-family:monospace;">@log.UserId[..8]…</span>
+                            }
+                        </td>
+                        <td><span class="log-badge" style="@RoleBadgeStyle(log.Role)">@log.Role</span></td>
+                        <td><span class="log-badge" style="@ActionBadgeStyle(log.Action)">@log.Action</span></td>
+                        <td style="color:#6b6878;font-size:.8rem;">@(log.RecordAffected ?? "—")</td>
+                        <td style="color:#6b6878;font-size:.8rem;white-space:nowrap;">@(log.IpAddress ?? "—")</td>
+                        <td><span class="device-cell" title="@log.Device">@(log.Device ?? "—")</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="re-pagination" id="auditPagination">
+    <span class="re-page-info" id="auditPageInfo"></span>
+    <div class="re-page-btns" id="auditPageBtns"></div>
+</div>
+
+<div id="queueToast"></div>
+
+@section Scripts {
+    <script>
+        const liveDot = document.getElementById('liveDot');
+        const liveLabel = document.getElementById('liveLabel');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const logBody = document.getElementById('logBody');
+        const tableWrap = document.getElementById('tableWrap');
+        const emptyState = document.getElementById('emptyState');
+        const liveCountEl = document.getElementById('liveCountNum');
+        const tblCountEl = document.getElementById('tableCountNum');
+        const countRow = document.getElementById('countRow');
+        let isPaused = false, liveCount = @Model.Logs.Count, pendingQueue = [];
+
+        function actionStyle(a) {
+            if (/Login/i.test(a)) return 'background:#dcfce7;color:#15803d;';
+            if (/Logout/i.test(a)) return 'background:#f3f4f6;color:#6b7280;';
+            if (/Delete|Reject/i.test(a)) return 'background:#fee2e2;color:#dc2626;';
+            if (/Approve/i.test(a)) return 'background:#dcfce7;color:#15803d;';
+            if (/Create|Publish|Register/i.test(a)) return 'background:#dbeafe;color:#1d4ed8;';
+            if (/Edit|Update/i.test(a)) return 'background:#fef3c7;color:#92400e;';
+            if (/Opened|View/i.test(a)) return 'background:#e0f2fe;color:#0369a1;';
+            if (/Restore/i.test(a)) return 'background:#d1fae5;color:#065f46;';
+            if (/Subscri/i.test(a)) return 'background:#ede9fe;color:#6d28d9;';
+            return 'background:#f3f4f6;color:#374151;';
+        }
+        function roleStyle(r) {
+            if (r === 'Admin') return 'background:#fee2e2;color:#991b1b;';
+            if (r === 'Author') return 'background:#dcfce7;color:#15803d;';
+            return 'background:#dbeafe;color:#1d4ed8;';
+        }
+        function escH(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function buildRow(log) {
+            const d = new Date(log.createdAt);
+            const date = d.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
+            const time = d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+            const uid8 = log.userId ? log.userId.substring(0,8)+'…' : '';
+            const tr = document.createElement('tr');
+            tr.className = 'log-row-new';
+            tr.innerHTML = `
+                <td style="white-space:nowrap;"><span class="fw-bold" style="font-size:.84rem;color:#1a1a2e;">${date}</span><br/><span style="font-size:.72rem;color:#9994a8;">${time}</span></td>
+                <td><span class="fw-bold" style="font-size:.84rem;">${escH(log.userName)}</span>${uid8?`<br/><span style="font-size:.65rem;color:#c0bdd0;font-family:monospace;">${uid8}</span>`:''}</td>
+                <td><span class="log-badge" style="${roleStyle(log.role)}">${escH(log.role)}</span></td>
+                <td><span class="log-badge" style="${actionStyle(log.action)}">${escH(log.action)}</span></td>
+                <td style="color:#6b6878;font-size:.8rem;">${escH(log.recordAffected||'—')}</td>
+                <td style="color:#6b6878;font-size:.8rem;white-space:nowrap;">${escH(log.ipAddress||'—')}</td>
+                <td><span class="device-cell" title="${escH(log.device||'—')}">${escH(log.device||'—')}</span></td>`;
+            return tr;
+        }
+        function injectRow(log) {
+            if (emptyState) emptyState.style.display = 'none';
+            tableWrap.style.display = ''; countRow.style.display = '';
+            logBody.insertBefore(buildRow(log), logBody.firstChild);
+            liveCount++; liveCountEl.textContent = liveCount; tblCountEl.textContent = liveCount;
+            // Go to page 1 to show the newest row
+            auditCurrentPage = 1;
+            renderAuditPagination();
+        }
+        function showToast(msg) {
+            const t = document.getElementById('queueToast');
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+        }
+        function togglePause() {
+            isPaused = !isPaused;
+            if (isPaused) { liveDot.classList.add('paused'); liveLabel.textContent='Live paused'; pauseBtn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Resume Live'; pauseBtn.classList.add('paused'); }
+            else { liveDot.classList.remove('paused'); liveLabel.textContent='Live — receiving events'; pauseBtn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause Live'; pauseBtn.classList.remove('paused'); if(pendingQueue.length){pendingQueue.forEach(injectRow);showToast(`${pendingQueue.length} queued log${pendingQueue.length>1?'s':''} added`);pendingQueue=[];} }
+        }
+        const auditConnection = new signalR.HubConnectionBuilder().withUrl("/hubs/audit").withAutomaticReconnect([1000,2000,5000,10000]).build();
+        auditConnection.on("ReceiveAuditLog", (log) => {
+            if (isPaused) { pendingQueue.push(log); showToast(`${pendingQueue.length} new log${pendingQueue.length>1?'s':''} queued — resume to see`); return; }
+            injectRow(log);
+            const orig = document.title; document.title='[Live] '+orig; setTimeout(()=>document.title=orig,2500);
+        });
+        auditConnection.onreconnecting(()=>{liveDot.className='live-dot disconnected';liveLabel.textContent='Reconnecting…';});
+        auditConnection.onreconnected(()=>{liveDot.className='live-dot';liveLabel.textContent='Live — receiving events';});
+        auditConnection.onclose(()=>{liveDot.className='live-dot disconnected';liveLabel.textContent='Disconnected — refresh to reconnect';pauseBtn.style.display='none';});
+        async function startConnection() {
+            try { await auditConnection.start(); liveDot.className='live-dot'; liveLabel.textContent='Live — receiving events'; }
+            catch(e) { liveDot.className='live-dot disconnected'; liveLabel.textContent='Connection failed — refresh to retry'; console.error('[AuditHub]',e); }
+        }
+        startConnection();
+        function exportCSV() {
+            const rows=[['Time','User','Role','Action','Record','IP','Device']];
+            document.querySelectorAll('#auditTable tbody tr').forEach(tr=>{
+                const cells=tr.querySelectorAll('td');
+                rows.push([cells[0]?.innerText.replace(/\n/g,' ').trim()||'',cells[1]?.innerText.split('\n')[0].trim()||'',cells[2]?.innerText.trim()||'',cells[3]?.innerText.trim()||'',cells[4]?.innerText.trim()||'',cells[5]?.innerText.trim()||'',cells[6]?.innerText.trim()||'']);
+            });
+            const csv=rows.map(r=>r.map(v=>`"${v.replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+            const a=document.createElement('a'); a.href=url; a.download='audit-logs-'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); URL.revokeObjectURL(url);
+        }
+
+        // ── PAGINATION ──
+        const PAGE_SIZE = 10;
+        let auditCurrentPage = 1;
+
+        function renderAuditPagination() {
+            const allRows = Array.from(document.querySelectorAll('#auditTable tbody tr')).filter(r => !r.dataset.filtered);
+            const total = allRows.length;
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            auditCurrentPage = Math.min(auditCurrentPage, totalPages);
+            const start = (auditCurrentPage - 1) * PAGE_SIZE;
+            allRows.forEach((r, i) => { r.style.display = (i >= start && i < start + PAGE_SIZE) ? '' : 'none'; });
+
+            const info = document.getElementById('auditPageInfo');
+            const btns = document.getElementById('auditPageBtns');
+            const showing = Math.min(PAGE_SIZE, total - start);
+            info.textContent = total === 0 ? 'No logs' : `Showing ${start + 1}–${start + showing} of ${total} log(s)`;
+
+            btns.innerHTML = '';
+            if (totalPages <= 1) { document.getElementById('auditPagination').style.display = 'none'; return; }
+            document.getElementById('auditPagination').style.display = 'flex';
+
+            const prev = document.createElement('button');
+            prev.className = 're-page-btn prev-next'; prev.textContent = '← Prev';
+            prev.disabled = auditCurrentPage === 1;
+            prev.onclick = () => { auditCurrentPage--; renderAuditPagination(); };
+            btns.appendChild(prev);
+
+            for (let p = 1; p <= totalPages; p++) {
+                if (totalPages > 7 && p > 2 && p < totalPages - 1 && Math.abs(p - auditCurrentPage) > 1) {
+                    if (p === 3 || p === totalPages - 2) { const d = document.createElement('span'); d.className = 're-page-info'; d.style.padding = '0 .2rem'; d.textContent = '…'; btns.appendChild(d); }
+                    continue;
+                }
+                const b = document.createElement('button');
+                b.className = 're-page-btn' + (p === auditCurrentPage ? ' active' : '');
+                b.textContent = p;
+                b.onclick = ((pg) => () => { auditCurrentPage = pg; renderAuditPagination(); })(p);
+                btns.appendChild(b);
+            }
+
+            const next = document.createElement('button');
+            next.className = 're-page-btn prev-next'; next.textContent = 'Next →';
+            next.disabled = auditCurrentPage === totalPages;
+            next.onclick = () => { auditCurrentPage++; renderAuditPagination(); };
+            btns.appendChild(next);
+        }
+
+        // Hook filter form to reset pagination
+        document.querySelector('form[method="get"]')?.addEventListener('submit', () => { auditCurrentPage = 1; });
+
+        // Initialize pagination on load
+        renderAuditPagination();
+    </script>
+}

@@ -1,0 +1,613 @@
+﻿@model ReadEase.ViewModels.Auth.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Account";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body > nav, footer, .re-main > .container {
+        display: none !important;
+    }
+
+    .re-main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .wp-page {
+        min-height: 100vh;
+        background: #fff;
+        display: flex;
+        align-items: stretch;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .blob-tl {
+        width: 280px;
+        height: 580px;
+        top: -160px;
+        left: -110px;
+        border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        animation: morph1 9s ease-in-out infinite;
+    }
+
+    .blob-br {
+        width: 260px;
+        height: 520px;
+        bottom: -160px;
+        right: -100px;
+        border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        animation: morph2 11s ease-in-out infinite;
+    }
+
+    @@keyframes morph1 {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45% / 42% 38% 62% 58%;
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60% / 55% 45% 58% 42%;
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38% / 40% 58% 42% 60%;
+        }
+    }
+
+    @@keyframes morph2 {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62% / 60% 42% 58% 40%;
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42% / 45% 55% 40% 60%;
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55% / 55% 45% 62% 38%;
+        }
+    }
+
+    .wp-left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem 3rem 3.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .wp-left-inner {
+        max-width: 460px;
+        width: 100%;
+    }
+
+    .brand-row {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        margin-bottom: 3rem;
+    }
+
+    .brand-book {
+        width: 36px;
+        height: 42px;
+        background: #f26522;
+        border-radius: 4px 6px 6px 4px;
+        position: relative;
+        box-shadow: 0 4px 14px rgba(242,101,34,.38);
+        flex-shrink: 0;
+    }
+
+        .brand-book::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: rgba(0,0,0,.18);
+        }
+
+        .brand-book::after {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 14px;
+            height: 13px;
+            background: linear-gradient(#fff,#fff) 0 0 / 14px 2px no-repeat, linear-gradient(#fff,#fff) 0 5px / 14px 2px no-repeat, linear-gradient(#fff,#fff) 0 10px / 9px 2px no-repeat;
+            opacity: .88;
+        }
+
+    .brand-name {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        letter-spacing: -.025em;
+        line-height: 1;
+    }
+
+        .brand-name em {
+            color: #f26522;
+            font-style: normal;
+        }
+
+    .steps-card {
+        background: #f8f5f0;
+        border-radius: 22px;
+        padding: 2.25rem 2rem;
+        box-shadow: 0 8px 40px rgba(0,0,0,.08);
+        border: 1px solid #ede8e0;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .steps-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(242,101,34,.1) 0%, transparent 65%);
+        }
+
+    .steps-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(242,101,34,.1);
+        border: 1px solid rgba(242,101,34,.25);
+        border-radius: 20px;
+        padding: .2rem .75rem;
+        font-size: .67rem;
+        font-weight: 800;
+        color: #c84f10;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin-bottom: .9rem;
+    }
+
+    .steps-headline {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        line-height: 1.2;
+        margin-bottom: .5rem;
+    }
+
+        .steps-headline em {
+            color: #f26522;
+            font-style: normal;
+        }
+
+    .steps-sub {
+        font-size: .88rem;
+        color: #6b6878;
+        font-weight: 600;
+        margin-bottom: 1.6rem;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .9rem;
+        background: #fff;
+        border: 1px solid #ede8e0;
+        border-radius: 14px;
+        padding: .9rem 1rem;
+        margin-bottom: .7rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .step-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #f26522;
+        color: #fff;
+        font-size: .72rem;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: .05rem;
+        box-shadow: 0 3px 10px rgba(242,101,34,.35);
+    }
+
+    .step-text {
+        font-size: .85rem;
+        font-weight: 800;
+        color: #1a1a2e;
+        margin-bottom: .1rem;
+    }
+
+    .step-sub {
+        font-size: .73rem;
+        color: #9994a8;
+        font-weight: 600;
+    }
+
+    .wp-right {
+        width: 460px;
+        flex-shrink: 0;
+        background: #fff;
+        border-left: 1px solid #f0ece6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 2.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .wp-form-wrap {
+        width: 100%;
+        max-width: 360px;
+    }
+
+    .wp-form-title {
+        font-size: 1.85rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        text-align: center;
+        margin-bottom: .3rem;
+        letter-spacing: -.02em;
+    }
+
+    .wp-form-sub {
+        font-size: .88rem;
+        color: #9994a8;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 1.75rem;
+    }
+
+    .btn-wp-social {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .65rem;
+        padding: .82rem 1rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .93rem;
+        font-weight: 800;
+        transition: box-shadow .2s, transform .15s;
+        text-decoration: none;
+        margin-bottom: .85rem;
+        cursor: pointer;
+        border: 2px solid #1a1a2e;
+        background: #fff;
+        color: #1a1a2e;
+    }
+
+        .btn-wp-social:hover {
+            box-shadow: 0 4px 18px rgba(0,0,0,.12);
+            transform: translateY(-1px);
+            color: #1a1a2e;
+        }
+
+    .wp-divider {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        font-size: .8rem;
+        font-weight: 600;
+        color: #aaa5b8;
+        margin: 1.25rem 0;
+    }
+
+        .wp-divider::before, .wp-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2ddd6;
+        }
+
+    .wp-label {
+        font-size: .74rem;
+        font-weight: 800;
+        color: #4a4660;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .38rem;
+        display: block;
+    }
+
+    .wp-input {
+        width: 100%;
+        border: 1.5px solid #e0dbd3;
+        border-radius: 10px;
+        padding: .65rem 1rem;
+        font-size: .9rem;
+        font-family: 'Nunito', sans-serif;
+        background: #fff;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .wp-input:focus {
+            border-color: #f26522;
+            box-shadow: 0 0 0 3px rgba(242,101,34,.13);
+        }
+
+    .pw-wrap {
+        position: relative;
+    }
+
+        .pw-wrap .wp-input {
+            padding-right: 3.5rem;
+        }
+
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear,
+    input[type="password"]::-webkit-contacts-auto-fill-button,
+    input[type="password"]::-webkit-credentials-auto-fill-button,
+    input[type="text"]::-webkit-contacts-auto-fill-button,
+    input[type="text"]::-webkit-credentials-auto-fill-button {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    .btn-wp-submit {
+        width: 100%;
+        padding: .82rem 1rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .93rem;
+        font-weight: 800;
+        background: #f26522;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background .2s, transform .15s, box-shadow .2s;
+        box-shadow: 0 4px 14px rgba(242,101,34,.3);
+    }
+
+        .btn-wp-submit:hover {
+            background: #d9541a;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px rgba(242,101,34,.4);
+        }
+
+    .wp-login-row {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: .88rem;
+        color: #6b6878;
+        font-weight: 600;
+    }
+
+        .wp-login-row a {
+            color: #f26522;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+            .wp-login-row a:hover {
+                text-decoration: underline;
+            }
+
+    .wp-alert {
+        border-radius: 10px;
+        padding: .65rem 1rem;
+        font-size: .85rem;
+        font-weight: 600;
+        margin-bottom: .9rem;
+    }
+
+    #pwMatchMsg {
+        font-size: .78rem;
+        font-weight: 700;
+        margin-top: .35rem;
+    }
+
+    @@media (max-width: 900px) {
+        .wp-left {
+            display: none;
+        }
+
+        .wp-right {
+            width: 100%;
+            border-left: none;
+            padding: 3rem 1.5rem;
+        }
+
+        .blob-tl {
+            width: 180px;
+            height: 360px;
+            top: -100px;
+            left: -70px;
+        }
+
+        .blob-br {
+            width: 160px;
+            height: 320px;
+            bottom: -90px;
+            right: -60px;
+        }
+    }
+</style>
+
+<div class="wp-page">
+    <div class="blob blob-tl"></div>
+    <div class="blob blob-br"></div>
+
+    <!-- ═══ LEFT ═══ -->
+    <div class="wp-left">
+        <div class="wp-left-inner">
+            <div class="brand-row">
+                <div class="brand-book"></div>
+                <div class="brand-name">Read<em>Ease</em></div>
+            </div>
+            <div class="steps-card">
+                <div class="steps-eyebrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    Start reading today
+                </div>
+                <h2 class="steps-headline">Join thousands<br>of <em>readers.</em></h2>
+                <p class="steps-sub">Your journey starts here — it only takes 30 seconds.</p>
+
+                <div class="step-item">
+                    <span class="step-num">1</span>
+                    <div>
+                        <div class="step-text">Create your free account</div>
+                        <div class="step-sub">No credit card required</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">2</span>
+                    <div>
+                        <div class="step-text">Verify your email with OTP</div>
+                        <div class="step-sub">Quick 6-digit code sent to your inbox</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">3</span>
+                    <div>
+                        <div class="step-text">Browse the full library</div>
+                        <div class="step-sub">Hundreds of free books across 20+ genres</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">4</span>
+                    <div>
+                        <div class="step-text">Unlock premium content</div>
+                        <div class="step-sub">Subscribe for unlimited access + AI reader</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ RIGHT ═══ -->
+    <div class="wp-right">
+        <div class="wp-form-wrap">
+            <h1 class="wp-form-title">Create account</h1>
+            <p class="wp-form-sub">Free forever. Start reading in seconds.</p>
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger wp-alert"></div>
+
+            <!-- Google -->
+            <a asp-action="GoogleLogin" class="btn-wp-social">
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                Sign up with Google
+            </a>
+
+            <div class="wp-divider">or sign up with email</div>
+
+            <form asp-action="Register" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="wp-label">Full Name</label>
+                    <input asp-for="Name" class="wp-input" placeholder="Your full name" autocomplete="name" autofocus />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="wp-label">Email Address</label>
+                    <input asp-for="Email" class="wp-input" placeholder="you@example.com" autocomplete="email" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="wp-label">Password</label>
+                    <div class="pw-wrap">
+                        <input asp-for="Password" type="password" class="wp-input" id="pwInput"
+                               placeholder="Min 6 characters" autocomplete="new-password" />
+                        <input type="checkbox" id="pwCheck"
+                               onchange="document.getElementById('pwInput').type=this.checked?'text':'password';document.getElementById('pwShowLabel').textContent=this.checked?'Hide':'Show'"
+                               style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;" />
+                        <label for="pwCheck" id="pwShowLabel"
+                               style="position:absolute!important;right:.85rem!important;top:50%!important;
+                                      transform:translateY(-50%)!important;cursor:pointer!important;
+                                      font-size:.75rem!important;font-weight:800!important;color:#888!important;
+                                      font-family:'Nunito',sans-serif!important;background:#fff!important;
+                                      padding:2px 6px!important;border-radius:4px!important;
+                                      z-index:9999!important;user-select:none!important;line-height:1!important;
+                                      display:block!important;visibility:visible!important;">Show</label>
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="wp-label">Confirm Password</label>
+                    <div class="pw-wrap">
+                        <input asp-for="ConfirmPassword" type="password" class="wp-input" id="cpwInput"
+                               placeholder="Repeat your password" autocomplete="new-password" />
+                        <input type="checkbox" id="cpwCheck"
+                               onchange="document.getElementById('cpwInput').type=this.checked?'text':'password';document.getElementById('cpwShowLabel').textContent=this.checked?'Hide':'Show'"
+                               style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;" />
+                        <label for="cpwCheck" id="cpwShowLabel"
+                               style="position:absolute!important;right:.85rem!important;top:50%!important;
+                                      transform:translateY(-50%)!important;cursor:pointer!important;
+                                      font-size:.75rem!important;font-weight:800!important;color:#888!important;
+                                      font-family:'Nunito',sans-serif!important;background:#fff!important;
+                                      padding:2px 6px!important;border-radius:4px!important;
+                                      z-index:9999!important;user-select:none!important;line-height:1!important;
+                                      display:block!important;visibility:visible!important;">Show</label>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    <div id="pwMatchMsg"></div>
+                </div>
+
+                <div style="background:rgba(242,101,34,.07);border:1px solid rgba(242,101,34,.25);color:#c84f10;border-radius:10px;padding:.6rem .9rem;font-size:.8rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    A 6-digit verification code will be emailed to you after signing up.
+                </div>
+
+                <button type="submit" class="btn-wp-submit">Create My Account →</button>
+            </form>
+
+            <div class="wp-login-row">
+                Already have an account? <a asp-action="Login">Log in here</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        var pw  = document.getElementById('pwInput');
+        var cpw = document.getElementById('cpwInput');
+        var msg = document.getElementById('pwMatchMsg');
+
+        function checkMatch() {
+            if (!cpw.value) { msg.textContent = ''; cpw.style.borderColor = ''; return; }
+            var ok = pw.value === cpw.value;
+            msg.style.color       = ok ? '#16a34a' : '#dc2626';
+            msg.textContent       = ok ? '✅ Passwords match' : '❌ Passwords do not match';
+            cpw.style.borderColor = ok ? '#16a34a' : '#dc2626';
+        }
+
+        pw.addEventListener('input', checkMatch);
+        cpw.addEventListener('input', checkMatch);
+    </script>
+}

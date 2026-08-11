@@ -1,0 +1,1040 @@
+@model ReadEase.ViewModels.Library.BookDetailViewModel
+@{
+    ViewData["Title"] = Model?.Title ?? "Book Detail";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+}
+
+@if (Model is null)
+{
+    <div class="mob-empty">
+        <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <div class="mob-empty-title">Book not found</div>
+        <div class="mob-empty-sub">This book may have been removed.</div>
+        <a class="mob-empty-btn" href="/Mobile/Home">Back to Home</a>
+    </div>
+    return;
+}
+
+<style>
+    /* ── Cover hero ── */
+    .det-hero {
+        position: relative;
+        width: 100vw;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        margin-top: -1rem;
+        height: 280px;
+        overflow: hidden;
+        max-width: 100vw;
+    }
+
+    body.maui-host .det-hero {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 0;
+        border-radius: 0 0 24px 24px;
+        height: 300px;
+    }
+    body.maui-host .re-main { padding: 0 !important; }
+    body.maui-host .det-body { padding: 0 1.25rem 1.5rem !important; margin-top: -90px !important; }
+    body.maui-host .det-back-btn { top: 1.25rem; left: 1.25rem; width: 44px; height: 44px; font-size: 1.2rem; background: #fff; color: #1a1a2e; border: 1px solid rgba(0,0,0,.1); box-shadow: 0 2px 10px rgba(0,0,0,.2); }
+
+    /* Fix brown bar and improve tab visibility */
+    body.maui-host .det-tabs { 
+        background: transparent !important; 
+        border-bottom: 1px solid rgba(0,0,0,.1);
+        padding-bottom: 0;
+        margin-bottom: 1rem;
+    }
+    body.maui-host .det-tab { 
+        color: #555 !important; 
+        border-bottom: 2px solid transparent;
+        padding: .75rem .25rem;
+        background: transparent !important;
+        margin: 0 !important;
+    }
+    body.maui-host .det-tab.active { 
+        color: var(--re-orange) !important; 
+        border-bottom-color: var(--re-orange);
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    body.maui-host .det-tab-content { 
+        background: transparent !important; 
+        min-height: 200px;
+    }
+    body.maui-host .det-tab-content.active { 
+        background: transparent !important; 
+        box-shadow: none !important;
+    }
+    body.maui-host #tab-overview,
+    body.maui-host #tab-chapters,
+    body.maui-host #tab-reviews { 
+        background: transparent !important; 
+    }
+    
+    /* Remove ALL brown/dark backgrounds from tab and content areas in MAUI */
+    body.maui-host .det-tabs,
+    body.maui-host .det-tabs > div,
+    body.maui-host .det-tabs > button,
+    body.maui-host .det-tab-content,
+    body.maui-host .det-tab-content > div,
+    body.maui-host .det-author-section,
+    body.maui-host .det-author-section > div,
+    body.maui-host .det-reviews-header,
+    body.maui-host .det-reviews-header > div,
+    body.maui-host .det-write-review,
+    body.maui-host .det-write-review > div,
+    body.maui-host .det-similar,
+    body.maui-host .det-similar > div,
+    body.maui-host .mob-sec-head,
+    body.maui-host .bk-rail {
+        background: transparent !important;
+        background-color: transparent !important;
+        background-image: none !important;
+    }
+    
+    /* Fix active tab - ensure border is thin and orange only */
+    body.maui-host .det-tab.active {
+        border-bottom: 2px solid var(--re-orange) !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        background: transparent !important;
+    }
+    body.maui-host .det-tab {
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        background: transparent !important;
+    }
+    
+    /* Ensure author section has proper light styling */
+    body.maui-host .det-author-section {
+        border: 1px solid rgba(0,0,0,.1) !important;
+    }
+    
+    /* Ensure review sections have proper light styling */
+    body.maui-host .det-reviews-header,
+    body.maui-host .det-write-review {
+        border: 1px solid rgba(0,0,0,.1) !important;
+    }
+    
+    /* Ensure all text is dark/readable in light mode */
+    body.maui-host .det-tab-content,
+    body.maui-host .det-author-section,
+    body.maui-host .det-reviews-header,
+    body.maui-host .det-write-review,
+    body.maui-host .det-similar {
+        color: #333 !important;
+    }
+    body.maui-host .det-tab-content h4,
+    body.maui-host .det-author-name,
+    body.maui-host .det-ch-title,
+    body.maui-host .det-desc-title {
+        color: #222 !important;
+    }
+    body.maui-host .det-tab-content p,
+    body.maui-host .det-author-info span,
+    body.maui-host .det-desc-text {
+        color: #444 !important;
+    }
+
+    .det-hero-img  { width: 100%; height: 100%; object-fit: cover; }
+    .det-hero-ph   { width: 100%; height: 100%; background: linear-gradient(135deg, #1a2a3a 0%, #f26522 100%); display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+    .det-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, #0b1219 0%, rgba(11,18,25,.5) 55%, transparent 100%); }
+    .det-back-btn {
+        position: absolute; top: 1rem; left: 1rem;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.1);
+        display: flex; align-items: center; justify-content: center;
+        color: #1a1a2e; text-decoration: none !important;
+        font-size: 1.2rem; font-weight: 900;
+        transition: all .15s;
+        box-shadow: 0 2px 10px rgba(0,0,0,.2);
+        z-index: 100;
+    }
+    .det-back-btn:hover { background: #f26522; color: #fff; border-color: #f26522; }
+
+    /* ── Cover thumbnail + meta ── */
+    .det-body { padding: 0 0 1.5rem; margin-top: -100px; position: relative; z-index: 2; }
+    .det-top-row { display: flex; gap: 1.1rem; align-items: flex-end; margin-bottom: 1.2rem; }
+
+    .det-thumb    { width: 120px; aspect-ratio: 2/3; border-radius: 16px; object-fit: cover; flex-shrink: 0; box-shadow: 0 16px 40px rgba(0,0,0,.7); border: 2px solid rgba(255,255,255,.12); }
+    .det-thumb-ph { width: 120px; aspect-ratio: 2/3; border-radius: 16px; background: linear-gradient(135deg, #f26522, #d97706); display: flex; align-items: center; justify-content: center; font-size: 3rem; flex-shrink: 0; box-shadow: 0 16px 40px rgba(0,0,0,.7); }
+
+    .det-meta { flex: 1; min-width: 0; padding-bottom: .35rem; }
+    .det-badges { display: flex; gap: .45rem; flex-wrap: wrap; margin-bottom: .6rem; }
+    .det-badge { font-size: .65rem; font-weight: 900; padding: .28rem .75rem; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; }
+    .det-badge-free   { background: rgba(34,197,94,.12);  color: #16a34a; border: 1px solid rgba(34,197,94,.3); }
+    .det-badge-pro    { background: rgba(242,101,34,.12); color: #ea580c; border: 1px solid rgba(242,101,34,.3); }
+    .det-badge-done   { background: rgba(99,102,241,.12); color: #6366f1; border: 1px solid rgba(99,102,241,.3); }
+    .det-badge-ongoing{ background: rgba(251,191,36,.12);  color: #d97706; border: 1px solid rgba(251,191,36,.3); }
+
+    .det-title  { 
+        font-family: 'Playfair Display', serif; 
+        font-size: 1.15rem; 
+        font-weight: 800; 
+        color: var(--re-text); 
+        line-height: 1.35; 
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        max-width: 100%;
+        word-break: break-word;
+    }
+    .det-author { 
+        font-size: .85rem; 
+        color: var(--re-text); 
+        opacity: 0.75;
+        font-weight: 600; 
+        margin-top: .4rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        max-width: 100%;
+        word-break: break-word;
+    }
+    .det-author span { color: var(--re-orange); font-weight: 800; }
+
+    /* ── Rating row ── */
+    .det-rating-row { display: flex; align-items: center; gap: .75rem; margin: 1rem 0 1.2rem; flex-wrap: wrap; }
+    .det-stars { display: flex; gap: 3px; }
+    .det-star  { font-size: 1rem; }
+    .det-rating-val { font-size: .9rem; font-weight: 800; color: var(--re-text); }
+    .det-rating-cnt { font-size: .8rem; color: var(--re-text); opacity: 0.7; font-weight: 600; }
+    .det-cat-chip { font-size: .75rem; font-weight: 800; background: rgba(242,101,34,.12); color: #c2410c; border: 1px solid rgba(242,101,34,.3); border-radius: 99px; padding: .3rem .85rem; margin-left: auto; }
+
+    /* ── Genre pills row ── */
+    .det-genres {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        margin: 0 0 1.25rem;
+    }
+    .det-genre-pill {
+        font-size: .7rem;
+        font-weight: 800;
+        padding: .28rem .75rem;
+        border-radius: 99px;
+        background: rgba(242,101,34,.10);
+        color: #c2410c;
+        border: 1px solid rgba(242,101,34,.28);
+        letter-spacing: .02em;
+        white-space: nowrap;
+    }
+
+    /* ── Action buttons ── */
+    .det-actions { display: flex; gap: .75rem; margin-bottom: 1.5rem; }
+    .det-read-btn {
+        flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+        background: var(--re-orange); color: var(--re-text) !important;
+        border-radius: 14px; padding: .95rem 1.2rem;
+        font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 900;
+        text-decoration: none !important; transition: all .2s;
+        box-shadow: 0 6px 20px rgba(242,101,34,.4); border: none; cursor: pointer; min-height: 52px;
+    }
+    .det-read-btn:hover { background: var(--re-orange-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(242,101,34,.5); }
+    .det-fav-btn {
+        width: 52px; height: 52px; border-radius: 14px;
+        background: var(--re-surface-2); border: 1.5px solid var(--re-border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.35rem; cursor: pointer; transition: all .2s; flex-shrink: 0;
+    }
+    .det-fav-btn.active { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.3); }
+    .det-fav-btn:hover  { transform: scale(1.08); }
+    
+    /* Download button states */
+    .det-fav-btn.downloaded { 
+        background: rgba(34,197,94,.15) !important; 
+        border-color: rgba(34,197,94,.3) !important;
+        cursor: pointer;
+    }
+    .det-fav-btn.downloaded:hover { 
+        background: rgba(34,197,94,.25) !important; 
+        transform: scale(1.08);
+    }
+
+    /* ── Description ── */
+    .det-desc-title { font-size: .85rem; font-weight: 900; color: var(--re-text); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .55rem; background: transparent; }
+    .det-desc-text  { font-size: .9rem; color: var(--re-text); opacity: 0.85; font-weight: 500; line-height: 1.7; margin-bottom: 1.4rem; background: transparent; }
+    #tab-overview { background: transparent !important; }
+    #tab-overview .mob-empty { background: transparent !important; }
+    .det-desc-more  { display: none; }
+    .det-read-more  { background: none; border: none; color: var(--re-orange); font-family: 'Nunito', sans-serif; font-size: .82rem; font-weight: 800; cursor: pointer; padding: 0; }
+
+    /* ── Chapters list ── */
+    .det-ch-head  { display: flex; align-items: center; justify-content: space-between; margin-bottom: .85rem; }
+    .det-ch-title { font-size: .95rem; font-weight: 900; color: var(--re-text); }
+    .det-ch-count { font-size: .8rem; font-weight: 700; color: var(--re-text); opacity: 0.7; }
+
+    /* ── FIXED: Chapter item — single row, no wrap ── */
+    .det-ch-item {
+        display: flex;
+        align-items: center;        /* ← center vertically, not flex-start */
+        gap: .75rem;
+        padding: .85rem .5rem;
+        border-bottom: 1px solid var(--re-border);
+        text-decoration: none !important;
+        color: var(--re-text) !important;
+        transition: all .15s;
+        background: transparent;
+        border-radius: 0;
+        flex-wrap: nowrap;          /* ← never wrap to next line */
+        min-height: 52px;
+    }
+    .det-ch-item:last-child { border-bottom: none; }
+    .det-ch-item:hover { color: var(--re-text) !important; background: var(--re-surface-2); border-radius: 10px; }
+    .det-ch-item:active { transform: scale(.995); }
+
+    .det-ch-num {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        background: var(--re-surface-2);
+        border: 1px solid var(--re-border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .7rem; font-weight: 900; color: var(--re-muted);
+        flex-shrink: 0;             /* ← never shrink */
+    }
+
+    .det-ch-info {
+        flex: 1;
+        min-width: 0;               /* ← allows text truncation */
+        display: flex;
+        flex-direction: column;
+        gap: .2rem;
+        overflow: hidden;
+    }
+
+    .det-ch-name {
+        font-size: .88rem;
+        font-weight: 700;
+        line-height: 1.35;
+        white-space: nowrap;        /* ← keep on one line */
+        overflow: hidden;
+        text-overflow: ellipsis;    /* ← ellipsis if too long */
+    }
+
+    .det-ch-sub  { font-size: .62rem; font-weight: 700; color: var(--re-orange); line-height: 1.3; }
+
+    /* ── FIXED: Right side — download + arrow inline ── */
+    .det-ch-right {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        flex-shrink: 0;             /* ← never shrink or wrap */
+        margin-left: auto;
+    }
+
+    .det-ch-arrow { color: var(--re-muted); font-size: .8rem; flex-shrink: 0; }
+    .det-ch-lock  { font-size: .8rem; flex-shrink: 0; }
+
+    .det-ch-item.locked { opacity: .6; pointer-events: none; cursor: default; }
+
+    /* ── FIXED: Download button — button element, always inline in flex row ── */
+    .det-ch-download {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(254,226,226,.95), rgba(254,202,202,.9));
+        border: 1px solid rgba(225,29,72,.2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+        box-shadow: 0 2px 8px rgba(225,29,72,.15), inset 0 1px 0 rgba(255,255,255,.4);
+        transition: all .2s ease;
+        flex-shrink: 0;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    .det-ch-download svg {
+        color: #e11d48;
+        filter: drop-shadow(0 1px 2px rgba(225,29,72,.2));
+        display: block;
+        pointer-events: none;
+    }
+    .det-ch-download:hover {
+        background: linear-gradient(135deg, rgba(254,202,202,.98), rgba(252,165,165,.95));
+        border-color: rgba(225,29,72,.35);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 12px rgba(225,29,72,.25), inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .det-ch-download:active {
+        transform: translateY(0) scale(0.98);
+        box-shadow: 0 1px 4px rgba(225,29,72,.2);
+    }
+
+    .det-similar { margin-top: 1.4rem; }
+
+    /* ── Author Section with Follow ── */
+    .det-author-section {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .75rem;
+        background: transparent;
+        border: 1px solid var(--re-border);
+        border-radius: 12px;
+        margin-bottom: 1.25rem;
+    }
+    .det-author-avatar {
+        width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; font-weight: 900; color: var(--re-text);
+        flex-shrink: 0;
+    }
+    .det-author-info { flex: 1; min-width: 0; }
+    .det-author-name {
+        font-size: .88rem; font-weight: 800; color: var(--re-text);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .det-follow-btn {
+        padding: .35rem .85rem;
+        border-radius: 99px;
+        border: 1.5px solid var(--re-orange);
+        background: transparent;
+        color: var(--re-orange);
+        font-size: .7rem; font-weight: 800;
+        cursor: pointer; transition: all .2s;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .det-follow-btn:hover, .det-follow-btn.following { background: var(--re-orange); color: var(--re-text); }
+    .det-follow-btn.following:hover { background: transparent; color: var(--re-orange); }
+
+    /* ── Tab Navigation ── */
+    .det-tabs {
+        display: flex;
+        gap: .25rem;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--re-border);
+        padding-bottom: .5rem;
+    }
+    .det-tab {
+        flex: 1;
+        padding: .75rem .5rem;
+        text-align: center;
+        font-size: .82rem;
+        font-weight: 700;
+        color: var(--re-text);
+        opacity: 0.7;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: all .2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+    }
+    .det-tab.active { color: var(--re-orange); opacity: 1; border-bottom-color: var(--re-orange); font-weight: 800; }
+
+    /* ── Tab Content ── */
+    .det-tab-content { display: none; }
+    .det-tab-content.active { display: block; }
+
+    /* ── Reviews Section ── */
+    .det-reviews-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: transparent;
+        border: 1px solid var(--re-border);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+    .det-reviews-rating { text-align: center; }
+    .det-reviews-rating .big { font-size: 2.5rem; font-weight: 800; color: var(--re-text); display: block; line-height: 1; }
+    .det-reviews-rating .stars { font-size: .9rem; color: #fbbf24; }
+    .det-reviews-rating .count { font-size: .65rem; color: var(--re-muted); }
+    .det-reviews-bars { flex: 1; }
+    .det-review-bar { display: flex; align-items: center; gap: .5rem; font-size: .65rem; color: var(--re-muted); margin-bottom: .25rem; }
+    .det-review-bar .bar { flex: 1; height: 4px; background: rgba(0,0,0,.1); border-radius: 2px; overflow: hidden; }
+    .det-review-bar .fill { height: 100%; background: #fbbf24; border-radius: 2px; }
+
+    /* ── Write Review ── */
+    .det-write-review { padding: 1rem; background: transparent; border: 1px solid var(--re-border); border-radius: 12px; margin-bottom: 1rem; }
+    .det-write-review h4 { font-size: .9rem; font-weight: 800; color: var(--re-text); margin: 0 0 .5rem; }
+    .det-rate-stars { display: flex; gap: .25rem; font-size: 1.25rem; margin-bottom: .75rem; cursor: pointer; }
+    .det-rate-stars .star { opacity: .5; transition: opacity .2s; }
+    .det-rate-stars .star.active, .det-rate-stars .star:hover { opacity: 1; }
+    .det-review-input {
+        width: 100%; background: var(--re-surface-2); border: 1px solid var(--re-border);
+        border-radius: 10px; padding: .75rem; color: var(--re-text);
+        font-family: 'Nunito', sans-serif; font-size: .85rem; resize: none;
+        min-height: 80px; margin-bottom: .75rem; box-sizing: border-box;
+    }
+    .det-review-input:focus { outline: none; border-color: rgba(242,101,34,.5); }
+    .det-submit-review {
+        width: 100%; padding: .75rem; background: var(--re-orange); color: var(--re-text);
+        border: none; border-radius: 10px; font-size: .85rem; font-weight: 800; cursor: pointer;
+    }
+
+    /* ── Review Item ── */
+    .det-review-item { padding: 1rem; background: rgba(255,255,255,.04); border-radius: 12px; margin-bottom: .75rem; }
+    .det-review-header { display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem; }
+    .det-review-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .9rem; font-weight: 700; color: var(--re-text); flex-shrink: 0;
+    }
+    .det-review-meta { flex: 1; }
+    .det-review-user { font-size: .85rem; font-weight: 800; color: var(--re-text); }
+    .det-review-date { font-size: .65rem; color: var(--re-muted); }
+    .det-review-stars { font-size: .75rem; color: #fbbf24; }
+    .det-review-text { font-size: .85rem; color: var(--re-text); line-height: 1.5; margin-bottom: .5rem; }
+    .det-review-actions { display: flex; gap: 1rem; font-size: .75rem; color: var(--re-muted); }
+    .det-review-actions button {
+        background: none; border: none; color: var(--re-muted);
+        cursor: pointer; font-size: .75rem; display: flex; align-items: center; gap: .25rem;
+    }
+    .det-review-actions button.liked { color: #ef4444; }
+</style>
+
+<!-- Hero backdrop -->
+<div class="det-hero">
+    @if (!string.IsNullOrEmpty(Model.CoverImage))
+    { <img class="det-hero-img" src="@Model.CoverImage" alt="@Model.Title" /> }
+    else
+    { <div class="det-hero-ph"></div> }
+    <div class="det-hero-overlay"></div>
+    <a class="det-back-btn" href="javascript:history.back()">←</a>
+</div>
+
+<div class="det-body">
+    <!-- Top row: thumbnail + meta -->
+    <div class="det-top-row">
+        @if (!string.IsNullOrEmpty(Model.CoverImage))
+        { <img class="det-thumb" src="@Model.CoverImage" alt="@Model.Title" /> }
+        else
+        { <div class="det-thumb-ph"></div> }
+        <div class="det-meta">
+            <div class="det-badges">
+                <span class="det-badge @(Model.IsFree ? "det-badge-free" : "det-badge-pro")">@(Model.IsFree ? "FREE" : "PRO")</span>
+                @if (Model.IsStoryComplete) { <span class="det-badge det-badge-done">Complete</span> }
+                else                        { <span class="det-badge det-badge-ongoing">Ongoing</span> }
+            </div>
+            <div class="det-title">@Model.Title</div>
+            <div class="det-author">by <span>@Model.Author</span></div>
+        </div>
+    </div>
+
+    <!-- Rating row -->
+    <div class="det-rating-row">
+        <div class="det-stars" id="starsDisplay">
+            @for (int i = 1; i <= 5; i++)
+            { <span class="det-star">@(i <= (int)Math.Round(Model.AverageRating) ? "★" : "☆")</span> }
+        </div>
+        <span class="det-rating-val">@Model.AverageRating.ToString("0.0")</span>
+        <span class="det-rating-cnt">(@Model.RatingCount ratings)</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Category))
+    {
+        <div class="det-genres">
+            @foreach (var genre in Model.Category.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                <span class="det-genre-pill">@genre</span>
+            }
+        </div>
+    }
+
+    <!-- Action buttons -->
+    <div class="det-actions">
+        @if (Model.CanRead)
+        { <a class="det-read-btn" href="/Mobile/Read/@Model.Id"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Read Now</a> }
+        else
+        { <button class="det-read-btn" style="background:rgba(255,255,255,.1);box-shadow:none;" disabled>Subscribe to Read</button> }
+        <button class="det-fav-btn @(Model.IsFavorite ? "active" : "")"
+                id="favBtn" onclick="toggleFav('@Model.Id')"
+                title="@(Model.IsFavorite ? "Remove from favorites" : "Add to favorites")">
+            @(Model.IsFavorite ? "♥" : "♡")
+        </button>
+        @if (ViewBag.IsPremiumPlus == true)
+        {
+            <button class="det-fav-btn" id="downloadBtn" onclick="downloadBook('@Model.Id')"
+                    title="Download for offline reading"
+                    style="background: rgba(168,85,247,.12); border-color: rgba(168,85,247,.25);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+            </button>
+        }
+    </div>
+
+    <!-- Author Section with Follow -->
+    <div class="det-author-section">
+        <a href="/Mobile/AuthorProfile?authorUserId=@Model.AuthorUserId" style="text-decoration:none;display:contents;">
+            <div class="det-author-avatar">
+                @(Model.Author.Length > 0 ? Model.Author[0].ToString().ToUpper() : "?")
+            </div>
+        </a>
+        <div class="det-author-info">
+            <div class="det-author-name">@Model.Author</div>
+        </div>
+        <button class="det-follow-btn @(Model.IsFollowingAuthor ? "following" : "")" id="followBtn" onclick="toggleFollow('@Model.AuthorUserId')">
+            @(Model.IsFollowingAuthor ? "✓ Following" : "+ Follow")
+        </button>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="det-tabs">
+        <button class="det-tab active" data-tab="overview" onclick="switchTab('overview')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Overview
+        </button>
+        <button class="det-tab" data-tab="chapters" onclick="switchTab('chapters')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg> Chapters (@(Model.Chapters?.Count ?? 0))
+        </button>
+        <button class="det-tab" data-tab="reviews" onclick="switchTab('reviews')">⭐ Reviews</button>
+    </div>
+
+    <!-- Tab Content: Overview -->
+    <div class="det-tab-content active" id="tab-overview">
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <div class="det-desc-title">About this book</div>
+            <div class="det-desc-text">
+                <span id="descShort">@(Model.Description.Length > 180 ? Model.Description[..180] + "…" : Model.Description)</span>
+                @if (Model.Description.Length > 180)
+                {
+                    <span class="det-desc-more" id="descFull">@Model.Description</span>
+                    <br />
+                    <button class="det-read-more" id="descToggle" onclick="toggleDesc()">Read more</button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="mob-empty" style="padding:1rem 0;">
+                <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <div class="mob-empty-title">No description</div>
+            </div>
+        }
+    </div>
+
+    <!-- Tab Content: Chapters -->
+    <div class="det-tab-content" id="tab-chapters">
+        @if (Model.Chapters?.Any() == true)
+        {
+            var now = DateTime.UtcNow;
+            bool callerIsPremiumPlus = ViewBag.IsPremiumPlus == true;
+            bool callerIsPremium = callerIsPremiumPlus || ViewBag.IsPremium == true;
+            bool callerBypass = ViewBag.BypassGate == true;
+
+            <div class="det-ch-head">
+                <div class="det-ch-title">Chapters</div>
+                <div class="det-ch-count">@Model.Chapters.Count chapter@(Model.Chapters.Count != 1 ? "s" : "")</div>
+            </div>
+
+            @foreach (var ch in Model.Chapters)
+            {
+                bool isLive = ch.IsVisible;
+                bool premiumOpen = ch.PremiumUnlocksAt.HasValue && now >= ch.PremiumUnlocksAt.Value;
+                bool canRead = callerBypass || callerIsPremiumPlus || (callerIsPremium && (isLive || premiumOpen)) || isLive;
+                string lockIcon = canRead ? "›" : "🔒";
+                string cssClass = canRead ? "det-ch-item" : "det-ch-item locked";
+
+                string? subLabel = null;
+                if (!isLive && ch.ScheduledAt.HasValue)
+                {
+                    var freeTime = ch.ScheduledAt.Value.ToLocalTime();
+                    var premTime = ch.PremiumUnlocksAt?.ToLocalTime();
+                    if (!callerIsPremiumPlus)
+                    {
+                        if (callerIsPremium && premiumOpen)
+                        { subLabel = "Early access — free readers get it " + freeTime.ToString("MMM d, h:mm tt"); }
+                        else if (callerIsPremium && premTime.HasValue)
+                        { subLabel = $"You get it {premTime.Value:MMM d, h:mm tt} · Free on {freeTime:MMM d, h:mm tt}"; }
+                        else
+                        {
+                            subLabel = $"Available {freeTime:MMM d, h:mm tt}";
+                            if (premTime.HasValue) subLabel += $"\nPremium gets it {premTime.Value:MMM d, h:mm tt} · Premium++ reads instantly";
+                        }
+                    }
+                }
+
+                if (canRead)
+                {
+                    @* Use div+onclick instead of <a> to avoid invalid nested <a><a> HTML which browsers break *@
+                    <div class="@cssClass" role="link" tabindex="0"
+                         onclick="window.location.href='/Mobile/Read/@Model.Id?chapter=@ch.ChapterNumber'"
+                         onkeydown="if(event.key==='Enter')window.location.href='/Mobile/Read/@Model.Id?chapter=@ch.ChapterNumber'"
+                         style="cursor:pointer;">
+                        <div class="det-ch-num">@ch.ChapterNumber</div>
+                        <div class="det-ch-info">
+                            <div class="det-ch-name">@ch.Title</div>
+                            @if (subLabel != null)
+                            { @foreach (var line in subLabel.Split('\n')) { <div class="det-ch-sub">@line</div> } }
+                        </div>
+                        <div class="det-ch-right">
+                            <span class="det-ch-arrow">@lockIcon</span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="@cssClass">
+                        <div class="det-ch-num">@ch.ChapterNumber</div>
+                        <div class="det-ch-info">
+                            <div class="det-ch-name">@ch.Title</div>
+                            @if (subLabel != null)
+                            { @foreach (var line in subLabel.Split('\n')) { <div class="det-ch-sub">@line</div> } }
+                        </div>
+                        <div class="det-ch-right">
+                            <span class="det-ch-lock">@lockIcon</span>
+                        </div>
+                    </div>
+                }
+            }
+        }
+        else
+        {
+            <div class="mob-empty" style="padding:2rem 0;">
+                <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <div class="mob-empty-title">No chapters yet</div>
+                <div class="mob-empty-sub">Check back soon for updates.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Tab Content: Reviews -->
+    <div class="det-tab-content" id="tab-reviews">
+        <!-- Reviews Summary -->
+        <div class="det-reviews-header">
+            <div class="det-reviews-rating">
+                <span class="big" id="rvAvgDisplay">@Model.AverageRating.ToString("0.0")</span>
+                <div class="stars" id="rvStarsDisplay">
+                    @for (int i = 1; i <= 5; i++)
+                    { <span>@(i <= (int)Math.Round(Model.AverageRating) ? "★" : "☆")</span> }
+                </div>
+                <div class="count" id="rvCountDisplay">@Model.RatingCount ratings</div>
+            </div>
+            <div class="det-reviews-bars" id="rvBarsDisplay">
+                @for (int star = 5; star >= 1; star--)
+                {
+                    var count = Model.Reviews?.Count(r => r.Stars == star) ?? 0;
+                    var pct = Model.RatingCount > 0 ? (count * 100 / Model.RatingCount) : 0;
+                    <div class="det-review-bar">
+                        <span>@star ★</span>
+                        <div class="bar"><div class="fill" style="width:@pct%"></div></div>
+                        <span>@count</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Write Review -->
+        @if (!Model.IsBookAuthor)
+        {
+            <div class="det-write-review">
+                <h4>What do you think?</h4>
+                <div class="det-rate-stars" id="rateStars">
+                    @for (int i = 1; i <= 5; i++)
+                    { <span class="star" data-rating="@i" onclick="setRating(@i)">☆</span> }
+                </div>
+                <textarea class="det-review-input" id="reviewText" placeholder="Share your thoughts about this book..."></textarea>
+                <button class="det-submit-review" onclick="submitReview('@Model.Id')">Write a Review</button>
+            </div>
+        }
+
+        <!-- Reviews List (dynamically loaded) -->
+        <div id="reviewsList">
+            <div class="mob-empty" style="padding:1rem 0;">
+                <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <div class="mob-empty-title">Loading reviews...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Similar Books -->
+    <div class="det-similar" id="similarSection" style="display:none;">
+        <div class="mob-sec-head"><div class="mob-sec-title">Similar Books</div></div>
+        <div class="bk-rail" id="similarRail"></div>
+    </div>
+</div>
+
+<style>
+    /* ── Review Comment Styles ── */
+    .rv-comment-block { margin-top: 0.6rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; }
+    .rv-comment-item { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .rv-comment-avatar {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: var(--re-accent, #f26522); color: var(--re-text);
+        font-size: 0.65rem; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; overflow: hidden;
+    }
+    .rv-comment-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .rv-comment-body { flex: 1; min-width: 0; }
+    .rv-comment-bubble { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+    .rv-comment-user { font-weight: 800; font-size: 0.72rem; color: var(--re-text, #e8e6f0); margin-bottom: 0.1rem; }
+    .rv-comment-text { color: var(--re-text-muted, #9994a8); line-height: 1.4; }
+    .rv-replying-pill { display: inline-block; background: rgba(242,101,34,0.15); color: #f26522; font-size: 0.62rem; font-weight: 700; border-radius: 8px; padding: 0.05rem 0.35rem; margin-bottom: 0.15rem; }
+    .rv-comment-actions { display: flex; gap: 0.75rem; margin-top: 0.25rem; padding-left: 0.2rem; }
+    .rv-comment-act { background: none; border: none; color: var(--re-text-muted, #9994a8); font-size: 0.68rem; font-weight: 700; cursor: pointer; padding: 0; }
+    .rv-comment-act.liked { color: #ef4444; }
+    .rv-comment-time { font-size: 0.62rem; color: var(--re-text-muted, #9994a8); margin-top: 0.2rem; }
+    .rv-nested-replies { margin-left: 1.5rem; margin-top: 0.4rem; }
+    .rv-comment-input-wrap { display: none; margin-top: 0.4rem; gap: 0.4rem; align-items: flex-start; }
+    .rv-comment-input-wrap.open { display: flex; }
+    .rv-comment-input { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.4rem 0.6rem; color: var(--re-text, #e8e6f0); font-size: 0.75rem; resize: none; min-height: 36px; font-family: inherit; }
+    .rv-comment-send { background: #f26522; border: none; border-radius: 8px; color: var(--re-text); font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.7rem; cursor: pointer; white-space: nowrap; }
+    .rv-author-reply-card { margin-top: 0.5rem; margin-left: 0.5rem; background: rgba(242,101,34,0.08); border-left: 3px solid #f26522; border-radius: 8px; padding: 0.5rem 0.65rem; font-size: 0.75rem; }
+    .rv-author-reply-header { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem; }
+    .rv-author-badge { font-size: 0.6rem; font-weight: 800; background: #f26522; color: var(--re-text); border-radius: 6px; padding: 0.05rem 0.35rem; }
+    .rv-author-reply-text { color: var(--re-text-muted, #9994a8); line-height: 1.4; }
+    .rv-show-comments-btn { background: none; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--re-text-muted, #9994a8); font-size: 0.72rem; font-weight: 700; padding: 0.3rem 0.7rem; cursor: pointer; margin-top: 0.4rem; }
+    .rv-add-comment-btn { background: none; border: none; color: #f26522; font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0; }
+</style>
+
+@section Scripts {
+    <script>
+        window.detailBookId = '@Model.Id';
+        window.detailIsBookAuthor = @(Model.IsBookAuthor ? "true" : "false");
+
+        // Call MAUI native code via the JS bridge (window.MauiBridge injected by CustomWebViewHandler).
+        // This replaces the old hidden-iframe trick which silently fails on modern Android
+        // because ShouldOverrideUrlLoading is NOT fired for custom-scheme iframes.
+        function callMaui(scheme, retries = 10) {
+            if (window.MauiBridge && typeof window.MauiBridge.postMessage === 'function') {
+                // Reliable path: AndroidJavascriptInterface bridge
+                window.MauiBridge.postMessage(scheme);
+            } else if (retries > 0) {
+                // Android: MauiBridge not ready yet, wait and retry
+                console.log('[callMaui] MauiBridge not ready, retrying... (' + retries + ' left)');
+                setTimeout(function() { callMaui(scheme, retries - 1); }, 100);
+            } else {
+                // Final fallback: try window.location (works on iOS WebKit, may fail on Android)
+                console.warn('[callMaui] MauiBridge not available after retries, falling back to window.location');
+                window.location.href = scheme;
+            }
+        }
+
+        // Detect if running inside MAUI WebView
+        function isMauiWebView() {
+            // Most reliable: MAUI injects this after page load
+            if (window.isMauiApp === true) return true;
+            var ua = navigator.userAgent || '';
+            // Check for Android WebView patterns (MAUI uses Android WebView)
+            var isAndroidWv = /wv/.test(ua) ||
+                (/Android/.test(ua) && !/Chrome\/[.\d]+/.test(ua)) ||
+                (/Android/.test(ua) && /Version\//.test(ua));
+            // Check for MAUI-injected cookie (set by WebViewHostPage)
+            var hasMauiCookie = document.cookie.indexOf('MobileAuth=') !== -1;
+            // Check for iOS WebView
+            var isIosWv = !!window.webkit?.messageHandlers;
+            return isAndroidWv || hasMauiCookie || isIosWv;
+        }
+
+        // Download book states
+        const DOWNLOAD_ICONS = {
+            default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+            loading: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"/></svg>`,
+            success: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M8 11l3 3 5-5"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+            error: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+        };
+
+        // Download book for offline reading
+        // - MAUI WebView: callMaui() iframe triggers ShouldOverrideUrlLoading → Chrome redirect
+        // - Web browser fallback: navigate to download endpoint directly
+        function downloadBook(bookId) {
+            const btn = document.getElementById('downloadBtn');
+            if (!btn) return;
+            
+            // Check if already downloaded
+            if (btn.classList.contains('downloaded')) {
+                // Already downloaded - go to downloads page
+                if (isMauiWebView()) {
+                    window.location.href = '/Mobile/Downloads';
+                } else {
+                    window.location.href = '/Mobile/Downloads';
+                }
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = DOWNLOAD_ICONS.loading;
+            btn.style.background = 'rgba(168,85,247,.2)';
+            
+            // Save metadata immediately for Downloads page
+            saveBookMetadata(bookId);
+            
+            if (isMauiWebView()) {
+                callMaui('readease://download/book?id=' + encodeURIComponent(bookId));
+                // MAUI will call setDownloadSuccess() via JS injection when complete
+            } else {
+                window.location.href = '/Mobile/DownloadBook/' + encodeURIComponent(bookId);
+                // For web, show success after short delay
+                setTimeout(() => setDownloadSuccess(), 1500);
+            }
+        }
+
+        // Called by MAUI when download succeeds
+        window.setDownloadSuccess = function() {
+            const btn = document.getElementById('downloadBtn');
+            if (!btn) return;
+            btn.innerHTML = DOWNLOAD_ICONS.success;
+            btn.style.background = 'rgba(34,197,94,.15)';
+            btn.style.borderColor = 'rgba(34,197,94,.3)';
+            btn.classList.add('downloaded');
+            btn.disabled = false;
+            btn.title = 'Downloaded! Click to view downloads';
+            
+            // Show toast
+            if (window.showToast) {
+                window.showToast('Downloaded successfully!');
+            }
+        };
+
+        // Called by MAUI if download fails
+        window.setDownloadError = function() {
+            const btn = document.getElementById('downloadBtn');
+            if (!btn) return;
+            btn.innerHTML = DOWNLOAD_ICONS.default;
+            btn.style.background = 'rgba(168,85,247,.12)';
+            btn.style.borderColor = 'rgba(168,85,247,.25)';
+            btn.disabled = false;
+        };
+
+        // Check on page load if this book is already downloaded
+        function checkIfDownloaded() {
+            try {
+                const bookId = '@Model.Id';
+                const downloads = JSON.parse(localStorage.getItem('downloadedBooks') || '[]');
+                const isDownloaded = downloads.some(d => d.book.id === bookId);
+                if (isDownloaded) {
+                    const btn = document.getElementById('downloadBtn');
+                    if (btn) {
+                        btn.innerHTML = DOWNLOAD_ICONS.success;
+                        btn.style.background = 'rgba(34,197,94,.15)';
+                        btn.style.borderColor = 'rgba(34,197,94,.3)';
+                        btn.classList.add('downloaded');
+                        btn.title = 'Already downloaded! Click to view downloads';
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to check download status:', e);
+            }
+        }
+
+        // Save book metadata to localStorage for the Downloads page listing
+        function saveBookMetadata(bookId) {
+            try {
+                const titleEl = document.querySelector('.det-title');
+                const authorEl = document.querySelector('.det-author span');
+                const coverImg = document.querySelector('.det-thumb');
+
+                const meta = {
+                    book: {
+                        id: bookId,
+                        title: titleEl ? titleEl.textContent.trim() : 'Unknown',
+                        author: authorEl ? authorEl.textContent.trim() : 'Unknown',
+                        coverImage: coverImg ? coverImg.src : null
+                    },
+                    downloadedAt: new Date().toISOString()
+                };
+
+                const downloads = JSON.parse(localStorage.getItem('downloadedBooks') || '[]');
+                const existingIndex = downloads.findIndex(b => b.book.id === bookId);
+                if (existingIndex >= 0) {
+                    downloads[existingIndex] = meta;
+                } else {
+                    downloads.push(meta);
+                }
+                localStorage.setItem('downloadedBooks', JSON.stringify(downloads));
+            } catch (e) {
+                console.warn('Failed to save book metadata:', e);
+            }
+        }
+
+        // Download single chapter
+        // - MAUI WebView: callMaui() iframe triggers ShouldOverrideUrlLoading → Chrome redirect
+        // - Web browser fallback: navigate to download endpoint directly
+        function downloadChapter(chapterId, bookId, btn) {
+            if (!btn) btn = document.activeElement;
+            btn.disabled = true;
+            if (isMauiWebView()) {
+                callMaui('readease://download/chapter?chapterId=' + encodeURIComponent(chapterId) + '&bookId=' + encodeURIComponent(bookId));
+            } else {
+                window.location.href = '/Mobile/DownloadChapter?chapterId=' + encodeURIComponent(chapterId) + '&bookId=' + encodeURIComponent(bookId);
+            }
+        }
+
+        // Helper to build HTML for chapter download (used by MAUI for offline rendering)
+        function buildChapterHtml(data) {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>${escapeHtml(data.book.title)} - Chapter ${data.chapter.chapterNumber}</title>
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;700;800;900&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{font-size:18px;-webkit-text-size-adjust:100%}
+        body{font-family:'Lora',Georgia,serif;background:#fafaf7;color:#1a1309;max-width:720px;margin:0 auto;padding:3rem 2rem 6rem;line-height:1.9;-webkit-font-smoothing:antialiased;overflow-x:hidden;word-wrap:break-word;overflow-wrap:break-word}
+        .re-cover{text-align:center;padding:2.5rem 1.5rem 2rem;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 55%,#0f3460 100%);border-radius:20px;margin-bottom:3rem;position:relative;overflow:hidden}
+        .re-cover::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(242,101,34,.18) 0%,transparent 65%)}
+        .re-cover h1{font-family:'Lora',Georgia,serif;font-size:clamp(1.6rem,4vw,2.5rem);font-weight:600;color:#fff;line-height:1.15;margin-bottom:.5rem;position:relative;z-index:1;text-shadow:0 2px 20px rgba(0,0,0,.45)}
+        .re-cover .author{font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,255,255,.55);position:relative;z-index:1}
+        .re-chapter{margin-bottom:4.5rem;padding-bottom:3rem;border-bottom:1px solid #ede8e0}
+        .re-chapter:last-child{border-bottom:none}
+        .re-chapter-eyebrow{font-family:'Nunito',sans-serif;font-size:.68rem;font-weight:900;color:#f26522;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem}
+        .re-chapter-eyebrow::before{content:'';display:block;width:24px;height:2px;background:#f26522;border-radius:2px;opacity:.6}
+        .re-chapter h2{font-family:'Lora',Georgia,serif;font-size:clamp(1.45rem,3vw,2.1rem);font-weight:600;color:#1a140d;line-height:1.2;margin-bottom:1.75rem}
+        .re-divider{display:flex;align-items:center;gap:.6rem;margin-bottom:1.75rem;opacity:.38}
+        .re-divider::before,.re-divider::after{content:'';flex:1;height:1px;background:#b0a898}
+        .re-divider-icon{font-size:.5rem;color:#f26522;letter-spacing:.3em}
+        .re-body{font-size:1rem;line-height:2;color:#2b2315}
+        .re-body p{margin-bottom:1.4em;text-indent:1.8em}
+        .re-body p:first-child{text-indent:0}
+        .re-footer{text-align:center;margin-top:4rem;padding-top:2rem;border-top:1px solid #ede8e0;font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:600;color:#c0bbb2}
+        @@media screen and (max-width:600px){html{font-size:16px}body{padding:1.5rem 1rem 5rem}.re-cover{padding:2rem 1.25rem 1.5rem;border-radius:14px;margin-bottom:2rem}.re-chapter{margin-bottom:3rem;padding-bottom:2rem}.re-chapter h2{font-size:1.35rem;margin-bottom:1.25rem}.re-body{line-height:1.85}.re-body p{text-indent:1.5em}}
+        @@media (prefers-color-scheme:dark){body{background:#0f1922;color:rgba(255,255,255,.88)}.re-cover{background:linear-gradient(160deg,#0b1219 0%,#0f1922 55%,#141e28 100%)}.re-chapter{border-bottom-color:rgba(255,255,255,.06)}.re-chapter h2{color:#fff}.re-body{color:rgba(255,255,255,.82)}.re-divider::before,.re-divider::after{background:rgba(255,255,255,.15)}.re-footer{border-top-color:rgba(255,255,255,.06);color:rgba(255,255,255,.35)}}
+    </style>
+</head>
+<body>
+    <div class="re-cover">
+        <h1>${escapeHtml(data.book.title)}</h1>
+        <div class="author">by ${escapeHtml(data.book.author)}</div>
+    </div>
+    <div class="re-chapter">
+        <div class="re-chapter-eyebrow">Chapter ${data.chapter.chapterNumber}</div>
+        <h2>${escapeHtml(data.chapter.title)}</h2>
+        <div class="re-divider"><span class="re-divider-icon">&#10022; &nbsp; &#10022; &nbsp; &#10022;</span></div>
+        <div class="re-body">${data.chapter.content}</div>
+    </div>
+    <div class="re-footer">Downloaded from <strong>ReadEase</strong> &middot; For offline reading only</div>
+<\/body>
+<\/html>`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Check download status on page load
+        document.addEventListener('DOMContentLoaded', checkIfDownloaded);
+    </script>
+    <script src="~/js/MobileDetail.js"></script>
+    <script>
+        loadReviews();
+        loadSimilar();
+    </script>
+}

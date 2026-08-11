@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — ReadEase" : "ReadEase")</title>
+
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap');
+
+        :root {
+            --re-orange: #C8860A;
+            --re-orange-light: #E9A520;
+            --re-orange-dark: #9E6808;
+            --re-orange-glow: rgba(200,134,10,.18);
+            --re-bg: #FAF6EF;
+            --re-surface: #FFFCF7;
+            --re-surface-2: #F5EFE3;
+            --re-border: #E4D8C4;
+            --re-border-active: rgba(200,134,10,.5);
+            --re-text: #2C1A0E;
+            --re-muted: #A08060;
+            --re-nav-bg: #FFFCF7;
+            --re-bottom-nav-height: 64px;
+            --re-nav-float-gap: 12px;
+            --re-maui-top-safe: env(safe-area-inset-top, 0px);
+            --maui-status-bar-height: 0px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --shadow-sm: 0 2px 8px rgba(44,26,14,.08);
+            --shadow-md: 0 4px 16px rgba(44,26,14,.10);
+            --shadow-glow: 0 0 0 3px rgba(200,134,10,.2);
+        }
+
+        .re-nav { display: none !important; }
+        body.browser-host .re-nav { display: flex !important; }
+        body.maui-host .re-nav { display: none !important; }
+        body.maui-host #mobileBottomNav { display: flex !important; }
+        body.maui-host .re-main {
+            padding-top: var(--maui-status-bar-height, 0px) !important;
+            padding-bottom: calc(var(--re-bottom-nav-height) + var(--safe-bottom) + var(--re-nav-float-gap) + 1.5rem) !important;
+        }
+        body.maui-host { -webkit-overflow-scrolling: touch; overflow-y: auto; overscroll-behavior-y: contain; }
+        body.browser-host .re-main { padding-top: 1rem !important; }
+
+        /* ══ PAGE FADE-IN — eliminates white flash on navigation ══ */
+        .re-main { animation: re-page-in .22s ease; }
+        @@keyframes re-page-in { from { opacity: 0; } to { opacity: 1; } }
+
+        *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        html { scroll-behavior: smooth; background: #FAF6EF; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--re-bg);
+            color: var(--re-text);
+            min-height: 100dvh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ══ TOP NAVBAR ══ */
+        .re-nav {
+            background: var(--re-surface);
+            border-bottom: 1px solid var(--re-border);
+            padding: .6rem .9rem;
+            position: sticky;
+            top: 0;
+            z-index: 1040;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            box-shadow: 0 2px 10px rgba(44,26,14,.07);
+        }
+        .re-nav-left { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+        .re-nav-center { flex: 1; min-width: 0; display: flex; justify-content: center; }
+        .re-nav-right { display: flex; align-items: center; gap: .4rem; flex-shrink: 0; }
+
+        .re-logo-link { display: inline-flex; align-items: center; text-decoration: none !important; user-select: none; flex-shrink: 0; }
+        .re-logo-text { display: flex; align-items: baseline; line-height: 1; }
+        .re-logo-read { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; color: var(--re-text) !important; }
+        .re-logo-ease { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; color: var(--re-orange) !important; }
+
+        /* ══ SEARCH ══ */
+        .re-search-wrap { position: relative; width: 100%; max-width: 280px; }
+        .re-search-input {
+            width: 100%;
+            background: var(--re-surface-2);
+            border: 1.5px solid var(--re-border);
+            border-radius: 50px;
+            padding: .42rem .9rem .42rem 2.2rem;
+            font-family: 'Nunito', sans-serif;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--re-text);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: normal !important;
+            text-orientation: mixed !important;
+            writing-mode: horizontal-tb !important;
+        }
+        .re-search-input::placeholder { color: var(--re-muted); }
+        .re-search-input:focus { border-color: var(--re-orange-light); box-shadow: var(--shadow-glow); }
+        .re-search-icon { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); color: var(--re-muted); pointer-events: none; display: flex; align-items: center; }
+        .re-search-clear { position: absolute; right: .65rem; top: 50%; transform: translateY(-50%); background: var(--re-border); border: none; border-radius: 50%; width: 18px; height: 18px; display: none; align-items: center; justify-content: center; cursor: pointer; color: var(--re-muted); font-size: .62rem; line-height: 1; padding: 0; transition: background .15s; }
+        .re-search-clear.visible { display: flex; }
+        .re-search-clear:hover { background: var(--re-orange); color: var(--re-text); }
+
+        .re-search-dropdown {
+            position: fixed;
+            top: 58px;
+            left: 0; right: 0;
+            background: var(--re-surface);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            box-shadow: 0 20px 60px rgba(44,26,14,.22);
+            border-top: none;
+            border: 1px solid var(--re-border);
+            border-top: 0;
+            overflow-y: auto;
+            max-height: calc(100dvh - 120px);
+            z-index: 2000; display: none;
+            animation: dropIn .18s ease;
+        }
+        @@keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .re-search-dropdown.open { display: block; }
+        .re-search-section-head { font-size: .6rem; font-weight: 900; color: var(--re-muted); text-transform: uppercase; letter-spacing: 1.2px; padding: .75rem 1rem .3rem; border-bottom: 1px solid var(--re-border); margin-bottom: .2rem; }
+        .re-search-item { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; text-decoration: none !important; transition: background .15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; min-height: 52px; }
+        .re-search-item:hover { background: rgba(200,134,10,.08); }
+        .re-search-thumb { width: 36px; height: 48px; border-radius: 7px; object-fit: cover; flex-shrink: 0; box-shadow: var(--shadow-sm); }
+        .re-search-thumb-ph { width: 36px; height: 48px; border-radius: 7px; background: linear-gradient(135deg, #C8860A, #E9A520); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; color: var(--re-text); }
+        .re-search-info { flex: 1; min-width: 0; }
+        .re-search-title { font-size: .88rem; font-weight: 800; color: var(--re-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: ltr; text-align: left; unicode-bidi: plaintext; }
+        .re-search-sub { font-size: .72rem; color: var(--re-muted); font-weight: 600; margin-top: .1rem; direction: ltr; text-align: left; unicode-bidi: plaintext; }
+        .re-search-tag { font-size: .58rem; font-weight: 900; padding: .15rem .5rem; border-radius: 50px; flex-shrink: 0; display: none; }
+        .re-search-tag-book { background: rgba(200,134,10,.15); color: var(--re-orange); }
+        .re-search-empty { text-align: center; padding: 1.75rem 1rem; color: var(--re-muted); font-size: .82rem; font-weight: 600; }
+        .re-search-footer { border-top: 1px solid var(--re-border); padding: .65rem 1rem; display: flex; align-items: center; justify-content: center; }
+        .re-search-footer a { font-size: .75rem; font-weight: 800; color: var(--re-orange) !important; text-decoration: none !important; }
+        .re-search-spinner { display: flex; align-items: center; justify-content: center; padding: 1.5rem; gap: .5rem; color: var(--re-muted); font-size: .78rem; font-weight: 600; }
+        .re-spin { width: 16px; height: 16px; border: 2px solid var(--re-border); border-top-color: var(--re-orange); border-radius: 50%; animation: spin .65s linear infinite; }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+        .re-hl { color: var(--re-orange); font-weight: 900; }
+
+        /* ══ NAV ICON BUTTONS ══ */
+        .nav-icon-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--re-muted);
+            transition: all .15s;
+            text-decoration: none !important;
+            position: relative;
+        }
+        .nav-icon-btn:hover { background: var(--re-surface-2); color: var(--re-text); }
+        .nav-icon-btn svg { width: 20px; height: 20px; }
+        .nav-icon-btn .nav-badge {
+            position: absolute; top: 2px; right: 2px;
+            min-width: 16px; height: 16px;
+            background: var(--re-orange); color: #fff;
+            font-size: .55rem; font-weight: 900;
+            border-radius: 99px; padding: 0 4px;
+            display: none; align-items: center; justify-content: center;
+        }
+        .nav-icon-btn .nav-badge.show { display: flex; }
+
+        /* ══ TRY PREMIUM (in profile panel) ══ */
+        .try-premium-btn {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: linear-gradient(135deg, #C8860A, #E9A520);
+            color: #fff; font-family: 'Nunito', sans-serif;
+            font-size: .8rem; font-weight: 900;
+            padding: .55rem 1rem; border-radius: 12px;
+            text-decoration: none !important; letter-spacing: .02em;
+            box-shadow: 0 2px 12px rgba(200,134,10,.35);
+            width: 100%; justify-content: center;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .try-premium-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,134,10,.45); }
+        .try-premium-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+        /* ══ AVATAR ══ */
+        .mob-topnav-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #C8860A, #E9A520);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .82rem; font-weight: 900; color: var(--re-text);
+            flex-shrink: 0; overflow: hidden;
+            border: 2px solid rgba(200,134,10,.4);
+            box-shadow: 0 2px 8px rgba(200,134,10,.3);
+            transition: box-shadow .2s, transform .2s;
+            cursor: pointer; padding: 0; outline: none;
+        }
+        .mob-topnav-avatar:hover { border-color: var(--re-orange); box-shadow: 0 0 0 3px rgba(200,134,10,.25); transform: scale(1.05); }
+        .mob-topnav-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
+        /* ══ PAGE BODY ══ */
+        .re-main {
+            padding: 1rem;
+            padding-top: var(--maui-status-bar-height, 0px);
+            padding-bottom: calc(var(--re-bottom-nav-height) + var(--safe-bottom) + 1.25rem);
+            max-width: 100%; position: relative; z-index: 1;
+            min-height: calc(100dvh - var(--re-bottom-nav-height));
+        }
+        .re-main.no-chrome { padding: 0; min-height: 100dvh; }
+
+        /* ══ BOTTOM NAV — floating pill ══ */
+        #mobileBottomNav {
+            display: flex;
+            position: fixed;
+            bottom: calc(var(--re-nav-float-gap) + var(--safe-bottom));
+            left: 14px; right: 14px;
+            height: var(--re-bottom-nav-height);
+            background: #1E1208;
+            border-radius: 22px;
+            z-index: 1050;
+            align-items: stretch;
+            box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 2px 10px rgba(0,0,0,.25);
+            border: 1px solid rgba(255,255,255,.07);
+            overflow: hidden;
+        }
+
+        .mob-nav-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; text-decoration: none !important;
+            color: rgba(255,255,255,.38);
+            font-family: 'Nunito', sans-serif; font-size: .56rem; font-weight: 700;
+            padding: .4rem .2rem; position: relative;
+            cursor: pointer; border: none; background: transparent; letter-spacing: .03em;
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-user-select: none; user-select: none;
+            transition: color .18s;
+        }
+        .mob-nav-item:focus { outline: none; }
+        .mob-nav-item:active { opacity: .75; }
+        .mob-nav-item:hover { color: rgba(255,255,255,.65); }
+        .mob-nav-item.active { color: #E9A520; }
+        .mob-nav-item svg { width: 22px; height: 22px; transition: transform .3s cubic-bezier(.34,1.56,.64,1); flex-shrink: 0; }
+        .mob-nav-item.active svg { transform: scale(1.12); stroke-width: 2.5; }
+        .mob-nav-icon-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 30px; border-radius: 12px; transition: background .18s; }
+        .mob-nav-item.active .mob-nav-icon-wrap { background: rgba(233,165,32,.18); }
+        .mob-nav-item:active .mob-nav-icon-wrap { background: rgba(233,165,32,.1); }
+        /* Top pill indicator */
+        .mob-nav-item::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%) scaleX(0); width: 22px; height: 3px; border-radius: 0 0 3px 3px; background: #E9A520; transition: transform .25s cubic-bezier(.34,1.56,.64,1); transform-origin: center top; }
+        .mob-nav-item.active::before { transform: translateX(-50%) scaleX(1); }
+        .mob-nav-item::after { display: none; }
+        /* Panel-open active state (Alerts & Profile buttons) */
+        .mob-nav-item.panel-active { color: #E9A520; }
+        .mob-nav-item.panel-active .mob-nav-icon-wrap { background: rgba(233,165,32,.18); }
+        .mob-nav-item.panel-active svg { transform: scale(1.12); stroke-width: 2.5; }
+        .mob-nav-item.panel-active::before { transform: translateX(-50%) scaleX(1); }
+        /* Suppress page-active while any panel is open */
+        #mobileBottomNav.has-panel .mob-nav-item.active:not(.panel-active) { color: rgba(255,255,255,.38); }
+        #mobileBottomNav.has-panel .mob-nav-item.active:not(.panel-active)::before { transform: translateX(-50%) scaleX(0); }
+        #mobileBottomNav.has-panel .mob-nav-item.active:not(.panel-active) .mob-nav-icon-wrap { background: transparent; }
+        #mobileBottomNav.has-panel .mob-nav-item.active:not(.panel-active) svg { transform: none; stroke-width: 2; }
+
+        .mob-nav-badge {
+            position: absolute; top: -4px; right: -5px;
+            min-width: 17px; height: 17px; padding: 0 4px;
+            background: #E9A520; color: #1E1208;
+            font-size: .52rem; font-weight: 900; line-height: 17px;
+            border-radius: 99px; text-align: center;
+            border: 2px solid #1E1208; display: none;
+            box-shadow: 0 2px 8px rgba(233,165,32,.55);
+        }
+        .mob-nav-badge.show { display: block; }
+
+        /* ══ PANEL SYSTEM ══ */
+        #mobPanelBackdrop { display: none; position: fixed; inset: 0; background: rgba(44,26,14,.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1048; }
+        #mobPanelBackdrop.show { display: block; }
+
+        .mob-panel {
+            position: fixed; bottom: calc(var(--re-bottom-nav-height) + var(--re-nav-float-gap)); left: 0; right: 0;
+            background: var(--re-surface);
+            border-radius: 24px 24px 0 0; z-index: 1049;
+            transform: translateY(calc(100% + var(--re-bottom-nav-height) + var(--re-nav-float-gap) + 20px));
+            visibility: hidden;
+            transition: transform .32s cubic-bezier(.34,1.3,.64,1), visibility 0s .32s;
+            box-shadow: 0 -12px 48px rgba(44,26,14,.18);
+            border-top: 1px solid var(--re-border);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .mob-panel.open {
+            transform: translateY(0);
+            visibility: visible;
+            transition: transform .32s cubic-bezier(.34,1.3,.64,1), visibility 0s 0s;
+        }
+        .mob-panel-handle { width: 36px; height: 4px; background: var(--re-border); border-radius: 2px; margin: 1rem auto .75rem; }
+        .mob-panel-title { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 900; color: var(--re-text); margin-bottom: 1rem; text-align: center; }
+
+        #mobileSearchPanel { max-height: 80vh; overflow-y: auto; padding: 0 1rem 1rem; }
+
+        /* ══ GENRE CHIPS FOR SEARCH ══ */
+        .search-genre-section { margin: .75rem 0; }
+        .search-genre-title { font-size: .7rem; font-weight: 800; color: var(--re-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
+        .search-genre-grid { display: flex; flex-wrap: wrap; gap: .5rem; }
+        .search-genre-chip {
+            display: inline-flex; align-items: center; background: var(--re-surface);
+            border: 1.5px solid var(--re-border); border-radius: 99px;
+            padding: .4rem .85rem; font-family: 'Nunito', sans-serif;
+            font-size: .75rem; font-weight: 700; color: var(--re-text) !important;
+            text-decoration: none !important; transition: all .18s; cursor: pointer;
+        }
+        .search-genre-chip:hover { border-color: var(--re-orange); background: rgba(200,134,10,.08); }
+        .search-genre-chip.active { background: var(--re-orange); color: var(--re-text) !important; border-color: var(--re-orange); box-shadow: 0 3px 12px rgba(200,134,10,.3); }
+
+        .mob-search-bar {
+            display: flex; align-items: center; gap: .75rem;
+            background: var(--re-surface-2); border: 1.5px solid var(--re-border);
+            border-radius: 50px; padding: .55rem 1rem; margin-bottom: .75rem;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .mob-search-bar:focus-within { border-color: var(--re-orange-light); box-shadow: var(--shadow-glow); }
+        .mob-search-bar input { flex: 1; background: none; border: none; outline: none; color: var(--re-text); font-family: 'Nunito', sans-serif; font-size: .9rem; font-weight: 600; direction: ltr !important; text-align: left !important; unicode-bidi: normal !important; }
+        .mob-search-bar input::placeholder { color: var(--re-muted); }
+        .mob-search-close { background: none; border: none; color: var(--re-muted); font-size: 1.1rem; cursor: pointer; padding: 0; transition: color .15s; }
+        .mob-search-close:hover { color: var(--re-text); }
+
+        #mobileWritePanel { padding: 0 1rem 1.5rem; }
+        .mob-write-item {
+            display: flex; align-items: center; gap: 1rem;
+            background: var(--re-surface-2); border: 1px solid var(--re-border);
+            border-radius: var(--radius-md); padding: 1rem 1.15rem;
+            text-decoration: none !important; color: var(--re-text) !important;
+            transition: border-color .15s, background .15s; margin-bottom: .65rem;
+        }
+        .mob-write-item:hover { background: rgba(200,134,10,.08); border-color: rgba(200,134,10,.3); }
+        .mob-write-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem; }
+        .mob-write-icon.orange { background: rgba(200,134,10,.15); }
+        .mob-write-icon.green { background: rgba(34,150,70,.1); }
+        .mob-write-text-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: .9rem; color: var(--re-text); }
+        .mob-write-text-desc { font-size: .72rem; color: var(--re-muted); font-weight: 600; margin-top: .1rem; }
+
+        #mobileNotifPanel { max-height: 75vh; display: flex; flex-direction: column; padding: 0; }
+        .mob-notif-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem .75rem; border-bottom: 1px solid var(--re-border); flex-shrink: 0; }
+        .mob-notif-title { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 900; color: var(--re-text); }
+        .mob-notif-mark-read { background: rgba(200,134,10,.1); border: 1px solid rgba(200,134,10,.25); color: var(--re-orange); font-family: 'Nunito', sans-serif; font-size: .72rem; font-weight: 800; cursor: pointer; padding: .3rem .75rem; border-radius: 99px; transition: background .15s; }
+        .mob-notif-mark-read:hover { background: rgba(200,134,10,.2); }
+        .mob-notif-body { overflow-y: auto; flex: 1; }
+        .mob-notif-item { padding: .9rem 1.25rem; border-bottom: 1px solid rgba(44,26,14,.05); cursor: pointer; transition: background .15s; }
+        .mob-notif-item.unread { background: rgba(200,134,10,.05); }
+        .mob-notif-item:hover { background: rgba(200,134,10,.08); }
+        .mob-notif-msg { font-family: 'Nunito', sans-serif; font-size: .84rem; font-weight: 600; color: var(--re-text); line-height: 1.45; }
+        .mob-notif-time { font-size: .68rem; color: var(--re-muted); font-weight: 600; margin-top: .25rem; }
+
+        #mobileProfilePanel { padding: 0; max-height: 82vh; display: flex; flex-direction: column; }
+        .mob-profile-header {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1.5rem 1.25rem 1.25rem;
+            background: linear-gradient(135deg, rgba(200,134,10,.12) 0%, rgba(233,165,32,.06) 100%);
+            border-bottom: 1px solid var(--re-border); flex-shrink: 0;
+        }
+        .mob-profile-avatar-lg {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, #C8860A, #E9A520);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; font-weight: 900; color: #fff; flex-shrink: 0;
+            overflow: hidden; border: 3px solid rgba(200,134,10,.4);
+            box-shadow: 0 4px 16px rgba(200,134,10,.25);
+        }
+        .mob-profile-name { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 900; color: var(--re-text); }
+        .mob-profile-role {
+            display: inline-flex; align-items: center; gap: .3rem;
+            font-size: .65rem; font-weight: 800; color: var(--re-orange);
+            background: rgba(200,134,10,.12); border: 1px solid rgba(200,134,10,.2);
+            border-radius: 99px; padding: .15rem .55rem; margin-top: .3rem;
+        }
+        .mob-profile-menu { padding: .5rem .65rem 1rem; overflow-y: auto; flex: 1; }
+        .mob-profile-item {
+            display: flex; align-items: center; gap: .85rem;
+            padding: .75rem .75rem; border-radius: 12px;
+            text-decoration: none !important; color: var(--re-text) !important;
+            font-family: 'Nunito', sans-serif; font-size: .86rem; font-weight: 700;
+            transition: background .15s; border: none; background: none;
+            width: 100%; text-align: left; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mob-profile-item:active { background: rgba(200,134,10,.08); }
+        .mob-profile-item-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--re-surface-2); display: flex; align-items: center;
+            justify-content: center; font-size: 1rem; border: 1px solid var(--re-border);
+            flex-shrink: 0;
+        }
+        .mob-profile-item-divider { height: 1px; background: var(--re-border); margin: .4rem .5rem; }
+
+        /* ══ TOAST ══ */
+        #mobToast {
+            position: fixed; bottom: calc(var(--re-bottom-nav-height) + var(--safe-bottom) + var(--re-nav-float-gap) + 1rem); left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #333; color: #fff;
+            font-family: 'Nunito', sans-serif; font-size: .84rem; font-weight: 700;
+            padding: .65rem 1.25rem; border-radius: 99px;
+            box-shadow: 0 8px 28px rgba(0,0,0,.25);
+            z-index: 2000; opacity: 0; transition: opacity .25s, transform .25s;
+            white-space: nowrap; pointer-events: none;
+        }
+        #mobToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        
+        /* Light mode toast fix for MAUI */
+        body.maui-host #mobToast {
+            background: #222 !important;
+            color: #fff !important;
+            box-shadow: 0 8px 28px rgba(0,0,0,.3) !important;
+        }
+
+        #scrollTopBtn {
+            display: none; position: fixed; bottom: calc(var(--re-bottom-nav-height) + var(--re-nav-float-gap) + 1.1rem); right: 1.25rem;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--re-orange); color: var(--re-text); border: none; cursor: pointer;
+            font-size: 1rem; align-items: center; justify-content: center;
+            box-shadow: 0 4px 18px rgba(200,134,10,.4); z-index: 999; transition: all .2s ease;
+        }
+        #scrollTopBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(200,134,10,.5); }
+
+        /* ══ SUB-PAGE HEADER ══ */
+        .mob-page-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; padding-top: .25rem; }
+        .mob-back-btn { width: 36px; height: 36px; border-radius: 10px; background: var(--re-surface); border: 1.5px solid var(--re-border); display: flex; align-items: center; justify-content: center; color: var(--re-muted); text-decoration: none !important; flex-shrink: 0; transition: all .15s; }
+        .mob-back-btn:hover { border-color: var(--re-orange); color: var(--re-orange); }
+        .mob-page-title { font-family: 'Nunito', sans-serif; font-size: 1.25rem; font-weight: 900; color: var(--re-text); flex: 1; }
+
+        /* ══ SHARED COMPONENTS ══ */
+        .mob-field { margin-bottom: 1.1rem; }
+        .mob-field label { display: block; font-size: .72rem; font-weight: 800; color: var(--re-muted); margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .05em; }
+        .mob-input { width: 100%; background: var(--re-surface-2); border: 1.5px solid var(--re-border); border-radius: var(--radius-sm); padding: .75rem 1rem; font-family: 'Nunito', sans-serif; font-size: .92rem; font-weight: 600; color: var(--re-text); outline: none; transition: border-color .2s, box-shadow .2s; }
+        .mob-input:focus { border-color: var(--re-orange-light); box-shadow: var(--shadow-glow); }
+        .mob-input::placeholder { color: var(--re-muted); }
+
+        .mob-btn-orange { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; background: var(--re-orange); color: #fff; border: none; border-radius: var(--radius-sm); padding: .88rem 1.35rem; font-family: 'Nunito', sans-serif; font-size: .95rem; font-weight: 900; cursor: pointer; transition: all .2s; text-decoration: none; box-shadow: 0 4px 16px rgba(200,134,10,.3); }
+        .mob-btn-orange:hover { background: var(--re-orange-dark); box-shadow: 0 6px 20px rgba(200,134,10,.4); transform: translateY(-1px); }
+        .mob-btn-orange:active { transform: scale(.97); }
+
+        .mob-sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; margin-top: .25rem; }
+        .mob-sec-title { font-size: .9rem; font-weight: 900; color: var(--re-text); display: flex; align-items: center; gap: .4rem; }
+        .mob-sec-badge { font-size: .58rem; font-weight: 900; background: rgba(200,134,10,.15); color: var(--re-orange); padding: .12rem .45rem; border-radius: 99px; }
+        .mob-sec-link { font-size: .75rem; font-weight: 800; color: var(--re-orange) !important; text-decoration: none !important; }
+        .mob-sec-link:hover { color: var(--re-orange-dark) !important; }
+
+        .mob-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3rem 1.5rem; gap: .65rem; }
+        .mob-empty-icon { font-size: 2.8rem; line-height: 1; }
+        .mob-empty-title { font-size: 1.05rem; font-weight: 900; color: var(--re-text); }
+        .mob-empty-sub { font-size: .82rem; color: var(--re-muted); font-weight: 600; max-width: 260px; line-height: 1.5; }
+        .mob-empty-btn { margin-top: .5rem; display: inline-flex; align-items: center; justify-content: center; background: var(--re-orange); color: var(--re-text) !important; border-radius: 99px; padding: .65rem 1.5rem; font-family: 'Nunito', sans-serif; font-size: .85rem; font-weight: 900; text-decoration: none !important; transition: background .15s, transform .15s; box-shadow: 0 4px 14px rgba(200,134,10,.3); }
+        .mob-empty-btn:hover { background: var(--re-orange-dark); transform: translateY(-1px); }
+
+        /* ══ BOOK CARDS ══ */
+        .bk-rail { display: flex; gap: .75rem; overflow-x: auto; padding-bottom: .5rem; margin-bottom: .5rem; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .bk-rail::-webkit-scrollbar { display: none; }
+        .bk-card { flex-shrink: 0; width: 108px; text-decoration: none !important; scroll-snap-align: start; }
+        .bk-cover-wrap { position: relative; margin-bottom: .5rem; }
+        .bk-cover { width: 108px; aspect-ratio: 2/3; border-radius: var(--radius-sm); object-fit: cover; box-shadow: var(--shadow-md); transition: transform .2s, box-shadow .2s; }
+        .bk-card:hover .bk-cover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 28px rgba(44,26,14,.2); }
+        .bk-cover-ph { width: 108px; aspect-ratio: 2/3; border-radius: var(--radius-sm); background: linear-gradient(135deg, #C8860A, #E9A520); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; box-shadow: var(--shadow-md); }
+        .bk-badge-pill { position: absolute; top: 6px; left: 6px; font-size: .52rem; font-weight: 900; padding: .18rem .5rem; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; }
+        .bk-badge-free { background: rgba(34,150,70,.85); color: var(--re-text); }
+        .bk-badge-pro { background: rgba(200,134,10,.9); color: var(--re-text); }
+        .bk-info { padding: 0 .1rem; }
+        .bk-title { font-size: .75rem; font-weight: 800; color: var(--re-text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+        .bk-author { font-size: .65rem; color: var(--re-muted); font-weight: 600; margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ══ FEATURED CARD ══ */
+        .feat-card { position: relative; display: block; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1.25rem; height: 190px; text-decoration: none !important; box-shadow: var(--shadow-md); transition: transform .2s, box-shadow .2s; }
+        .feat-card:hover { transform: translateY(-2px); box-shadow: 0 14px 48px rgba(44,26,14,.2); }
+        .feat-cover { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+        .feat-card:hover .feat-cover { transform: scale(1.03); }
+        .feat-cover-ph { width: 100%; height: 100%; background: linear-gradient(135deg, #5C3210, #C8860A); display: flex; align-items: center; justify-content: center; font-size: 4rem; }
+        .feat-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(44,26,14,.85) 0%, rgba(44,26,14,.3) 55%, transparent 100%); }
+        .feat-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.25rem 1.1rem; }
+        .feat-badge { display: inline-block; background: var(--re-orange); color: var(--re-text); font-size: .6rem; font-weight: 900; padding: .2rem .6rem; border-radius: 99px; margin-bottom: .4rem; letter-spacing: .05em; }
+        .feat-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 800; color: var(--re-text); line-height: 1.25; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
+        .feat-author { font-size: .78rem; color: rgba(255,255,255,.75); font-weight: 600; margin-top: .2rem; }
+
+        /* ══ CAT CHIPS ══ */
+        .cat-rail { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .2rem; -webkit-overflow-scrolling: touch; }
+        .cat-rail::-webkit-scrollbar { display: none; }
+        .cat-chip { flex-shrink: 0; display: inline-flex; align-items: center; background: var(--re-surface); border: 1.5px solid var(--re-border); border-radius: 99px; padding: .38rem .9rem; font-family: 'Nunito', sans-serif; font-size: .75rem; font-weight: 800; color: var(--re-muted) !important; text-decoration: none !important; transition: all .18s; white-space: nowrap; }
+        .cat-chip:hover { border-color: rgba(200,134,10,.4); color: var(--re-orange-dark) !important; }
+        .cat-chip.active { background: var(--re-orange); color: var(--re-text) !important; border-color: var(--re-orange); box-shadow: 0 3px 12px rgba(200,134,10,.3); }
+
+        /* ══ HOME HERO ══ */
+        .home-hero { padding: .85rem 0 1.25rem; }
+        .home-hero-greeting { font-size: .68rem; font-weight: 800; color: var(--re-muted); text-transform: uppercase; letter-spacing: .09em; }
+        .home-hero-name { font-family: 'Playfair Display', serif; font-size: 1.55rem; font-weight: 800; color: var(--re-text); line-height: 1.2; margin-top: .12rem; }
+        .home-hero-stats { display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap; }
+        .home-hero-stat { display: inline-flex; align-items: center; gap: .3rem; background: var(--re-surface); border: 1px solid var(--re-border); border-radius: 99px; padding: .28rem .7rem; font-size: .7rem; font-weight: 700; color: var(--re-muted); }
+        .home-hero-stat strong { color: var(--re-text); font-weight: 900; }
+        .home-hero-stat svg { opacity: .65; }
+        /* ══ SECTION HEADERS ══ */
+        .mob-sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .9rem; margin-top: 1.5rem; }
+        .mob-sec-head:first-child { margin-top: 0; }
+        .mob-sec-title { font-size: .88rem; font-weight: 900; color: var(--re-text); display: flex; align-items: center; gap: .4rem; }
+        .mob-sec-badge { font-size: .56rem; font-weight: 900; background: rgba(200,134,10,.12); color: var(--re-orange); padding: .1rem .45rem; border-radius: 99px; border: 1px solid rgba(200,134,10,.2); }
+        .mob-sec-link { font-size: .72rem; font-weight: 800; color: var(--re-orange) !important; text-decoration: none !important; display: flex; align-items: center; gap: .2rem; opacity: .9; }
+        .mob-sec-link:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    @{
+        var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
+        var isAuthPage = currentPath.Contains("/login") || currentPath.Contains("/register")
+            || currentPath.Contains("/forgotpassword") || currentPath.Contains("/resetpassword");
+        var isReaderPage = currentPath.Contains("/read");
+        var showChrome = !isAuthPage && !isReaderPage;
+
+        var _profileSvc = Context.RequestServices.GetService<ReadEase.Services.Interfaces.IProfileService>();
+        var _userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var _userId = Guid.TryParse(_userIdClaim, out var uid) ? uid : Guid.Empty;
+        var _layoutProfile = (_userId != Guid.Empty && _profileSvc != null)
+            ? await _profileSvc.GetProfileAsync(_userId) : null;
+        var profilePhoto = _layoutProfile?.ProfilePhoto ?? User.FindFirst("ProfilePhoto")?.Value;
+        var userName = _layoutProfile?.Name ?? User.Identity?.Name ?? "Reader";
+        var userInitial = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+        var layoutIsSubscribed = User.IsInRole("Admin") || User.IsInRole("Author")
+            || _layoutProfile?.IsSubscribed == true
+            || User.FindFirst("IsSubscribed")?.Value == "true";
+    }
+
+    <script>
+        (function earlyMauiDetect() {
+            var isMaui = false;
+            try {
+                if (document.cookie.indexOf('X-MAUI-App=1') !== -1) isMaui = true;
+                if (!isMaui && navigator.userAgent.indexOf('MAUI') !== -1) isMaui = true;
+            } catch(e) {}
+            if (isMaui) { document.documentElement.classList.add('is-maui'); document.body.classList.add('maui-host'); }
+            else { document.body.classList.add('browser-host'); }
+        })();
+    </script>
+
+    @if (showChrome)
+    {
+        <nav class="re-nav" id="reNav">
+            <div class="re-nav-left">
+                <a href="/Mobile/Home" class="re-logo-link">
+                    <div class="re-logo-text">
+                        <span class="re-logo-read">Read</span><span class="re-logo-ease">Ease</span>
+                    </div>
+                </a>
+            </div>
+            <div class="re-nav-center">
+                <div class="re-search-wrap" id="navSearchWrap">
+                    <span class="re-search-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </span>
+                    <input class="re-search-input" id="navSearchInput" type="text" placeholder="Search…" autocomplete="off" dir="ltr" lang="en"
+                           autocorrect="off" autocapitalize="off" spellcheck="false"
+                           oninput="onNavSearchInput(this.value)"
+                           onfocus="navSearchOpen()" />
+                    <button class="re-search-clear" id="navSearchClear" onclick="clearNavSearch()" tabindex="-1">×</button>
+                    <div class="re-search-dropdown" id="navSearchDrop">
+                        <div style="text-align:center;padding:2rem 1rem;color:var(--re-muted);font-size:.82rem;font-family:'Nunito',sans-serif;font-weight:600;">Start typing to search…</div>
+                    </div>
+                </div>
+            </div>
+            <div class="re-nav-right">
+                <a href="/Mobile/Downloads" class="nav-icon-btn" title="Downloads">
+                    <span class="nav-badge" id="navDownloadBadge"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                </a>
+                <button class="mob-topnav-avatar" onclick="toggleMobProfile()" type="button" title="Profile">
+                    @if (!string.IsNullOrEmpty(profilePhoto)) { <img src="@profilePhoto" alt="avatar" /> } else { @userInitial }
+                </button>
+            </div>
+        </nav>
+    }
+
+    <div id="mauiStatusBarSpacer" style="display:none;height:var(--maui-status-bar-height,24px);flex-shrink:0;"></div>
+
+    <div class="re-main @(showChrome ? "" : "no-chrome")">
+        @RenderBody()
+    </div>
+
+    @if (showChrome)
+    {
+        <div id="mobPanelBackdrop" onclick="closeAllMobPanels()"></div>
+
+        <nav id="mobileBottomNav" aria-label="Mobile navigation">
+            <a href="/Mobile/Home" class="mob-nav-item @(currentPath.EndsWith("/home") ? "active" : "")" id="mobNavHome">
+                <span class="mob-nav-icon-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                </span>
+                Home
+            </a>
+
+            <a href="/Mobile/Ongoing" class="mob-nav-item @(currentPath.Contains("/ongoing") || currentPath.Contains("/completed") || currentPath.Contains("/favorites") ? "active" : "")" id="mobNavLibrary">
+                <span class="mob-nav-icon-wrap">
+                    <span class="mob-nav-badge" id="mobOngoingBadge"></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                </span>
+                Library
+            </a>
+
+            <button class="mob-nav-item @(currentPath.Contains("/notifications") ? "active" : "")" id="mobNavNotif" onclick="toggleMobNotif()">
+                <span class="mob-nav-icon-wrap">
+                    <span class="mob-nav-badge" id="mobNotifBadge"></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                </span>
+                Alerts
+            </button>
+
+            <button class="mob-nav-item @(currentPath.Contains("/profile") || currentPath.Contains("/dashboard") ? "active" : "")" id="mobNavProfile" onclick="toggleMobProfile()">
+                <span class="mob-nav-icon-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                    </svg>
+                </span>
+                Profile
+            </button>
+        </nav>
+
+        <!-- Search Panel -->
+        <div class="mob-panel" id="mobileSearchPanel">
+            <div class="mob-panel-handle"></div>
+            <div class="mob-panel-title">Search Books</div>
+            <div style="padding:0 1rem 1rem;">
+                <div class="mob-search-bar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--re-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                    <input type="text" placeholder="Title, author, category…" autocomplete="off" oninput="onMobSearchInput(this.value)" id="mobSearchInput" />
+                    <button class="mob-search-close" onclick="closeAllMobPanels()">×</button>
+                </div>
+                <!-- Genre Chips -->
+                <div class="search-genre-section" id="searchGenreSection" style="display:block;min-height:60px;">
+                    <div class="search-genre-title">Browse by Genre</div>
+                    <div class="search-genre-grid" id="searchGenreGrid" style="min-height:30px;">
+                        <div style="padding:.5rem;color:var(--re-muted);font-size:.75rem;">Tap a genre to browse books...</div>
+                    </div>
+                </div>
+                <div id="mobSearchResults" style="display:none;margin-top:1rem;">
+                    <div style="text-align:center;padding:2.5rem 1rem;color:var(--re-muted);font-size:.85rem;font-family:'Nunito',sans-serif;font-weight:600;">Start typing to search…</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Write Panel -->
+        <div class="mob-panel" id="mobileWritePanel">
+            <div class="mob-panel-handle"></div>
+            <div class="mob-panel-title">Create</div>
+            <a class="mob-write-item" href="/Mobile/PublishBook">
+                <div class="mob-write-icon green"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
+                <div><div class="mob-write-text-title">Publish a Book</div><div class="mob-write-text-desc">Upload & share your story</div></div>
+            </a>
+            <a class="mob-write-item" href="/Mobile/Write">
+                <div class="mob-write-icon orange"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+                <div><div class="mob-write-text-title">Manage My Books</div><div class="mob-write-text-desc">Chapters, edits & stats</div></div>
+            </a>
+        </div>
+
+        <!-- Notif Panel -->
+        <div class="mob-panel" id="mobileNotifPanel">
+            <div class="mob-panel-handle"></div>
+            <div class="mob-notif-header">
+                <div class="mob-notif-title">Notifications</div>
+                <button class="mob-notif-mark-read" onclick="markAllReadPanel()">Mark all read</button>
+            </div>
+            <div class="mob-notif-body" id="mobNotifBody">
+                <div class="re-search-spinner"><div class="re-spin"></div> Loading…</div>
+            </div>
+        </div>
+
+        <!-- Profile Panel -->
+        <div class="mob-panel" id="mobileProfilePanel">
+            <div class="mob-panel-handle"></div>
+            <div class="mob-profile-header">
+                <div class="mob-profile-avatar-lg">
+                    @if (!string.IsNullOrEmpty(profilePhoto)) { <img src="@profilePhoto" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" /> } else { @userInitial }
+                </div>
+                <div>
+                    <div class="mob-profile-name">@userName</div>
+                    <div class="mob-profile-role">@(User.IsInRole("Admin") ? "Administrator" : User.IsInRole("Author") ? "Author" : "Reader")</div>
+                </div>
+            </div>
+            <div class="mob-profile-menu">
+                @if (!layoutIsSubscribed)
+                {
+                    <a href="/Mobile/Subscribe" class="try-premium-btn" onclick="closeAllMobPanels()" style="margin-bottom:1rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        Try Premium
+                    </a>
+                }
+                <a class="mob-profile-item" href="/Mobile/Dashboard" onclick="closeAllMobPanels()"><div class="mob-profile-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div> Dashboard</a>
+                <a class="mob-profile-item" href="/Mobile/Profile" onclick="closeAllMobPanels()"><div class="mob-profile-item-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div> My Profile</a>
+                @if (User.IsInRole("Author") || User.IsInRole("Admin"))
+                {
+                    <a class="mob-profile-item" href="/Mobile/PublishBook" onclick="closeAllMobPanels()"><div class="mob-profile-item-icon" style="background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.15);color:#22c55e;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div> Publish Book</a>
+                    <a class="mob-profile-item" href="/Mobile/Write" onclick="closeAllMobPanels()"><div class="mob-profile-item-icon" style="background:rgba(200,134,10,.1);border-color:rgba(200,134,10,.15);color:var(--re-orange);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div> Manage My Books</a>
+                    <a class="mob-profile-item" href="/Mobile/Archive" onclick="closeAllMobPanels()"><div class="mob-profile-item-icon" style="background:rgba(156,163,175,.1);border-color:rgba(156,163,175,.15);color:#9ca3af;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div> Archived Books</a>
+                }
+                <a class="mob-profile-item" href="/Mobile/Favorites" onclick="closeAllMobPanels()"><div class="mob-profile-item-icon" style="background:rgba(200,50,80,.1);border-color:rgba(200,50,80,.15);color:#e05070;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div> My Favorites</a>
+                <a class="mob-profile-item" href="/Mobile/Downloads" onclick="closeAllMobPanels()">
+                    <div class="mob-profile-item-icon" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.15);color:#a855f7;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </div>
+                    <span style="display:flex;align-items:center;gap:.5rem;">Downloads <span id="profileDownloadBadge" style="display:none;font-size:.65rem;background:rgba(168,85,247,.2);color:#a855f7;padding:.15rem .4rem;border-radius:99px;font-weight:800;"></span></span>
+                </a>
+                <div class="mob-profile-item-divider"></div>
+                <a class="mob-profile-item" href="/Mobile/Logout" style="color:#C0392B!important;" onclick="return confirm('Sign out of ReadEase?')">
+                    <div class="mob-profile-item-icon" style="background:rgba(192,57,43,.1);border-color:rgba(192,57,43,.15);color:#c0392b;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div> Sign Out
+                </a>
+            </div>
+        </div>
+
+        <div id="mobToast"></div>
+        <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Scroll to top">↑</button>
+    }
+
+    <script>
+        function mobileApi(url, opts = {}) {
+            const token = document.cookie.match(/MobileAuthToken=([^;]+)/)?.[1];
+            const isFormData = opts.body instanceof FormData;
+            return fetch(url, { ...opts, headers: { ...(isFormData ? {} : { 'Content-Type': 'application/json' }), 'ngrok-skip-browser-warning': 'true', ...(token ? { 'Authorization': 'Bearer ' + decodeURIComponent(token) } : {}), ...(opts.headers || {}) } });
+        }
+
+        async function mobileApiJson(url, opts = {}) {
+            try {
+                const res = await mobileApi(url, opts);
+                const text = await res.text();
+                const t = (text || '').trim();
+                if (!t || (!t.startsWith('{') && !t.startsWith('['))) return { _error: true, status: res.status, ok: res.ok, raw: t };
+                return { ...JSON.parse(t), _ok: res.ok, _status: res.status };
+            } catch (err) { return { _error: true, message: err.message }; }
+        }
+
+        function showToast(msg, duration = 2500) {
+            const t = document.getElementById('mobToast');
+            if (!t) return;
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), duration);
+        }
+
+        function updateNotifBadges(count) {
+            ['mobNotifBadge','navNotifBadge'].forEach(id => {
+                const el = document.getElementById(id); if (!el) return;
+                if (count > 0) { el.textContent = count > 99 ? '99+' : count; el.style.display = 'block'; el.classList.add('show'); }
+                else { el.style.display = 'none'; el.classList.remove('show'); }
+            });
+        }
+
+        const _panelNavMap = {
+            'mobileNotifPanel': 'mobNavNotif',
+            'mobileProfilePanel': 'mobNavProfile'
+        };
+        function _setPanelActiveNav(panelId) {
+            const nav = document.getElementById('mobileBottomNav');
+            document.querySelectorAll('.mob-nav-item.panel-active').forEach(el => el.classList.remove('panel-active'));
+            const btnId = _panelNavMap[panelId];
+            if (btnId) { document.getElementById(btnId)?.classList.add('panel-active'); nav?.classList.add('has-panel'); }
+            else { nav?.classList.remove('has-panel'); }
+        }
+        function _clearPanelActiveNav() {
+            document.querySelectorAll('.mob-nav-item.panel-active').forEach(el => el.classList.remove('panel-active'));
+            document.getElementById('mobileBottomNav')?.classList.remove('has-panel');
+        }
+        function openMobPanel(id) {
+            closeAllMobPanels(id);
+            document.getElementById(id)?.classList.add('open');
+            document.getElementById('mobPanelBackdrop')?.classList.add('show');
+            _setPanelActiveNav(id);
+            if (id === 'mobileSearchPanel') loadSearchGenres();
+        }
+        function closeAllMobPanels(except) {
+            ['mobileSearchPanel','mobileWritePanel','mobileNotifPanel','mobileProfilePanel'].forEach(id => { if (id !== except) document.getElementById(id)?.classList.remove('open'); });
+            if (!except) { document.getElementById('mobPanelBackdrop')?.classList.remove('show'); _clearPanelActiveNav(); }
+            else { document.getElementById('mobPanelBackdrop')?.classList.add('show'); }
+        }
+
+        function toggleMobWrite() { const el = document.getElementById('mobileWritePanel'); el?.classList.contains('open') ? closeAllMobPanels() : openMobPanel('mobileWritePanel'); }
+        function toggleMobNotif() { const el = document.getElementById('mobileNotifPanel'); if (el?.classList.contains('open')) { closeAllMobPanels(); return; } openMobPanel('mobileNotifPanel'); loadPanelNotifs(); }
+        function toggleMobProfile() { const el = document.getElementById('mobileProfilePanel'); el?.classList.contains('open') ? closeAllMobPanels() : openMobPanel('mobileProfilePanel'); }
+
+        function normalizeMobileLink(link) {
+            if (!link || link === '#') return '#';
+            if (link.startsWith('/Mobile')) return link;
+            if (/^\/Library\/Detail\/(.+)/.test(link)) return link.replace('/Library/Detail/', '/Mobile/Detail/');
+            if (/^\/Library\/Read\/(.+)/.test(link)) return link.replace('/Library/Read/', '/Mobile/Read/');
+            if (link.startsWith('/Library')) return '/Mobile/Ongoing';
+            if (link.startsWith('/Subscription')) return '/Mobile/Subscribe';
+            if (link.startsWith('/User/Library')) return '/Mobile/Ongoing';
+            if (link.startsWith('/Author/MyBooks')) return '/Mobile/Write';
+            if (link.startsWith('/Admin')) return '#';
+            return link;
+        }
+
+        async function loadPanelNotifs() {
+            const body = document.getElementById('mobNotifBody'); if (!body) return;
+            try {
+                const res = await mobileApi('/Areas/Mobile/api/Notifications?take=20');
+                if (!res?.ok) throw new Error();
+                const notifs = await res.json();
+                if (!notifs.length) { body.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:var(--re-muted);font-size:.85rem;font-family:\'Nunito\',sans-serif;font-weight:600;">No notifications yet </div>'; return; }
+                body.innerHTML = notifs.map(n => {
+                    const icon = n.message?.startsWith('') ? '' : n.message?.startsWith('') ? '' : n.message?.startsWith('') ? '' : '';
+                    const href = normalizeMobileLink(n.link);
+                    return `<div class="mob-notif-item ${n.isRead ? '' : 'unread'}" onclick="${href !== '#' ? `location.href='${href}'` : ''}"><div style="display:flex;align-items:flex-start;gap:.75rem;"><span style="font-size:1.1rem;flex-shrink:0;margin-top:.1rem;">${icon}</span><div style="flex:1;"><div class="mob-notif-msg">${n.message||''}</div><div class="mob-notif-time">${formatTime(n.createdAt)}</div></div>${!n.isRead ? '<div style="width:7px;height:7px;border-radius:50%;background:var(--re-orange);flex-shrink:0;margin-top:.4rem;"></div>' : ''}</div></div>`;
+                }).join('');
+            } catch { body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--re-muted);font-size:.85rem;">Something went wrong.</div>'; }
+        }
+
+        async function markAllReadPanel() {
+            try { await mobileApi('/Areas/Mobile/api/Notifications/mark-all-read', { method: 'POST' }); document.querySelectorAll('.mob-notif-item.unread').forEach(el => el.classList.remove('unread')); updateNotifBadges(0); showToast('All caught up ✓'); } catch {}
+        }
+
+        function formatTime(iso) {
+            if (!iso) return '';
+            const diff = Math.floor((new Date() - new Date(iso)) / 1000);
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('scrollTopBtn');
+            if (btn) btn.style.display = window.scrollY > 300 ? 'flex' : 'none';
+        }, { passive: true });
+
+        (async function loadBadges() {
+            try { const res = await mobileApi('/Areas/Mobile/api/Library/counts'); if (!res?.ok) return; const { ongoing } = await res.json(); const b = document.getElementById('mobOngoingBadge'); if (b && ongoing > 0) { b.textContent = ongoing > 99 ? '99+' : ongoing; b.classList.add('show'); } } catch(_) {}
+            // Downloads badge - updated by MAUI via JS bridge
+            updateDownloadBadges(0); // Will be set by MAUI with actual download count
+        })();
+
+        // Called by MAUI to update download count badges
+        window.updateDownloadBadges = function(count) {
+            const navBadge = document.getElementById('navDownloadBadge');
+            const profileBadge = document.getElementById('profileDownloadBadge');
+            if (count > 0) {
+                if (navBadge) { navBadge.textContent = count > 99 ? '99+' : count; navBadge.classList.add('show'); }
+                if (profileBadge) { profileBadge.textContent = count > 99 ? '99+' : count; profileBadge.style.display = 'inline-flex'; }
+            } else {
+                if (navBadge) navBadge.classList.remove('show');
+                if (profileBadge) profileBadge.style.display = 'none';
+            }
+        };
+
+        // ── Nav bar search ──
+        let navSearchTimer = null;
+        const navSearchCache = {};
+
+        function navSearchOpen() {
+            document.getElementById('navSearchDrop')?.classList.add('open');
+        }
+
+        function closeNavSearch() {
+            const inp = document.getElementById('navSearchInput');
+            const drop = document.getElementById('navSearchDrop');
+            const clr  = document.getElementById('navSearchClear');
+            inp && (inp.value = '');
+            clr && clr.classList.remove('visible');
+            drop && drop.classList.remove('open');
+        }
+
+        function clearNavSearch() {
+            const inp = document.getElementById('navSearchInput');
+            const clr = document.getElementById('navSearchClear');
+            const drop = document.getElementById('navSearchDrop');
+            inp.value = '';
+            clr.classList.remove('visible');
+            drop.innerHTML = '<div style="text-align:center;padding:2rem 1rem;color:var(--re-muted);font-size:.82rem;font-family:\'Nunito\',sans-serif;font-weight:600;">Start typing to search…</div>';
+            drop.classList.remove('open');
+            inp.focus();
+        }
+
+        async function onNavSearchInput(q) {
+            q = q.trim();
+            const drop = document.getElementById('navSearchDrop');
+            const clr  = document.getElementById('navSearchClear');
+            clr.classList.toggle('visible', q.length > 0);
+            drop.classList.add('open');
+
+            if (!q || q.length < 2) {
+                drop.innerHTML = '<div style="text-align:center;padding:2rem 1rem;color:var(--re-muted);font-size:.82rem;font-family:\'Nunito\',sans-serif;font-weight:600;">Start typing to search…</div>';
+                return;
+            }
+            clearTimeout(navSearchTimer);
+            navSearchTimer = setTimeout(async () => {
+                if (navSearchCache[q]) { renderNavSearch(navSearchCache[q], q, drop); return; }
+                drop.innerHTML = '<div class="re-search-spinner"><div class="re-spin"></div> Searching…</div>';
+                try {
+                    const res = await mobileApi(`/Areas/Mobile/api/Library?search=${encodeURIComponent(q)}`);
+                    const books = await res.json();
+                    const data = { books: books.map(b => ({ ...b, url: `/Mobile/Detail/${b.id}` })) };
+                    navSearchCache[q] = data;
+                    renderNavSearch(data, q, drop);
+                } catch(_) { drop.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--re-muted);">Something went wrong.</div>'; }
+            }, 280);
+        }
+
+        function renderNavSearch(data, q, el) {
+            const books = (data.books||[]).slice(0, 6);
+            if (!books.length) {
+                el.innerHTML = `<div class="re-search-empty">No results for "<strong style="color:var(--re-orange)">${q}</strong>"</div>`;
+                return;
+            }
+            let html = '<div class="re-search-section-head">Books</div>';
+            books.forEach(b => {
+                const cover = b.coverImage
+                    ? `<img src="${b.coverImage}" class="re-search-thumb" alt="" loading="lazy" />`
+                    : `<div class="re-search-thumb-ph"></div>`;
+                html += `<a class="re-search-item" href="${b.url}">${cover}<div class="re-search-info"><div class="re-search-title">${b.title}</div><div class="re-search-sub">by ${b.author}${b.category ? ' · ' + b.category : ''}</div></div><span class="re-search-tag re-search-tag-book">Book</span></a>`;
+            });
+            html += `<div class="re-search-footer"><a href="/Mobile/Home?search=${encodeURIComponent(q)}">See all results →</a></div>`;
+            el.innerHTML = html;
+        }
+
+        // ── Auto-load notification badge count on page load ──
+        (async function initNotifBadge() {
+            try {
+                const res = await mobileApi('/Areas/Mobile/api/Notifications/unread-count');
+                if (res?.ok) {
+                    const data = await res.json();
+                    updateNotifBadges(data.unreadCount || 0);
+                }
+            } catch(_) {}
+        })();
+
+        // Fix for Android WebView text direction bug - force LTR on all text inputs
+        (function fixTextDirection() {
+            const inputs = document.querySelectorAll('input[type="text"], input[type="search"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.style.direction = 'ltr';
+                    this.style.textAlign = 'left';
+                });
+                input.addEventListener('focus', function() {
+                    this.style.direction = 'ltr';
+                    this.style.textAlign = 'left';
+                });
+            });
+        })();
+
+        // Close nav search when clicking outside
+        document.addEventListener('click', (e) => {
+            const wrap = document.getElementById('navSearchWrap');
+            const drop = document.getElementById('navSearchDrop');
+            if (drop && wrap && !wrap.contains(e.target) && !drop.contains(e.target)) {
+                drop.classList.remove('open');
+            }
+        });
+
+        // ── Genre chips for search ──
+        let searchGenresLoaded = false;
+        async function loadSearchGenres() {
+            if (searchGenresLoaded) return;
+            const grid = document.getElementById('searchGenreGrid');
+            if (!grid) return;
+            grid.innerHTML = '<div style="padding:.5rem;color:var(--re-muted);font-size:.75rem;">Loading genres…</div>';
+            try {
+                const res = await fetch('/api/library/categories', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+                if (!res.ok) throw new Error('Failed to load');
+                const cats = await res.json();
+                if (!cats || cats.length === 0) {
+                    document.getElementById('searchGenreSection').style.display = 'none';
+                    return;
+                }
+                grid.innerHTML = cats.map(cat =>
+                    `<button class="search-genre-chip" onclick="selectSearchGenre(this, '${cat.replace(/'/g, "\\'")}')">${cat}</button>`
+                ).join('');
+                searchGenresLoaded = true;
+            } catch (e) {
+                grid.innerHTML = '<div style="padding:.5rem;color:var(--re-muted);font-size:.75rem;">Unable to load genres</div>';
+            }
+        }
+        function selectSearchGenre(btn, genre) {
+            document.querySelectorAll('.search-genre-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            // Navigate to home with genre filter
+            window.location.href = '/Mobile/Home?category=' + encodeURIComponent(genre);
+        }
+
+        // ── Mobile panel search ──
+        let mobSearchTimer = null;
+        const mobSearchCache = {};
+
+        async function onMobSearchInput(q) {
+            q = q.trim();
+            const el = document.getElementById('mobSearchResults');
+            if (!q || q.length < 2) { el.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:var(--re-muted);font-size:.85rem;font-family:\'Nunito\',sans-serif;font-weight:600;">Start typing to search…</div>'; return; }
+            clearTimeout(mobSearchTimer);
+            mobSearchTimer = setTimeout(async () => {
+                if (mobSearchCache[q]) { renderMobSearch(mobSearchCache[q], q, el); return; }
+                el.innerHTML = '<div class="re-search-spinner"><div class="re-spin"></div> Searching…</div>';
+                try {
+                    const res = await mobileApi(`/Areas/Mobile/api/Library?search=${encodeURIComponent(q)}`);
+                    const books = await res.json();
+                    const data = { books: books.map(b => ({ ...b, url: `/Mobile/Detail/${b.id}` })) };
+                    mobSearchCache[q] = data; renderMobSearch(data, q, el);
+                } catch(_) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--re-muted);">Something went wrong.</div>'; }
+            }, 300);
+        }
+
+        function renderMobSearch(data, q, el) {
+            const books = (data.books||[]).slice(0, 6);
+            if (!books.length) { el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--re-muted);font-family:'Nunito',sans-serif;font-size:.85rem;">No results for "<strong style="color:var(--re-orange)">${q}</strong>"</div>`; return; }
+            let html = '<div class="re-search-section-head">Books</div>';
+            books.forEach(b => {
+                const cover = b.coverImage ? `<img src="${b.coverImage}" class="re-search-thumb" alt="" loading="lazy" />` : `<div class="re-search-thumb-ph"></div>`;
+                html += `<a class="re-search-item" href="${b.url}" onclick="closeAllMobPanels()">${cover}<div class="re-search-info"><div class="re-search-title">${b.title}</div><div class="re-search-sub">by ${b.author}${b.category ? ' · ' + b.category : ''}</div></div><span class="re-search-tag re-search-tag-book">Book</span></a>`;
+            });
+            html += `<div class="re-search-footer"><a href="/Mobile/Home?search=${encodeURIComponent(q)}" onclick="closeAllMobPanels()">See all results →</a></div>`;
+            el.innerHTML = html;
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

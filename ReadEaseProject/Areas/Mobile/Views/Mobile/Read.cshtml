@@ -1,0 +1,1732 @@
+@model ReadEase.ViewModels.Library.BookReaderViewModel
+@{
+    ViewData["Title"] = Model?.Title ?? "Read";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+
+    var isSubscribed = User.FindFirst("IsSubscribed")?.Value == "true"
+                    || User.IsInRole("Admin")
+                    || User.IsInRole("Author");
+}
+
+@if (Model is null)
+{
+    <div class="mob-empty">
+        <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <div class="mob-empty-title">Book not found</div>
+        <a class="mob-empty-btn" href="/Mobile/Home">Back to Home</a>
+    </div>
+    return;
+}
+
+@{
+    var chapters = Model.Chapters ?? new List<ReadEase.ViewModels.Library.ChapterNavItem>();
+    var currentChapter = chapters.FirstOrDefault(c => c.ChapterNumber == Model.CurrentChapter)
+                      ?? chapters.FirstOrDefault();
+    var hasPrev = currentChapter is not null && chapters.Any(c => c.ChapterNumber < currentChapter.ChapterNumber);
+    var hasNext = currentChapter is not null && chapters.Any(c => c.ChapterNumber > currentChapter.ChapterNumber);
+    var prevNum = hasPrev ? chapters.Where(c => c.ChapterNumber < currentChapter!.ChapterNumber).Max(c => c.ChapterNumber) : 0;
+    var nextNum = hasNext ? chapters.Where(c => c.ChapterNumber > currentChapter!.ChapterNumber).Min(c => c.ChapterNumber) : 0;
+}
+
+<style>
+    /* ══ READING THEME VARIABLES ══════════════════════════════════════════ */
+    /* Default inherits the app's warm cream theme from layout */
+    :root {
+        --rd-bg:         var(--re-bg);
+        --rd-surface:    var(--re-surface);
+        --rd-surface2:   var(--re-surface-2);
+        --rd-border:     var(--re-border);
+        --rd-bar-bg:     rgba(250,246,239,.97);
+        --rd-text:       var(--re-text);
+        --rd-text-muted: var(--re-muted);
+        --rd-heading:    #1a0f05;
+        --rd-label:      var(--re-muted);
+        --rd-btn-bg:     var(--re-surface-2);
+        --rd-btn-border: var(--re-border);
+        --rd-btn-color:  var(--re-muted);
+        --rd-progress-bg: rgba(44,26,14,.07);
+        --rd-progress-c:  var(--re-text);
+        --rd-orange:     var(--re-orange);
+        --rd-orange-dark: var(--re-orange-dark);
+    }
+
+    /* Dark theme */
+    body.rt-dark {
+        --rd-bg:         #0b1219;
+        --rd-surface:    #0f1922;
+        --rd-surface2:   #141e28;
+        --rd-border:     rgba(255,255,255,.08);
+        --rd-bar-bg:     rgba(11,18,25,.97);
+        --rd-text:       rgba(255,255,255,.88);
+        --rd-text-muted: rgba(255,255,255,.45);
+        --rd-heading:    #ffffff;
+        --rd-label:      rgba(255,255,255,.65);
+        --rd-btn-bg:     rgba(255,255,255,.07);
+        --rd-btn-border: rgba(255,255,255,.12);
+        --rd-btn-color:  rgba(255,255,255,.75);
+        --rd-progress-bg: rgba(0,0,0,.35);
+        --rd-progress-c:  rgba(255,255,255,.7);
+    }
+
+    /* Sepia theme */
+    body.rt-sepia {
+        --rd-bg:         #f5ead6;
+        --rd-surface:    #efe2c8;
+        --rd-surface2:   #e8d8b8;
+        --rd-border:     rgba(160,120,60,.2);
+        --rd-bar-bg:     rgba(245,234,214,.98);
+        --rd-text:       #3a2a10;
+        --rd-text-muted: #9a7844;
+        --rd-heading:    #2c1c08;
+        --rd-label:      #9a7844;
+        --rd-btn-bg:     rgba(160,120,60,.1);
+        --rd-btn-border: rgba(160,120,60,.22);
+        --rd-btn-color:  #7a5828;
+        --rd-progress-bg: rgba(0,0,0,.1);
+        --rd-progress-c:  #5c3e18;
+    }
+
+    /* ══ GLOBAL ══════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+        background: var(--rd-bg) !important;
+        transition: background .25s;
+        overflow-x: hidden;
+    }
+
+    /* ══ TOP BAR — matches app nav style ════════════════════════════════ */
+    .rd-topbar {
+        position: fixed;
+        top: env(safe-area-inset-top, 0px);
+        left: 0; right: 0;
+        min-height: 56px;
+        padding: 0 12px;
+        padding-top: env(safe-area-inset-top, 0);
+        background: var(--rd-bar-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--rd-border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 1000;
+        transition: transform .3s cubic-bezier(.2,.9,.4,1), background .25s;
+        box-shadow: 0 2px 12px rgba(44,26,14,.08);
+    }
+    .rd-topbar.hidden { transform: translateY(-110%); }
+
+    /* Back button — same pill style as app */
+    .rd-back {
+        width: 38px; height: 38px;
+        border-radius: 50%;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--rd-btn-color);
+        font-size: 1rem;
+        text-decoration: none !important;
+        flex-shrink: 0;
+        transition: all .15s;
+    }
+    .rd-back:hover { background: rgba(200,134,10,.12); border-color: rgba(200,134,10,.3); color: var(--re-orange); }
+
+    .rd-bar-info { flex: 1; min-width: 0; }
+    .rd-bar-title {
+        font-size: .82rem; font-weight: 800;
+        color: var(--rd-heading);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        line-height: 1.2; transition: color .25s;
+        font-family: 'Playfair Display', serif;
+    }
+    .rd-bar-ch {
+        font-size: .67rem; font-weight: 600;
+        color: var(--rd-text-muted);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        margin-top: 1px; transition: color .25s;
+    }
+
+    /* Chapters pill button */
+    .rd-ch-btn {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        border-radius: 99px;
+        color: var(--rd-btn-color);
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem; font-weight: 800;
+        padding: 6px 12px;
+        cursor: pointer; white-space: nowrap;
+        transition: all .15s; min-height: 36px; flex-shrink: 0;
+    }
+    .rd-ch-btn:hover { border-color: rgba(200,134,10,.45); color: var(--re-orange); }
+
+    /* Icon buttons */
+    .rd-icon-btn {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--rd-btn-color);
+        font-size: .95rem;
+        cursor: pointer; flex-shrink: 0;
+        transition: all .15s;
+    }
+    .rd-icon-btn:hover { border-color: rgba(200,134,10,.45); color: var(--re-orange); background: rgba(200,134,10,.08); }
+
+    /* AI button — orange tint */
+    .rd-ai-btn {
+        background: rgba(200,134,10,.1);
+        border-color: rgba(200,134,10,.3);
+        color: var(--re-orange);
+        position: relative;
+    }
+    .rd-ai-btn::after {
+        content: 'AI';
+        position: absolute; top: -4px; right: -4px;
+        background: var(--re-orange); color: var(--re-bg);
+        font-size: .42rem; font-weight: 900;
+        padding: 1px 3px; border-radius: 99px; line-height: 1.4;
+    }
+
+    /* TTS button — green tint */
+    .rd-tts-btn {
+        background: rgba(34,197,94,.1);
+        border-color: rgba(34,197,94,.3);
+        color: #22c55e;
+        position: relative;
+    }
+    .rd-tts-btn::after {
+        content: '▶';
+        position: absolute; top: -4px; right: -4px;
+        background: #22c55e; color: #fff;
+        font-size: .38rem; font-weight: 900;
+        padding: 1px 3px; border-radius: 99px; line-height: 1.4;
+    }
+    .rd-tts-btn.playing {
+        background: rgba(34,197,94,.18);
+        border-color: #22c55e;
+        animation: ttsGlow .9s ease-in-out infinite alternate;
+    }
+    @@keyframes ttsGlow {
+        from { box-shadow: 0 0 0 0 rgba(34,197,94,.3); }
+        to   { box-shadow: 0 0 0 6px rgba(34,197,94,.0); }
+    }
+
+    /* ══ CONTENT AREA ════════════════════════════════════════════════════ */
+    .rd-body {
+        padding-top: 76px;
+        padding-bottom: 96px;
+        cursor: default;
+        min-height: 100dvh;
+        background: var(--rd-bg);
+        transition: background .25s;
+    }
+
+    .rd-content {
+        max-width: 660px;
+        margin: 0 auto;
+        padding: 1.75rem 1.25rem 2.5rem;
+    }
+
+    /* Chapter header — styled like Detail view badges/headings */
+    .rd-ch-eyebrow {
+        display: inline-flex; align-items: center; gap: .4rem;
+        font-size: .62rem; font-weight: 900;
+        color: var(--re-orange);
+        text-transform: uppercase; letter-spacing: .1em;
+        background: rgba(200,134,10,.1);
+        border: 1px solid rgba(200,134,10,.2);
+        border-radius: 99px;
+        padding: .22rem .75rem;
+        margin-bottom: .85rem;
+    }
+
+    .rd-ch-heading {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 1.55rem; font-weight: 800;
+        color: var(--rd-heading);
+        line-height: 1.28; margin-bottom: .65rem;
+        word-break: break-word;
+        transition: color .25s;
+    }
+
+    .rd-divider {
+        display: flex; align-items: center; gap: .65rem;
+        margin-bottom: 1.5rem;
+    }
+    .rd-divider-line {
+        width: 36px; height: 3px;
+        background: var(--re-orange);
+        border-radius: 3px; opacity: .75;
+        flex-shrink: 0;
+    }
+    .rd-divider-dot {
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: var(--re-orange);
+        opacity: .45; flex-shrink: 0;
+    }
+
+    /* Reading text */
+    .rd-text {
+        font-size: var(--rd-fs, 1rem);
+        line-height: var(--rd-lh, 1.85);
+        color: var(--rd-text);
+        font-weight: 400;
+        font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+        word-break: break-word; overflow-wrap: break-word;
+        transition: color .25s, font-size .15s, line-height .15s;
+    }
+    .rd-text p { margin-bottom: 1.3em; }
+    .rd-text p:last-child { margin-bottom: 0; }
+    .rd-text .tts-word { border-radius: 4px; transition: background .15s, color .15s; padding: 1px 2px; margin: -1px -2px; }
+    .rd-text .tts-word.active { background: #86efac; color: #14532d; box-shadow: 0 0 8px rgba(34,197,94,.4); font-weight: 700; }
+
+    /* ══ BOTTOM BAR ══════════════════════════════════════════════════════ */
+    .rd-bottom {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        min-height: 64px;
+        padding: 10px 16px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        background: var(--rd-bar-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--rd-border);
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; z-index: 1000;
+        transition: transform .3s cubic-bezier(.2,.9,.4,1), background .25s;
+        box-shadow: 0 -2px 12px rgba(44,26,14,.07);
+    }
+    .rd-bottom.hidden { transform: translateY(110%); }
+
+    /* Nav buttons — same pill style as other views */
+    .rd-nav-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+        padding: 9px 18px; border-radius: 99px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-btn-color) !important;
+        font-family: 'Nunito', sans-serif;
+        font-size: .82rem; font-weight: 800;
+        text-decoration: none !important;
+        transition: all .18s; min-width: 80px; min-height: 42px;
+        cursor: pointer; flex-shrink: 0;
+    }
+    .rd-nav-btn:hover { border-color: rgba(200,134,10,.4); color: var(--re-orange) !important; }
+    .rd-nav-btn.primary {
+        background: var(--re-orange);
+        border-color: var(--re-orange);
+        color: var(--re-bg) !important;
+        box-shadow: 0 4px 14px rgba(200,134,10,.3);
+    }
+    .rd-nav-btn.primary:hover {
+        background: var(--re-orange-dark);
+        box-shadow: 0 6px 20px rgba(200,134,10,.4);
+        transform: translateY(-1px);
+    }
+
+    /* Progress pill */
+    .rd-progress {
+        flex: 1; text-align: center;
+        font-size: .72rem; font-weight: 800;
+        color: var(--rd-text-muted);
+        background: var(--rd-progress-bg);
+        padding: 6px 10px; border-radius: 99px;
+        white-space: nowrap;
+        border: 1px solid var(--rd-border);
+        transition: color .25s, background .25s;
+    }
+
+    /* ══ SETTINGS PANEL — matches app bottom sheet style ════════════════ */
+    .rd-settings-panel {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: var(--rd-surface);
+        border-top: 1px solid var(--rd-border);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        padding: 1.25rem 1.25rem;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+        z-index: 1100;
+        transform: translateY(100%);
+        transition: transform .3s cubic-bezier(.2,.9,.4,1.1), background .25s;
+        box-shadow: 0 -8px 32px rgba(44,26,14,.12);
+    }
+    .rd-settings-panel.open { transform: translateY(0); }
+    .rd-settings-panel::before {
+        content: ''; display: block;
+        width: 36px; height: 4px;
+        background: var(--rd-border);
+        border-radius: 2px; margin: 0 auto 1.1rem;
+    }
+
+    .rsp-title {
+        font-size: .7rem; font-weight: 900;
+        color: var(--re-orange);
+        text-transform: uppercase; letter-spacing: .1em;
+        margin-bottom: 1rem;
+    }
+    .rsp-row { display: flex; align-items: center; gap: 10px; margin-bottom: .9rem; }
+    .rsp-label {
+        font-size: .78rem; font-weight: 700;
+        color: var(--rd-label);
+        width: 72px; flex-shrink: 0; transition: color .25s;
+    }
+    .rsp-group { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+    .rsp-btn {
+        flex: 1; padding: 9px 6px; border-radius: 99px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-btn-color);
+        font-family: 'Nunito', sans-serif;
+        font-size: .82rem; font-weight: 700;
+        cursor: pointer; text-align: center;
+        min-width: 52px; min-height: 42px;
+        transition: all .18s; white-space: nowrap;
+    }
+    .rsp-btn:hover { border-color: rgba(200,134,10,.4); color: var(--re-orange); }
+    .rsp-btn.active {
+        background: var(--re-orange);
+        border-color: var(--re-orange);
+        color: var(--re-bg);
+        box-shadow: 0 3px 10px rgba(200,134,10,.3);
+    }
+
+    /* ══ CHAPTER DRAWER ══════════════════════════════════════════════════ */
+    .rd-drawer {
+        position: fixed; top: 0; right: -100%; bottom: 0;
+        width: min(82vw, 310px);
+        background: var(--rd-surface);
+        border-left: 1px solid var(--rd-border);
+        z-index: 1200; overflow-y: auto;
+        transition: right .3s cubic-bezier(.2,.9,.4,1.1), background .25s;
+        padding: 1.5rem 1rem;
+        padding-top: max(1.5rem, env(safe-area-inset-top));
+        box-shadow: -6px 0 30px rgba(44,26,14,.12);
+    }
+    .rd-drawer.open { right: 0; }
+
+    .rd-drawer-head {
+        font-size: .95rem; font-weight: 900;
+        color: var(--rd-heading);
+        margin-bottom: .85rem;
+        padding-bottom: .75rem;
+        border-bottom: 1px solid var(--rd-border);
+        display: flex; align-items: center; justify-content: space-between;
+        transition: color .25s;
+        font-family: 'Playfair Display', serif;
+    }
+    .rd-drawer-close {
+        background: none; border: none;
+        color: var(--rd-text-muted);
+        font-size: 1rem; cursor: pointer;
+        padding: 6px 10px; border-radius: 99px;
+        transition: all .15s;
+    }
+    .rd-drawer-close:hover { background: rgba(200,134,10,.1); color: var(--re-orange); }
+
+    /* Chapter list items in drawer */
+    .rd-ch-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 10px; margin: 3px 0;
+        border-radius: var(--radius-md);
+        text-decoration: none !important;
+        color: var(--rd-text) !important;
+        font-size: .86rem; font-weight: 600;
+        transition: background .15s;
+    }
+    .rd-ch-item:hover { background: rgba(200,134,10,.08); color: var(--re-orange-dark) !important; }
+    .rd-ch-item.active { background: rgba(200,134,10,.12); color: var(--re-orange-dark) !important; }
+
+    .rd-ch-num {
+        width: 32px; height: 32px; border-radius: 10px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .72rem; font-weight: 900;
+        flex-shrink: 0; color: var(--rd-text-muted);
+        transition: all .15s;
+    }
+    .rd-ch-item.active .rd-ch-num {
+        background: var(--re-orange);
+        border-color: var(--re-orange);
+        color: var(--re-bg);
+    }
+
+    /* ══ TTS PANEL ═══════════════════════════════════════════════════════ */
+    .rd-tts-panel {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: var(--rd-surface);
+        border-top: 1px solid var(--rd-border);
+        border-radius: 28px 28px 0 0;
+        padding: 0 1.35rem max(1.5rem, env(safe-area-inset-bottom));
+        z-index: 1100;
+        transform: translateY(100%);
+        transition: transform .35s cubic-bezier(.2,.9,.4,1.1), background .25s;
+        box-shadow: 0 -12px 40px rgba(44,26,14,.12);
+    }
+    .rd-tts-panel.open { transform: translateY(0); }
+
+    .tts-handle { width: 40px; height: 4px; background: var(--rd-border); border-radius: 2px; margin: 14px auto 18px; }
+
+    .tts-hero { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .tts-cover {
+        width: 48px; height: 48px; border-radius: 10px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-border);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .tts-cover svg { width: 22px; height: 22px; color: var(--rd-text-muted); }
+    .tts-meta { flex: 1; min-width: 0; }
+    .tts-meta-title {
+        font-size: .9rem; font-weight: 900;
+        color: var(--rd-heading);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        line-height: 1.25; transition: color .25s;
+        font-family: 'Playfair Display', serif;
+    }
+    .tts-meta-sub {
+        font-size: .68rem; font-weight: 700; color: #22c55e;
+        margin-top: 3px; display: flex; align-items: center; gap: 5px;
+    }
+    .tts-live-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #22c55e; display: none;
+        animation: ttsPulse .9s ease-in-out infinite alternate;
+    }
+    .tts-live-dot.active { display: inline-block; }
+    @@keyframes ttsPulse {
+        from { opacity: .4; transform: scale(.8); }
+        to   { opacity: 1; transform: scale(1.2); }
+    }
+    .tts-close {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-text-muted);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: .85rem; flex-shrink: 0;
+        transition: all .15s;
+    }
+    .tts-close:hover { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: #ef4444; }
+
+    .tts-ticker-wrap {
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        border-radius: var(--radius-md);
+        padding: 10px 14px; margin-bottom: 14px;
+        min-height: 44px; display: flex; align-items: center;
+    }
+    .tts-ticker {
+        font-size: .78rem; font-weight: 600;
+        color: var(--rd-text-muted); line-height: 1.5;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+        transition: color .25s; width: 100%;
+    }
+    .tts-ticker.speaking { color: var(--rd-text); }
+
+    .tts-progress-wrap {
+        width: 100%; height: 3px;
+        background: var(--rd-btn-bg);
+        border-radius: 99px; margin-bottom: 18px; overflow: hidden;
+    }
+    .tts-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #22c55e, #4ade80);
+        border-radius: 99px; width: 0%;
+        transition: width .4s linear;
+    }
+
+    .tts-controls {
+        display: flex; align-items: center; justify-content: center;
+        gap: 16px; margin-bottom: 16px;
+    }
+    .tts-ctrl-btn {
+        height: 40px; border-radius: 99px;
+        padding: 0 18px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-btn-color);
+        font-family: 'Nunito', sans-serif;
+        font-size: .78rem; font-weight: 800;
+        cursor: pointer; flex-shrink: 0; transition: all .15s;
+    }
+    .tts-ctrl-btn:hover { border-color: rgba(239,68,68,.4); color: #ef4444; }
+    .tts-play-btn {
+        width: 56px; height: 40px; border-radius: 10px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-text);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; cursor: pointer; flex-shrink: 0;
+        transition: all .15s;
+    }
+    .tts-play-btn:hover { border-color: var(--rd-text-muted); background: var(--rd-border); }
+    .tts-play-btn:active { transform: scale(.97); }
+
+    .tts-speed-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .tts-speed-label {
+        font-size: .7rem; font-weight: 800;
+        color: var(--rd-text-muted); text-transform: uppercase; letter-spacing: .06em;
+        flex-shrink: 0; width: 44px; transition: color .25s;
+    }
+    .tts-speed-group { display: flex; gap: 6px; flex: 1; }
+    .tts-speed-btn {
+        flex: 1; padding: 7px 4px; border-radius: 99px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-btn-color);
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem; font-weight: 800;
+        cursor: pointer; min-height: 34px;
+        transition: all .15s; text-align: center; white-space: nowrap;
+    }
+    .tts-speed-btn:hover { border-color: var(--rd-text-muted); }
+    .tts-speed-btn.active { background: var(--rd-text); border-color: var(--rd-text); color: var(--rd-surface); }
+
+    .tts-lang-row { display: flex; align-items: center; gap: 8px; }
+    .tts-lang-label {
+        font-size: .7rem; font-weight: 800;
+        color: var(--rd-text-muted); text-transform: uppercase; letter-spacing: .06em;
+        flex-shrink: 0; width: 44px; transition: color .25s;
+    }
+    .tts-lang-group { display: flex; gap: 6px; flex: 1; }
+    .tts-lang-btn {
+        flex: 1; padding: 8px 4px; border-radius: 99px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-btn-color);
+        font-family: 'Nunito', sans-serif;
+        font-size: .76rem; font-weight: 800;
+        cursor: pointer; min-height: 36px;
+        transition: all .15s; text-align: center;
+    }
+    .tts-lang-btn:hover { border-color: var(--rd-text-muted); }
+    .tts-lang-btn.active {
+        background: var(--rd-text);
+        border-color: var(--rd-text); color: var(--rd-surface);
+    }
+
+    /* ══ AI READER PANEL ═════════════════════════════════════════════════ */
+    .rd-ai-panel {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: 72vh;
+        background: var(--rd-surface);
+        border-top: 1px solid var(--rd-border);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        z-index: 1100;
+        transform: translateY(100%);
+        transition: transform .35s cubic-bezier(.2,.9,.4,1.1), background .25s;
+        box-shadow: 0 -12px 40px rgba(44,26,14,.12);
+        display: flex; flex-direction: column; overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .rd-ai-panel.open { transform: translateY(0); }
+
+    .rd-ai-handle { width: 36px; height: 4px; background: var(--rd-border); border-radius: 2px; margin: 14px auto 0; flex-shrink: 0; }
+
+    .rd-ai-header {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 16px 10px;
+        border-bottom: 1px solid var(--rd-border);
+        flex-shrink: 0;
+    }
+    .rd-ai-header-icon {
+        width: 36px; height: 36px; border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, var(--re-orange), var(--re-orange-dark));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
+        box-shadow: 0 3px 10px rgba(200,134,10,.3);
+    }
+    .rd-ai-header-text { flex: 1; min-width: 0; }
+    .rd-ai-header-title {
+        font-size: .88rem; font-weight: 900;
+        color: var(--rd-heading); line-height: 1.2;
+        transition: color .25s;
+        font-family: 'Playfair Display', serif;
+    }
+    .rd-ai-header-sub {
+        font-size: .65rem; font-weight: 600;
+        color: var(--rd-text-muted); margin-top: 1px; transition: color .25s;
+    }
+
+    .rd-ai-lang-toggle {
+        display: flex;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        border-radius: 99px; overflow: hidden; flex-shrink: 0;
+    }
+    .rd-ai-lang-btn {
+        padding: 6px 12px;
+        background: none; border: none;
+        color: var(--rd-btn-color);
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem; font-weight: 800;
+        cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .rd-ai-lang-btn.active { background: var(--re-orange); color: var(--re-bg); border-radius: 99px; }
+
+    .rd-ai-close {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        color: var(--rd-text-muted);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: .85rem; flex-shrink: 0; transition: all .15s;
+    }
+    .rd-ai-close:hover { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: #ef4444; }
+
+    .rd-ai-chips {
+        display: flex; gap: 7px;
+        padding: 10px 16px;
+        overflow-x: auto; flex-shrink: 0;
+        border-bottom: 1px solid var(--rd-border);
+        -webkit-overflow-scrolling: touch;
+    }
+    .rd-ai-chips::-webkit-scrollbar { display: none; }
+
+    .rd-ai-chip {
+        flex-shrink: 0;
+        display: inline-flex; align-items: center; gap: 4px;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        border-radius: 99px;
+        color: var(--rd-btn-color);
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem; font-weight: 800;
+        padding: 6px 14px; cursor: pointer; white-space: nowrap;
+        transition: all .15s;
+    }
+    .rd-ai-chip:hover { border-color: rgba(200,134,10,.4); color: var(--re-orange); background: rgba(200,134,10,.07); }
+
+    .rd-ai-messages {
+        flex: 1; overflow-y: auto;
+        padding: 12px 16px;
+        display: flex; flex-direction: column; gap: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .rd-ai-msg {
+        max-width: 90%;
+        padding: 10px 14px; border-radius: var(--radius-md);
+        font-size: .84rem; font-weight: 600;
+        line-height: 1.55; word-break: break-word;
+        animation: msgIn .2s ease;
+    }
+    @@keyframes msgIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .rd-ai-msg.user {
+        background: rgba(200,134,10,.1);
+        border: 1.5px solid rgba(200,134,10,.2);
+        color: var(--rd-text); align-self: flex-end;
+        border-bottom-right-radius: 4px;
+    }
+    .rd-ai-msg.ai {
+        background: var(--rd-surface2);
+        border: 1.5px solid var(--rd-border);
+        color: var(--rd-text); align-self: flex-start;
+        border-bottom-left-radius: 4px;
+    }
+    .rd-ai-msg.ai .ai-label {
+        font-size: .62rem; font-weight: 900;
+        color: var(--re-orange); text-transform: uppercase;
+        letter-spacing: .06em; margin-bottom: 4px;
+    }
+
+    .rd-ai-typing {
+        display: flex; align-items: center; gap: 4px;
+        padding: 12px 14px;
+        background: var(--rd-surface2);
+        border: 1.5px solid var(--rd-border);
+        border-radius: var(--radius-md); border-bottom-left-radius: 4px;
+        align-self: flex-start;
+    }
+    .rd-ai-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--re-orange); animation: rdDot .9s ease-in-out infinite; }
+    .rd-ai-dot:nth-child(2) { animation-delay: .15s; }
+    .rd-ai-dot:nth-child(3) { animation-delay: .3s; }
+    @@keyframes rdDot {
+        0%, 80%, 100% { transform: scale(.6); opacity: .4; }
+        40%            { transform: scale(1);  opacity: 1; }
+    }
+
+    .rd-ai-inputbar {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 16px 12px;
+        border-top: 1px solid var(--rd-border); flex-shrink: 0;
+    }
+    .rd-ai-input {
+        flex: 1;
+        background: var(--rd-btn-bg);
+        border: 1.5px solid var(--rd-btn-border);
+        border-radius: 99px;
+        padding: 9px 16px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .85rem; font-weight: 600;
+        color: var(--rd-text);
+        outline: none; transition: border-color .2s; min-height: 42px;
+    }
+    .rd-ai-input::placeholder { color: var(--rd-text-muted); }
+    .rd-ai-input:focus { border-color: rgba(200,134,10,.5); box-shadow: 0 0 0 3px rgba(200,134,10,.1); }
+
+    .rd-ai-send {
+        width: 42px; height: 42px; border-radius: 50%;
+        background: var(--re-orange); border: none;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--re-bg); font-size: .95rem; cursor: pointer; flex-shrink: 0;
+        box-shadow: 0 3px 10px rgba(200,134,10,.35);
+        transition: all .15s;
+    }
+    .rd-ai-send:hover { background: var(--re-orange-dark); transform: scale(1.05); }
+    .rd-ai-send:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* Upsell for non-subscribers */
+    .rd-ai-upsell {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        text-align: center; padding: 2rem 1.5rem; gap: .75rem;
+    }
+    .rd-ai-upsell-icon { font-size: 2.8rem; line-height: 1; filter: drop-shadow(0 4px 10px rgba(200,134,10,.3)); }
+    .rd-ai-upsell-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem; font-weight: 800;
+        color: var(--rd-heading); line-height: 1.3; transition: color .25s;
+    }
+    .rd-ai-upsell-sub {
+        font-size: .82rem; font-weight: 600;
+        color: var(--rd-text-muted); line-height: 1.5;
+        max-width: 270px; transition: color .25s;
+    }
+    .rd-ai-upsell-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        background: var(--re-orange); color: var(--re-bg) !important;
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem; font-weight: 900;
+        padding: .75rem 1.5rem; border-radius: 99px;
+        text-decoration: none !important;
+        box-shadow: 0 4px 14px rgba(200,134,10,.35);
+        margin-top: .5rem; transition: all .15s;
+    }
+    .rd-ai-upsell-btn:hover { background: var(--re-orange-dark); transform: translateY(-1px); }
+
+    /* ══ BOOKMARK ═══════════════════════════════════════════════════════ */
+    #rdBmBtn { position: relative; }
+    #rdBmBtn.has-bookmark { color: var(--re-orange) !important; }
+    #rdBmBtn.has-bookmark svg { stroke: var(--re-orange); }
+    #rdBmBanner {
+        display: none; position: fixed;
+        top: 54px; left: 50%; transform: translateX(-50%);
+        background: var(--re-orange); color: #fff;
+        font-family: 'Nunito', sans-serif; font-size: .78rem; font-weight: 800;
+        padding: .45rem 1.1rem; border-radius: 99px;
+        box-shadow: 0 4px 16px rgba(200,134,10,.4);
+        z-index: 2000; white-space: nowrap;
+        animation: bm-pop .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @@keyframes bm-pop { from { opacity:0; transform:translateX(-50%) scale(.85); } to { opacity:1; transform:translateX(-50%) scale(1); } }
+
+    /* Sentence pick mode */
+    .rd-bm-sent { display: inline; border-radius: 3px; transition: background .12s; }
+    .bm-pick-active .rd-bm-sent { cursor: pointer; }
+    .bm-pick-active .rd-bm-sent:hover,
+    .bm-pick-active .rd-bm-sent:active { background: rgba(200,134,10,.22); border-radius: 3px; }
+    .bookmark-marker {
+        font-size: 1rem; margin-right: 2px;
+        cursor: pointer; user-select: none; -webkit-user-select: none;
+        filter: drop-shadow(0 1px 4px rgba(200,134,10,.6));
+    }
+    #rdBmPickBanner {
+        display: none; position: fixed;
+        top: 60px; left: 0; right: 0;
+        background: var(--re-orange); color: #fff;
+        font-family: 'Nunito', sans-serif; font-size: .8rem; font-weight: 800;
+        padding: .55rem 1rem; text-align: center;
+        z-index: 1999; box-shadow: 0 3px 12px rgba(200,134,10,.3);
+        display: none; align-items: center; justify-content: center; gap: 10px;
+    }
+    #rdBmPickBanner.visible { display: flex; }
+    #rdBmPickCancel {
+        background: rgba(255,255,255,.25); border: none; color: #fff;
+        font-family: 'Nunito', sans-serif; font-size: .75rem; font-weight: 800;
+        border-radius: 99px; padding: 3px 10px; cursor: pointer;
+    }
+
+    /* ══ BACKDROPS ════════════════════════════════════════════════════════ */
+    #rdDrawerBg, #rdSettingsBg, #rdAiBg, #rdTtsBg {
+        display: none; position: fixed; inset: 0;
+        background: rgba(44,26,14,.45);
+        backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    }
+    #rdDrawerBg  { z-index: 1150; }
+    #rdSettingsBg{ z-index: 1090; }
+    #rdAiBg      { z-index: 1090; }
+    #rdTtsBg     { z-index: 1090; }
+</style>
+
+<!-- ── TOP BAR ── -->
+<div class="rd-topbar" id="rdTopbar">
+    <a class="rd-back" href="/Mobile/Detail/@Model.Id">←</a>
+    <div class="rd-bar-info">
+        <div class="rd-bar-title">@Model.Title</div>
+        @if (currentChapter is not null)
+        {
+            <div class="rd-bar-ch">Chapter @currentChapter.ChapterNumber — @currentChapter.Title</div>
+        }
+    </div>
+    <button class="rd-ch-btn" onclick="toggleDrawer()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Chapters
+    </button>
+    @if (isSubscribed)
+    {
+        <button class="rd-icon-btn rd-tts-btn" id="rdTtsIconBtn" onclick="toggleTts()" title="Read Aloud">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        </button>
+    }
+    <button class="rd-icon-btn rd-ai-btn" onclick="toggleAi()" title="AI Reader">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+    </button>
+    <button class="rd-icon-btn" id="rdBmBtn" onclick="tapBookmark()" title="Bookmark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <button class="rd-icon-btn" onclick="toggleSettings()" title="Reading settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+</div>
+
+<!-- ── CONTENT ── -->
+<div class="rd-body" id="rdBody" onclick="toggleChrome()">
+    <div class="rd-content">
+        @if (currentChapter is not null)
+        {
+            <div class="rd-ch-eyebrow">Chapter @currentChapter.ChapterNumber</div>
+            <div class="rd-ch-heading">@currentChapter.Title</div>
+            <div class="rd-divider">
+                <div class="rd-divider-line"></div>
+                <div class="rd-divider-dot"></div>
+                <div class="rd-divider-dot"></div>
+            </div>
+            <div class="rd-text" id="rdText">
+                @Html.Raw(currentChapter.Content ?? Model.Content)
+            </div>
+        }
+        else
+        {
+            <div class="mob-empty">
+                <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <div class="mob-empty-title">No content available</div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ── BOTTOM BAR ── -->
+<div class="rd-bottom" id="rdBottom">
+    @if (hasPrev)
+    {
+        <a class="rd-nav-btn" href="/Mobile/Read/@Model.Id?chapter=@prevNum">← Prev</a>
+    }
+    else
+    {
+        <span style="min-width:80px;"></span>
+    }
+
+    <div class="rd-progress">
+        @(currentChapter?.ChapterNumber ?? 1) / @chapters.Count
+    </div>
+
+    @if (hasNext)
+    {
+        <a class="rd-nav-btn primary" href="/Mobile/Read/@Model.Id?chapter=@nextNum">Next →</a>
+    }
+    else
+    {
+        <button class="rd-nav-btn primary" onclick="markComplete()">✓ Finish</button>
+    }
+</div>
+
+<!-- ── BOOKMARK ── -->
+<div id="rdBmBanner"></div>
+<div id="rdBmPickBanner">
+    📌 Tap any sentence to place your bookmark
+    <button id="rdBmPickCancel" onclick="cancelBmPickMode()">✕ Cancel</button>
+</div>
+
+<!-- ── SETTINGS PANEL ── -->
+<div id="rdSettingsBg" onclick="closeSettings()"></div>
+<div class="rd-settings-panel" id="rdSettings">
+    <div class="rsp-title">Reading Settings</div>
+    <div class="rsp-row">
+        <div class="rsp-label">Font Size</div>
+        <div class="rsp-group" id="grpSize">
+            <button class="rsp-btn" data-size=".85rem" onclick="setSize(this)">S</button>
+            <button class="rsp-btn" data-size="1rem"   onclick="setSize(this)">M</button>
+            <button class="rsp-btn" data-size="1.15rem" onclick="setSize(this)">L</button>
+            <button class="rsp-btn" data-size="1.3rem" onclick="setSize(this)">XL</button>
+        </div>
+    </div>
+    <div class="rsp-row">
+        <div class="rsp-label">Spacing</div>
+        <div class="rsp-group" id="grpSpacing">
+            <button class="rsp-btn" data-lh="1.55" onclick="setSpacing(this)">Compact</button>
+            <button class="rsp-btn" data-lh="1.85" onclick="setSpacing(this)">Normal</button>
+            <button class="rsp-btn" data-lh="2.2"  onclick="setSpacing(this)">Spacious</button>
+        </div>
+    </div>
+    <div class="rsp-row">
+        <div class="rsp-label">Theme</div>
+        <div class="rsp-group" id="grpTheme">
+            <button class="rsp-btn" data-theme="light" onclick="setTheme(this)">Light</button>
+            <button class="rsp-btn" data-theme="sepia" onclick="setTheme(this)">Sepia</button>
+            <button class="rsp-btn" data-theme="dark"  onclick="setTheme(this)">Dark</button>
+        </div>
+    </div>
+    <div class="rsp-row" id="bmRemoveRow" style="display:none;">
+        <div class="rsp-label" style="color:#ef4444;">Bookmark</div>
+        <div class="rsp-group">
+            <button class="rsp-btn" onclick="jumpToBookmark(); closeSettings();" style="color:var(--rd-orange);">Jump to 📍</button>
+            <button class="rsp-btn" onclick="removeBookmark(); closeSettings();" style="color:#ef4444;">Remove 🗑️</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── CHAPTER DRAWER ── -->
+<div id="rdDrawerBg" onclick="toggleDrawer()"></div>
+<div class="rd-drawer" id="rdDrawer">
+    <div class="rd-drawer-head">
+        Chapters
+        <button class="rd-drawer-close" onclick="toggleDrawer()">×</button>
+    </div>
+    @foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
+    {
+        <a class="rd-ch-item @(ch.ChapterNumber == currentChapter?.ChapterNumber ? "active" : "")"
+           href="/Mobile/Read/@Model.Id?chapter=@ch.ChapterNumber"
+           onclick="closeDrawer()">
+            <div class="rd-ch-num">@ch.ChapterNumber</div>
+            <div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@ch.Title</div>
+        </a>
+    }
+</div>
+
+@if (isSubscribed)
+{
+    <!-- ── TTS PANEL (subscribers only) ── -->
+    <div id="rdTtsBg" onclick="closeTts()"></div>
+    <div class="rd-tts-panel" id="rdTtsPanel">
+        <div class="tts-handle"></div>
+        <div class="tts-hero">
+            <div class="tts-cover">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </div>
+            <div class="tts-meta">
+                <div class="tts-meta-title">@Model.Title</div>
+                <div class="tts-meta-sub">
+                    <span class="tts-live-dot" id="ttsLiveDot"></span>
+                    <span id="ttsStatusLabel">Chapter @(currentChapter?.ChapterNumber ?? 1) · Ready</span>
+                </div>
+            </div>
+            <button class="tts-close" onclick="closeTts()">×</button>
+        </div>
+        <div class="tts-ticker-wrap">
+            <div class="tts-ticker" id="ttsTicker">Tap ▶ to start reading the chapter aloud.</div>
+        </div>
+        <div class="tts-progress-wrap">
+            <div class="tts-progress-bar" id="ttsProgressBar"></div>
+        </div>
+        <div class="tts-controls">
+            <button class="tts-ctrl-btn" onclick="ttsStop()">Stop</button>
+            <button class="tts-play-btn" id="ttsPlayBtn" onclick="ttsToggle()">▶</button>
+        </div>
+        <div class="tts-speed-row">
+            <span class="tts-speed-label">Speed</span>
+            <div class="tts-speed-group" id="ttsSpeedGroup">
+                <button class="tts-speed-btn" data-rate=".75"  onclick="setTtsSpeed(this)">0.75×</button>
+                <button class="tts-speed-btn active" data-rate="1" onclick="setTtsSpeed(this)">1×</button>
+                <button class="tts-speed-btn" data-rate="1.25" onclick="setTtsSpeed(this)">1.25×</button>
+                <button class="tts-speed-btn" data-rate="1.5"  onclick="setTtsSpeed(this)">1.5×</button>
+            </div>
+        </div>
+        <div class="tts-lang-row">
+            <span class="tts-lang-label">Voice</span>
+            <div class="tts-lang-group" id="ttsLangGroup">
+                <button class="tts-lang-btn active" data-lang="en"  onclick="setTtsLang(this)">🇺🇸 English</button>
+                <button class="tts-lang-btn"        data-lang="fil" onclick="setTtsLang(this)">🇵🇭 Filipino</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ── AI READER PANEL ── -->
+<div id="rdAiBg" onclick="closeAi()"></div>
+<div class="rd-ai-panel" id="rdAiPanel">
+    <div class="rd-ai-handle"></div>
+    <div class="rd-ai-header">
+        <div class="rd-ai-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:#fff;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        </div>
+        <div class="rd-ai-header-text">
+            <div class="rd-ai-header-title">AI Reader</div>
+            <div class="rd-ai-header-sub">Powered by Gemini · Chapter @(currentChapter?.ChapterNumber ?? 1)</div>
+        </div>
+        @if (isSubscribed)
+        {
+            <div class="rd-ai-lang-toggle" id="aiLangToggle">
+                <button class="rd-ai-lang-btn active" data-lang="en"  onclick="setLang(this)">EN</button>
+                <button class="rd-ai-lang-btn"        data-lang="fil" onclick="setLang(this)">FIL</button>
+            </div>
+        }
+        <button class="rd-ai-close" onclick="closeAi()">×</button>
+    </div>
+
+    @if (isSubscribed)
+    {
+        <div class="rd-ai-chips" id="aiChips">
+            <button class="rd-ai-chip" onclick="sendChip(this)">Summarize chapter</button>
+            <button class="rd-ai-chip" onclick="sendChip(this)">Describe characters</button>
+            <button class="rd-ai-chip" onclick="sendChip(this)">Explain themes</button>
+            <button class="rd-ai-chip" onclick="sendChip(this)">What just happened?</button>
+            <button class="rd-ai-chip" onclick="sendChip(this)">What might happen next?</button>
+        </div>
+        <div class="rd-ai-messages" id="aiMessages">
+            <div class="rd-ai-msg ai">
+                <div class="ai-label">✨ AI Reader</div>
+                Kamusta! I'm your AI reading companion for <strong>@Model.Title</strong>. Ask me anything about this chapter — I can summarize, explain characters, break down themes, or just chat about the story. 
+            </div>
+        </div>
+        <div class="rd-ai-inputbar">
+            <input class="rd-ai-input" id="aiInput" type="text"
+                   placeholder="Ask about this chapter…"
+                   onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}" />
+            <button class="rd-ai-send" id="aiSendBtn" onclick="sendAiMessage()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="rd-ai-upsell">
+            <div class="rd-ai-upsell-icon">✨</div>
+            <div class="rd-ai-upsell-title">AI Reader is a Premium Feature</div>
+            <div class="rd-ai-upsell-sub">
+                Summarize chapters, explore characters, understand themes — in English or Filipino.
+                Unlock it with a ReadEase subscription.
+            </div>
+            <a class="rd-ai-upsell-btn" href="/Mobile/Dashboard">✦ Upgrade to Premium</a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        const BOOK_TITLE    = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Title));
+        const CHAPTER_NUM   = @(currentChapter?.ChapterNumber ?? 1);
+        const CHAPTER_TITLE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentChapter?.Title ?? ""));
+        const CHAPTER_TEXT  = (document.getElementById('rdText') ? document.getElementById('rdText').innerText : '').trim();
+        const IS_SUBSCRIBED = @(isSubscribed ? "true" : "false");
+
+        // ── CHROME AUTO-HIDE ──────────────────────────────────────────────
+        var chromeOn  = true;
+        var hideTimer = null;
+
+        window.showChrome = function() {
+            chromeOn = true;
+            document.getElementById('rdTopbar').classList.remove('hidden');
+            document.getElementById('rdBottom').classList.remove('hidden');
+            scheduleHide();
+        };
+
+        function hideChrome() {
+            chromeOn = false;
+            document.getElementById('rdTopbar').classList.add('hidden');
+            document.getElementById('rdBottom').classList.add('hidden');
+        }
+
+        window.toggleChrome = function() {
+            var settings = document.getElementById('rdSettings');
+            var aiPanel  = document.getElementById('rdAiPanel');
+            var ttsPanel = document.getElementById('rdTtsPanel');
+            if (settings && settings.classList.contains('open')) { closeSettings(); return; }
+            if (aiPanel  && aiPanel.classList.contains('open'))  { return; }
+            if (ttsPanel && ttsPanel.classList.contains('open')) { return; }
+            chromeOn ? hideChrome() : showChrome();
+            clearTimeout(hideTimer);
+        };
+
+        function scheduleHide() {
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(hideChrome, 4500);
+        }
+        scheduleHide();
+
+        // ── SETTINGS PANEL ────────────────────────────────────────────────
+        window.toggleSettings = function() {
+            var panel  = document.getElementById('rdSettings');
+            var bg     = document.getElementById('rdSettingsBg');
+            var isOpen = panel.classList.toggle('open');
+            bg.style.display = isOpen ? 'block' : 'none';
+            if (isOpen) clearTimeout(hideTimer);
+        };
+        window.closeSettings = function() {
+            document.getElementById('rdSettings').classList.remove('open');
+            document.getElementById('rdSettingsBg').style.display = 'none';
+            scheduleHide();
+        };
+
+        // ── CHAPTER DRAWER ────────────────────────────────────────────────
+        window.toggleDrawer = function() {
+            var drawer = document.getElementById('rdDrawer');
+            var bg     = document.getElementById('rdDrawerBg');
+            var isOpen = drawer.classList.toggle('open');
+            bg.style.display = isOpen ? 'block' : 'none';
+            if (isOpen) clearTimeout(hideTimer);
+        };
+        window.closeDrawer = function() {
+            document.getElementById('rdDrawer').classList.remove('open');
+            document.getElementById('rdDrawerBg').style.display = 'none';
+        };
+
+        // ── AI PANEL ──────────────────────────────────────────────────────
+        window.toggleAi = function() {
+            var panel  = document.getElementById('rdAiPanel');
+            var bg     = document.getElementById('rdAiBg');
+            var isOpen = panel.classList.toggle('open');
+            bg.style.display = isOpen ? 'block' : 'none';
+            if (isOpen) { clearTimeout(hideTimer); showChrome(); }
+            else scheduleHide();
+        };
+        window.closeAi = function() {
+            document.getElementById('rdAiPanel').classList.remove('open');
+            document.getElementById('rdAiBg').style.display = 'none';
+            scheduleHide();
+        };
+
+        // ── LANGUAGE TOGGLE ───────────────────────────────────────────────
+        var currentLang = 'en';
+        window.setLang = function(btn) {
+            currentLang = btn.dataset.lang;
+            document.querySelectorAll('#aiLangToggle .rd-ai-lang-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+        };
+
+        // ── QUICK CHIPS ───────────────────────────────────────────────────
+        window.sendChip = function(btn) {
+            document.getElementById('aiInput').value = btn.innerText;
+            sendAiMessage();
+        };
+
+        // ── AI CHAT ───────────────────────────────────────────────────────
+        var aiLoading = false;
+
+        function appendMsg(role, html) {
+            var box = document.getElementById('aiMessages');
+            var div = document.createElement('div');
+            div.className = 'rd-ai-msg ' + role;
+            if (role === 'ai') div.innerHTML = '<div class="ai-label">\u2728 AI Reader</div>' + html;
+            else               div.textContent = html;
+            box.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return div;
+        }
+
+        function showTyping() {
+            var box = document.getElementById('aiMessages');
+            var div = document.createElement('div');
+            div.className = 'rd-ai-typing'; div.id = 'aiTyping';
+            div.innerHTML = '<div class="rd-ai-dot"></div><div class="rd-ai-dot"></div><div class="rd-ai-dot"></div>';
+            box.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideTyping() { var el = document.getElementById('aiTyping'); if (el) el.remove(); }
+
+        window.sendAiMessage = async function() {
+            if (aiLoading) return;
+            var input   = document.getElementById('aiInput');
+            var userMsg = input.value.trim();
+            if (!userMsg) return;
+            input.value = '';
+            aiLoading = true;
+            document.getElementById('aiSendBtn').disabled = true;
+            appendMsg('user', userMsg);
+            showTyping();
+            try {
+                var response = await fetch('/Areas/Mobile/api/Ai/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        bookTitle: BOOK_TITLE, chapterNumber: CHAPTER_NUM,
+                        chapterTitle: CHAPTER_TITLE,
+                        chapterContent: CHAPTER_TEXT.slice(0, 6000),
+                        userMessage: userMsg, language: currentLang
+                    })
+                });
+                var data   = await response.json();
+                var aiText = data.reply || 'Sorry, I could not generate a response.';
+                hideTyping();
+                appendMsg('ai', aiText.replace(/\n/g, '<br>'));
+            } catch (err) {
+                hideTyping();
+                appendMsg('ai', 'Something went wrong. Please check your connection and try again.');
+                console.error('AI Reader error:', err);
+            } finally {
+                aiLoading = false;
+                document.getElementById('aiSendBtn').disabled = false;
+                input.focus();
+            }
+        };
+
+        // ── TTS (subscribers only) ────────────────────────────────────────
+        if (IS_SUBSCRIBED) {
+        // Detect MAUI WebView (native TTS) vs Browser (speechSynthesis)
+        var MAUI_TTS = (typeof MauiBridge !== 'undefined') &&
+                       (typeof MauiBridge.ttsSpeak === 'function') &&
+                       (typeof MauiBridge.ttsIsAvailable !== 'function' || MauiBridge.ttsIsAvailable());
+        var BROWSER_TTS = !MAUI_TTS && ('speechSynthesis' in window);
+        var TTS_SUPPORTED = MAUI_TTS || BROWSER_TTS;
+        var ttsUtterances = [], ttsCurrent = 0, ttsPlaying = false;
+        var ttsRate = 1, ttsLang = 'en', ttsWords = [];
+        var chNumLabel = '@(currentChapter?.ChapterNumber ?? 1)';
+        var currentHighlightWord = null;
+        var ttsHighlightTimer = null;
+        var ttsMauiSentences = [];
+        var ttsMauiSentIdx = 0;
+
+        // Trigger async voice loading on mobile browsers
+        if (BROWSER_TTS) {
+            speechSynthesis.getVoices();
+            speechSynthesis.addEventListener('voiceschanged', function() {
+                ttsUtterances = []; // rebuild with loaded voices on next play
+            }, { once: true });
+        }
+
+        function pickVoice(lang) {
+            if (!BROWSER_TTS) return null;
+            var voices = speechSynthesis.getVoices();
+            if (!voices.length) return null;
+            if (lang === 'fil') {
+                var ps = [function(v){return /fil|Filipino/i.test(v.lang)&&/Natural|Online/i.test(v.name);},function(v){return /fil/i.test(v.lang);},function(v){return /tl/i.test(v.lang);},function(v){return /en-US/i.test(v.lang)&&/Natural|Online/i.test(v.name);},function(v){return /en-US/i.test(v.lang);}];
+                for (var i=0;i<ps.length;i++){var f=voices.find(ps[i]);if(f)return f;}
+            } else {
+                var ep=[function(v){return /en-US/i.test(v.lang)&&/Natural|Online/i.test(v.name);},function(v){return /en-US/i.test(v.lang);},function(v){return /en-GB/i.test(v.lang);},function(v){return /^en/i.test(v.lang);}];
+                for(var j=0;j<ep.length;j++){var ef=voices.find(ep[j]);if(ef)return ef;}
+            }
+            return voices[0];
+        }
+
+        function updateTtsPlayBtn() { var b=document.getElementById('ttsPlayBtn'); if(b) b.textContent = ttsPlaying ? '\u23f8' : '\u25b6'; }
+        function setTtsStatus(t,live) { var e=document.getElementById('ttsStatusLabel'),d=document.getElementById('ttsLiveDot'); if(e)e.textContent=t; if(d)d.classList.toggle('active',!!live); }
+        function setTickerText(t) { var tc=document.getElementById('ttsTicker'); if(!tc)return; tc.textContent=t||'Tap \u25b6 to start reading the chapter aloud.'; tc.classList.toggle('speaking',!!t); }
+
+        function wrapWords() {
+            var c=document.getElementById('rdText'); if(!c||c.dataset.ttsWrapped) return;
+            c.dataset.ttsWrapped='1';
+            var w=document.createTreeWalker(c,NodeFilter.SHOW_TEXT),ns=[],n;
+            while((n=w.nextNode())) ns.push(n);
+            ns.forEach(function(tn){
+                var f=document.createDocumentFragment();
+                tn.textContent.split(/(\S+)/).forEach(function(p){
+                    if(/\S/.test(p)){var sp=document.createElement('span');sp.className='tts-word';sp.textContent=p;f.appendChild(sp);}
+                    else f.appendChild(document.createTextNode(p));
+                });
+                tn.parentNode.replaceChild(f,tn);
+            });
+            ttsWords=Array.from(c.querySelectorAll('.tts-word'));
+        }
+
+        function clearWordHighlight(){ttsWords.forEach(function(w){w.classList.remove('active');});}
+
+        function buildUtterances() {
+            ttsUtterances=[]; var voice=pickVoice(ttsLang), langCode=ttsLang==='fil'?'fil-PH':'en-US';
+            var sentences=CHAPTER_TEXT.match(/[^.!?\u2026\n]+[.!?\u2026\n]*(\s|$)/g)||[CHAPTER_TEXT];
+            var wordPos=0;
+            sentences.forEach(function(s){
+                var t=s.trim(); if(!t) return;
+                var u=new SpeechSynthesisUtterance(t); u.rate=ttsRate; u.lang=langCode; if(voice) u.voice=voice;
+                var swc=(t.match(/\S+/g)||[]).length, sw=wordPos; wordPos+=swc;
+                u.onboundary=function(e){
+                    if(e.name!=='word')return;
+                    var ai=sw+Math.floor((e.charIndex/t.length)*swc), si=Math.min(ai,ttsWords.length-1);
+                    highlightWord(si);
+                    setTickerText(t);
+                };
+                u.onend=function(){
+                    clearWordHighlight(); ttsCurrent++;
+                    var bar=document.getElementById('ttsProgressBar');
+                    if(bar) bar.style.width=Math.round((ttsCurrent/ttsUtterances.length)*100)+'%';
+                    if(ttsCurrent<ttsUtterances.length&&ttsPlaying) speechSynthesis.speak(ttsUtterances[ttsCurrent]);
+                    else if(ttsCurrent>=ttsUtterances.length){
+                        ttsPlaying=false; updateTtsPlayBtn();
+                        setTtsStatus('Chapter '+chNumLabel+' \u00b7 Done',false);
+                        setTickerText('\u2705 Chapter finished!');
+                        var ic=document.getElementById('rdTtsIconBtn'); if(ic) ic.classList.remove('playing');
+                    }
+                };
+                u.onerror=function(e){if(e.error==='interrupted'||e.error==='canceled')return; ttsPlaying=false; updateTtsPlayBtn();};
+                ttsUtterances.push(u);
+            });
+        }
+
+        // ── TTS WITH WORD HIGHLIGHTING & AUTO-SCROLL ──────────────────────
+        function highlightWord(index) {
+            clearWordHighlight();
+            var w = ttsWords[index];
+            if (!w) return;
+            w.classList.add('active');
+            currentHighlightWord = w;
+            // Only scroll when the word is outside the visible area (avoids constant jank)
+            var r = w.getBoundingClientRect();
+            var margin = 90;
+            if (r.top < margin || r.bottom > (window.innerHeight - margin)) {
+                w.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Manual word highlighting for native TTS (since it doesn't provide word boundaries)
+        function startManualHighlighting(fromSentIdx) {
+            if (ttsHighlightTimer) { clearInterval(ttsHighlightTimer); ttsHighlightTimer = null; }
+            // Estimate start word from sentence index
+            var startWord = 0;
+            if (fromSentIdx > 0 && ttsMauiSentences.length) {
+                var joined = ttsMauiSentences.slice(0, fromSentIdx).join(' ');
+                startWord = Math.min((joined.match(/\S+/g)||[]).length, Math.max(0, ttsWords.length - 1));
+            }
+            var wordIndex = startWord;
+            var msPerWord = Math.max(120, Math.round(400 / ttsRate)); // ~150 wpm at 1x
+            ttsHighlightTimer = setInterval(function() {
+                if (!ttsPlaying) { clearInterval(ttsHighlightTimer); ttsHighlightTimer = null; return; }
+                if (wordIndex >= ttsWords.length) {
+                    clearInterval(ttsHighlightTimer); ttsHighlightTimer = null;
+                    ttsPlaying = false; updateTtsPlayBtn();
+                    setTtsStatus('Chapter ' + chNumLabel + ' \u00b7 Done', false);
+                    setTickerText('\u2705 Chapter finished!');
+                    var ic = document.getElementById('rdTtsIconBtn'); if (ic) ic.classList.remove('playing');
+                    return;
+                }
+                // Track which sentence we're in (for resume after pause)
+                var wordsBeforeSent = 0;
+                for (var si = 0; si < ttsMauiSentences.length; si++) {
+                    var sc = (ttsMauiSentences[si].match(/\S+/g)||[]).length;
+                    if (wordsBeforeSent + sc > wordIndex) { ttsMauiSentIdx = si; break; }
+                    wordsBeforeSent += sc;
+                }
+                if (ttsMauiSentences[ttsMauiSentIdx]) setTickerText(ttsMauiSentences[ttsMauiSentIdx]);
+                highlightWord(wordIndex);
+                wordIndex++;
+            }, msPerWord);
+        }
+
+        function stopManualHighlighting() {
+            if (ttsHighlightTimer) {
+                clearInterval(ttsHighlightTimer);
+                ttsHighlightTimer = null;
+            }
+        }
+
+        function ttsStart(fromSentIdx){
+            if(!TTS_SUPPORTED){alert('Text-to-speech not available on this device.');return;}
+            wrapWords();
+            ttsPlaying=true; updateTtsPlayBtn(); setTtsStatus('Chapter '+chNumLabel+' · Reading…',true);
+            var ic=document.getElementById('rdTtsIconBtn'); if(ic) ic.classList.add('playing');
+
+            if(MAUI_TTS){
+                try{
+                    var rawSents=CHAPTER_TEXT.match(/[^.!?…\n]+[.!?…\n]*(\s|$)/g)||[CHAPTER_TEXT];
+                    ttsMauiSentences=rawSents.filter(function(s){return s.trim();});
+                    ttsMauiSentIdx=fromSentIdx||0;
+                    for(var i=ttsMauiSentIdx;i<ttsMauiSentences.length;i++){
+                        MauiBridge.ttsSpeak(ttsMauiSentences[i].trim());
+                    }
+                    startManualHighlighting(ttsMauiSentIdx);
+                }catch(e){console.error('[TTS] Native error:',e);ttsStop();}
+            }else if(BROWSER_TTS){
+                if(!ttsUtterances.length||ttsCurrent>=ttsUtterances.length){ttsCurrent=0;buildUtterances();}
+                speechSynthesis.cancel();
+                setTimeout(function(){if(ttsPlaying&&ttsUtterances[ttsCurrent]) speechSynthesis.speak(ttsUtterances[ttsCurrent]);},100);
+            }
+        }
+
+        function ttsPause(){
+            ttsPlaying=false; updateTtsPlayBtn(); setTtsStatus('Chapter '+chNumLabel+' · Paused',false);
+            var ic=document.getElementById('rdTtsIconBtn'); if(ic)ic.classList.remove('playing');
+            if(MAUI_TTS){
+                // Android TTS can't pause mid-utterance — stop native audio, keep sentence position
+                try{MauiBridge.ttsStop();}catch(e){}
+                stopManualHighlighting();
+            }else if(BROWSER_TTS){
+                speechSynthesis.pause();
+            }
+        }
+
+        function ttsResume(){
+            ttsPlaying=true; updateTtsPlayBtn(); setTtsStatus('Chapter '+chNumLabel+' · Reading…',true);
+            var ic=document.getElementById('rdTtsIconBtn'); if(ic)ic.classList.add('playing');
+            if(MAUI_TTS){
+                // Re-queue remaining sentences from last tracked sentence
+                try{
+                    for(var i=ttsMauiSentIdx;i<ttsMauiSentences.length;i++){
+                        MauiBridge.ttsSpeak(ttsMauiSentences[i].trim());
+                    }
+                    startManualHighlighting(ttsMauiSentIdx);
+                }catch(e){ttsStart();}
+            }else if(BROWSER_TTS){
+                speechSynthesis.resume();
+            }
+        }
+
+        function ttsStop(){
+            if(MAUI_TTS){try{MauiBridge.ttsStop();}catch(e){} stopManualHighlighting();}
+            else if(BROWSER_TTS){speechSynthesis.cancel();}
+            ttsPlaying=false; ttsUtterances=[]; ttsCurrent=0; clearWordHighlight();
+            updateTtsPlayBtn(); var bar=document.getElementById('ttsProgressBar');if(bar)bar.style.width='0%';
+            setTtsStatus('Chapter '+chNumLabel+' \u00b7 Ready',false); setTickerText('');
+            var ic=document.getElementById('rdTtsIconBtn'); if(ic)ic.classList.remove('playing');
+        }
+
+        window.ttsToggle=function(){
+            if(!ttsPlaying){
+                // Resume only works when paused mid-chapter on browser TTS
+                var canResume=BROWSER_TTS && ttsUtterances.length>0 && ttsCurrent<ttsUtterances.length;
+                if(canResume){ ttsResume(); } else { ttsStart(); }
+            }else{
+                ttsPause();
+            }
+        };
+        window.ttsStop=ttsStop;
+
+        window.setTtsSpeed=function(btn){
+            ttsRate=parseFloat(btn.dataset.rate);
+            document.querySelectorAll('#ttsSpeedGroup .tts-speed-btn').forEach(function(b){b.classList.remove('active');});
+            btn.classList.add('active'); localStorage.setItem('re_tts_rate',ttsRate);
+            if(MAUI_TTS){try{MauiBridge.ttsSetRate(ttsRate);}catch(e){}}
+            if(ttsPlaying){ttsStop(); setTimeout(ttsStart,120);}
+            else{ttsUtterances=[];}
+        };
+
+        window.setTtsLang=function(btn){
+            ttsLang=btn.dataset.lang;
+            document.querySelectorAll('#ttsLangGroup .tts-lang-btn').forEach(function(b){b.classList.remove('active');});
+            btn.classList.add('active'); localStorage.setItem('re_tts_lang',ttsLang);
+            if(MAUI_TTS){try{MauiBridge.ttsSetLanguage(ttsLang);}catch(e){}}
+            if(ttsPlaying){ttsStop(); setTimeout(ttsStart,120);}
+            else{ttsUtterances=[];}
+        };
+
+        window.toggleTts=function(){var p=document.getElementById('rdTtsPanel'),bg=document.getElementById('rdTtsBg'),o=p.classList.toggle('open');bg.style.display=o?'block':'none';if(o){clearTimeout(hideTimer);showChrome();}else{scheduleHide();}};
+        window.closeTts=function(){document.getElementById('rdTtsPanel').classList.remove('open');document.getElementById('rdTtsBg').style.display='none';scheduleHide();};
+
+        (function(){
+            var sr=parseFloat(localStorage.getItem('re_tts_rate')||'1'),sl=localStorage.getItem('re_tts_lang')||'en';
+            ttsRate=sr; ttsLang=sl;
+            if(MAUI_TTS){try{MauiBridge.ttsSetRate(sr); MauiBridge.ttsSetLanguage(sl);}catch(e){}}
+            document.querySelectorAll('#ttsSpeedGroup .tts-speed-btn').forEach(function(b){b.classList.toggle('active',parseFloat(b.dataset.rate)===sr);});
+            document.querySelectorAll('#ttsLangGroup .tts-lang-btn').forEach(function(b){b.classList.toggle('active',b.dataset.lang===sl);});
+        })();
+
+        window.addEventListener('pagehide',function(){ttsStop();});
+        window.addEventListener('beforeunload',function(){ttsStop();});
+        } // end IS_SUBSCRIBED
+
+        // ── READING SETTINGS ──────────────────────────────────────────────
+        window.setSize=function(btn){document.getElementById('rdText').style.fontSize=btn.dataset.size;document.querySelectorAll('#grpSize .rsp-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');localStorage.setItem('re_fs',btn.dataset.size);};
+        window.setSpacing=function(btn){document.getElementById('rdText').style.lineHeight=btn.dataset.lh;document.querySelectorAll('#grpSpacing .rsp-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');localStorage.setItem('re_lh',btn.dataset.lh);};
+        window.setTheme=function(btn){
+            var t=btn.dataset.theme;
+            document.body.classList.remove('rt-dark','rt-sepia','rt-light');
+            document.body.classList.add('rt-'+t);
+            var bgMap={dark:'#0b1219',sepia:'#f5ead6',light:''};
+            document.documentElement.style.background=bgMap[t]||'';
+            document.querySelectorAll('#grpTheme .rsp-btn').forEach(function(b){b.classList.remove('active');});
+            btn.classList.add('active');
+            localStorage.setItem('re_theme',t);
+        };
+
+        (function restore(){
+            var fs=localStorage.getItem('re_fs')||'1rem', lh=localStorage.getItem('re_lh')||'1.85', theme=localStorage.getItem('re_theme')||'light';
+            var txt=document.getElementById('rdText');
+            if(txt){txt.style.fontSize=fs;txt.style.lineHeight=lh;}
+            document.body.classList.add('rt-'+theme);
+            var bgMap={dark:'#0b1219',sepia:'#f5ead6',light:''};
+            document.documentElement.style.background=bgMap[theme]||'';
+            document.querySelectorAll('#grpSize .rsp-btn').forEach(function(b){b.classList.toggle('active',b.dataset.size===fs);});
+            document.querySelectorAll('#grpSpacing .rsp-btn').forEach(function(b){b.classList.toggle('active',b.dataset.lh===lh);});
+            document.querySelectorAll('#grpTheme .rsp-btn').forEach(function(b){b.classList.toggle('active',b.dataset.theme===theme);});
+        })();
+
+        // ── BOOKMARK ──────────────────────────────────────────────────────
+        var bmUserId  = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+        var bmBookId  = '@Model.Id';
+        var bmChNum   = @(currentChapter?.ChapterNumber ?? 0);
+        var bmKey     = 're_bm_' + bmUserId + '_' + bmBookId + '_ch' + bmChNum;
+        var bmPickMode = false;
+        var bmSentSpans = [];
+
+        function bmEsc(t) {
+            return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function bmWrapSentences() {
+            var el = document.getElementById('rdText');
+            if (!el) return;
+            var full = el.innerText;
+            var parts = full.match(/[^.!?\u2026\n]+[.!?\u2026]*[\s]*/g) || [full];
+            var html = '';
+            parts.forEach(function(part, i) {
+                if (part.trim() === '') { html += bmEsc(part); return; }
+                html += '<span class="rd-bm-sent" data-idx="' + i + '" onclick="bmSentClick(this)">' + bmEsc(part) + '</span>';
+            });
+            el.innerHTML = html;
+            bmSentSpans = Array.from(el.querySelectorAll('.rd-bm-sent'));
+        }
+        bmWrapSentences();
+
+        function bmRefreshUI() {
+            var has = !!localStorage.getItem(bmKey);
+            var btn = document.getElementById('rdBmBtn');
+            var row = document.getElementById('bmRemoveRow');
+            if (btn) btn.classList.toggle('has-bookmark', has);
+            if (row) row.style.display = has ? 'flex' : 'none';
+        }
+
+        window.tapBookmark = function() {
+            clearTimeout(hideTimer);
+            if (bmPickMode) { cancelBmPickMode(); return; }
+            if (localStorage.getItem(bmKey)) { jumpToBookmark(); }
+            else { enterBmPickMode(); }
+        };
+
+        window.enterBmPickMode = function() {
+            bmPickMode = true;
+            var rt = document.getElementById('rdText');
+            if (rt) rt.classList.add('bm-pick-active');
+            var pb = document.getElementById('rdBmPickBanner');
+            if (pb) pb.classList.add('visible');
+            clearTimeout(hideTimer); showChrome();
+        };
+
+        window.cancelBmPickMode = function() {
+            bmPickMode = false;
+            var rt = document.getElementById('rdText');
+            if (rt) rt.classList.remove('bm-pick-active');
+            var pb = document.getElementById('rdBmPickBanner');
+            if (pb) pb.classList.remove('visible');
+            showBmToast('Bookmark placement cancelled');
+        };
+
+        window.bmSentClick = function(span) {
+            if (!bmPickMode) return;
+            bmPickMode = false;
+            var rt = document.getElementById('rdText');
+            if (rt) rt.classList.remove('bm-pick-active');
+            var pb = document.getElementById('rdBmPickBanner');
+            if (pb) pb.classList.remove('visible');
+
+            var idx  = parseInt(span.dataset.idx);
+            var text = (span.innerText||'').trim().substring(0, 60);
+            document.querySelectorAll('.bookmark-marker').forEach(function(m){m.remove();});
+            var marker = document.createElement('span');
+            marker.className = 'bookmark-marker';
+            marker.title = 'Your bookmark — tap to jump';
+            marker.textContent = '🔖';
+            marker.setAttribute('onclick', 'jumpToBookmark()');
+            span.parentNode.insertBefore(marker, span);
+
+            localStorage.setItem(bmKey, JSON.stringify({ idx: idx, text: text }));
+            bmRefreshUI();
+            showBmToast('🔖 Bookmark placed — "' + text.substring(0, 28) + (text.length > 28 ? '…' : '') + '"');
+        };
+
+        window.jumpToBookmark = function() {
+            var raw = localStorage.getItem(bmKey);
+            if (!raw) { showBmToast('No bookmark on this chapter'); return; }
+            var bm = JSON.parse(raw);
+            var span = bmSentSpans[bm.idx];
+            if (span) {
+                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                span.style.transition = 'background .1s';
+                span.style.background = 'rgba(200,134,10,.28)';
+                setTimeout(function(){ span.style.background = ''; }, 1200);
+            }
+            showBmToast('📍 Jumped to bookmark');
+        };
+
+        window.removeBookmark = function() {
+            if (!localStorage.getItem(bmKey)) { showBmToast('No bookmark on this chapter'); return; }
+            localStorage.removeItem(bmKey);
+            document.querySelectorAll('.bookmark-marker').forEach(function(m){m.remove();});
+            bmRefreshUI();
+            showBmToast('🗑️ Bookmark removed');
+        };
+
+        function restoreBmOnLoad() {
+            var raw = localStorage.getItem(bmKey);
+            if (!raw) return;
+            var bm = JSON.parse(raw);
+            var span = bmSentSpans[bm.idx];
+            if (!span) return;
+            document.querySelectorAll('.bookmark-marker').forEach(function(m){m.remove();});
+            var marker = document.createElement('span');
+            marker.className = 'bookmark-marker';
+            marker.title = 'Your bookmark — tap to jump';
+            marker.textContent = '🔖';
+            marker.setAttribute('onclick', 'jumpToBookmark()');
+            span.parentNode.insertBefore(marker, span);
+        }
+
+        function showBmToast(msg) {
+            var el = document.getElementById('rdBmBanner');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'block';
+            clearTimeout(showBmToast._t);
+            showBmToast._t = setTimeout(function(){ el.style.display = 'none'; }, 2400);
+        }
+
+        bmRefreshUI();
+        restoreBmOnLoad();
+
+        // ── LOG CHAPTER PROGRESS (fires once on load) ─────────────────────
+        (function(){
+            var chNum = @(currentChapter?.ChapterNumber ?? 0);
+            if(chNum > 0){
+                try{
+                    mobileApi('/Areas/Mobile/api/Library/chapter-progress',{
+                        method:'POST',
+                        body:JSON.stringify({bookId:'@Model.Id', chapterNumber:chNum})
+                    });
+                }catch(_){}
+            }
+        })();
+
+        // ── MARK COMPLETE ─────────────────────────────────────────────────
+        window.markComplete=async function(){
+            try{
+                await mobileApi('/Areas/Mobile/api/Library/complete/@Model.Id',{method:'POST'});
+                if(typeof showToast==='function') showToast('\ud83d\udcda Book completed!');
+                setTimeout(function(){window.location.href='/Mobile/Detail/@Model.Id';},1200);
+            }catch(e){if(typeof showToast==='function') showToast('Could not save progress');}
+        };
+
+        // ── SAVE SCROLL ───────────────────────────────────────────────────
+        var scrollTimer=null;
+        window.addEventListener('scroll',function(){
+            clearTimeout(scrollTimer);
+            scrollTimer=setTimeout(async function(){
+                try{await mobileApi('/Areas/Mobile/api/Library/scroll',{method:'POST',body:JSON.stringify({bookId:'@Model.Id',scrollPosition:Math.round(window.scrollY)})});}catch(_){}
+            },1500);
+        },{passive:true});
+
+        // Fallbacks
+        if(typeof showToast!=='function') window.showToast=function(msg){console.log(msg);};
+        if(typeof mobileApi!=='function') window.mobileApi=async function(url,opts){
+            opts=opts||{};
+            var token=document.cookie.match(/MobileAuthToken=([^;]+)/);
+            token=token?decodeURIComponent(token[1]):null;
+            var res=await fetch(url,Object.assign({},opts,{headers:Object.assign({'Content-Type':'application/json'},token?{'Authorization':'Bearer '+token}:{},opts.headers||{})}));
+            if(!res.ok) throw new Error(res.status);
+            return res;
+        };
+    </script>
+}

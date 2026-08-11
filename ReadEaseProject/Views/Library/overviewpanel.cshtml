@@ -1,0 +1,26 @@
+﻿@model ReadEase.ViewModels.Library.Partials.OverviewPanelViewModel
+
+<div class="dh-panel active" id="panel-overview">
+    <div class="dh-section-title">Description</div>
+    @if (!string.IsNullOrEmpty(Model.Description))
+    {
+        <div class="dh-desc" id="overviewText" style="max-height:210px;overflow:hidden;transition:max-height .45s ease;">
+            @foreach (var para in (Model.Description ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                <p>@para</p>
+            }
+        </div>
+        <button class="dh-read-more" onclick="toggleDesc()">
+            <span id="readMoreIcon">▼</span>
+            <span id="readMoreText">Read More</span>
+        </button>
+    }
+    else
+    {
+        <p style="color:#b0afc0;font-style:italic;">No description available.</p>
+    }
+    <div class="dh-chip-wrap">
+        <div class="dh-chip-label">Category</div>
+        <a asp-controller="Library" asp-action="Index" asp-route-category="@Model.Category" class="dh-chip">@Model.Category</a>
+    </div>
+</div>

@@ -1,0 +1,790 @@
+﻿@model ReadEase.ViewModels.Library.FavoritesViewModel
+@{
+    ViewData["Title"] = "My Favorites";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ── BLOBS ── */
+    .re-blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+        opacity: .05;
+    }
+
+    .re-blob-tl {
+        width: 320px;
+        height: 640px;
+        top: -180px;
+        left: -120px;
+        border-radius: 38% 62% 55% 45%/42% 38% 62% 58%;
+        animation: blobA 9s ease-in-out infinite;
+    }
+
+    .re-blob-br {
+        width: 300px;
+        height: 580px;
+        bottom: -180px;
+        right: -110px;
+        border-radius: 55% 45% 38% 62%/60% 42% 58% 40%;
+        animation: blobB 11s ease-in-out infinite;
+    }
+
+    @@keyframes blobA {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45%/42% 38% 62% 58%
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60%/55% 45% 58% 42%
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38%/40% 58% 42% 60%
+        }
+    }
+
+    @@keyframes blobB {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62%/60% 42% 58% 40%
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42%/45% 55% 40% 60%
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55%/55% 45% 62% 38%
+        }
+    }
+
+    /* ── PAGE ── */
+    .fv-page {
+        position: relative;
+        z-index: 2;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1rem 3rem;
+    }
+
+    /* ── BACK BAR ── */
+    .fv-back-bar {
+        margin-bottom: 1.1rem;
+    }
+
+    .fv-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .8rem;
+        font-weight: 700;
+        font-family: 'Nunito', sans-serif;
+        color: #9994a8;
+        text-decoration: none;
+        transition: color .18s;
+    }
+
+        .fv-back-link:hover {
+            color: #f26522;
+        }
+
+    /* ── PROFILE HEADER ── */
+    .fv-profile-bar {
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 20px;
+        padding: 1.25rem 1.75rem;
+        margin-bottom: 1.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        box-shadow: 0 2px 16px rgba(0,0,0,.05);
+    }
+
+    .fv-avatar {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        flex-shrink: 0;
+        box-shadow: 0 3px 14px rgba(242,101,34,.28);
+        overflow: hidden;
+    }
+
+        .fv-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+    .fv-profile-name {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        margin-bottom: .45rem;
+    }
+
+    .fv-profile-tabs {
+        display: flex;
+        gap: .4rem;
+        flex-wrap: wrap;
+    }
+
+    .fv-ptab {
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 800;
+        padding: .28rem .9rem;
+        border-radius: 50px;
+        border: 1.5px solid #e8e3dc;
+        background: #fff;
+        color: #9994a8;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all .18s;
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+    }
+
+        .fv-ptab.active {
+            background: #f26522;
+            border-color: #f26522;
+            color: #fff;
+        }
+
+        .fv-ptab:hover:not(.active) {
+            border-color: #f26522;
+            color: #f26522;
+        }
+
+    /* ── SECTION HEADER ── */
+    .fv-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.35rem;
+        flex-wrap: wrap;
+        gap: .75rem;
+    }
+
+    .fv-section-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: .95rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .fv-count-pill {
+        font-size: .7rem;
+        font-weight: 700;
+        color: #9994a8;
+        background: #f0eeea;
+        padding: .2rem .7rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .fv-browse-link {
+        font-family: 'Nunito', sans-serif;
+        font-size: .78rem;
+        font-weight: 700;
+        color: #9994a8;
+        text-decoration: none;
+        transition: color .18s;
+    }
+
+        .fv-browse-link:hover {
+            color: #f26522;
+        }
+
+    /* ── GRID ── */
+    .fv-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 1.25rem;
+    }
+
+    /* ── CARD ── */
+    .fv-card-wrap {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .fv-card {
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s, border-color .2s;
+        box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+        height: 100%;
+    }
+
+        .fv-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 40px rgba(0,0,0,.11);
+            border-color: #f26522;
+        }
+
+    /* Cover — fixed aspect ratio, no overflow */
+    .fv-cover-wrap {
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        position: relative;
+    }
+
+    .fv-cover {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform .35s ease;
+    }
+
+    .fv-card:hover .fv-cover {
+        transform: scale(1.05);
+    }
+
+    .fv-cover-ph {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.8rem;
+    }
+
+    /* Card body — grows to fill remaining space */
+    .fv-body {
+        padding: .75rem .85rem .6rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
+    }
+
+    .fv-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: .82rem;
+        font-weight: 800;
+        color: #1a1a2e;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.2em; /* reserve 2 lines so single-line titles don't collapse */
+    }
+
+    .fv-author {
+        font-size: .68rem;
+        color: #9994a8;
+        font-weight: 600;
+        font-family: 'Nunito', sans-serif;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* meta row: badge left, remove right — always aligned */
+    .fv-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: auto;
+        padding-top: .45rem;
+    }
+
+    .fv-badge {
+        font-size: .62rem;
+        font-weight: 800;
+        padding: .18rem .6rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        line-height: 1;
+    }
+
+    .fv-badge-free {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .fv-badge-premium {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .fv-remove-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        border: 1.5px solid #fecaca;
+        background: #fef2f2;
+        font-size: .75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+        transition: all .18s cubic-bezier(.34,1.56,.64,1);
+        flex-shrink: 0;
+        line-height: 1;
+    }
+
+        .fv-remove-btn:hover {
+            border-color: #ef4444;
+            background: #fee2e2;
+            transform: scale(1.2);
+        }
+
+    /* CTA button — always at the bottom, full width */
+    .fv-cta {
+        margin: 0 .85rem .85rem;
+        flex-shrink: 0;
+    }
+
+    .fv-read-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .3rem;
+        width: 100%;
+        padding: .42rem 0;
+        border-radius: 10px;
+        background: #f26522;
+        color: #fff;
+        font-size: .72rem;
+        font-weight: 800;
+        font-family: 'Nunito', sans-serif;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: background .18s, transform .15s;
+        box-shadow: 0 2px 10px rgba(242,101,34,.2);
+    }
+
+        .fv-read-btn:hover {
+            background: #d9541a;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .fv-premium-btn {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 2px 10px rgba(217,119,6,.2);
+    }
+
+        .fv-premium-btn:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #fff;
+        }
+
+    /* ── EMPTY STATE ── */
+    .fv-empty {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: #fff;
+        border: 1.5px solid #ede9e2;
+        border-radius: 20px;
+    }
+
+    .fv-empty-icon {
+        font-size: 3.5rem;
+        display: block;
+        margin-bottom: 1rem;
+        animation: floatIcon 3s ease-in-out infinite;
+    }
+
+    @@keyframes floatIcon {
+        0%, 100% {
+            transform: translateY(0)
+        }
+
+        50% {
+            transform: translateY(-8px)
+        }
+    }
+
+    .fv-empty-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        margin-bottom: .4rem;
+    }
+
+    .fv-empty-sub {
+        font-size: .85rem;
+        color: #9994a8;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    .fv-discover-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: #f26522;
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .875rem;
+        padding: .65rem 1.6rem;
+        border-radius: 12px;
+        text-decoration: none;
+        box-shadow: 0 4px 16px rgba(242,101,34,.28);
+        transition: all .18s;
+    }
+
+        .fv-discover-btn:hover {
+            background: #d9541a;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    /* ── PAGINATION ── */
+    .fv-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: .75rem;
+        margin-top: 1.5rem;
+    }
+
+    .fv-page-info {
+        font-family: 'Nunito', sans-serif;
+        font-size: .78rem;
+        font-weight: 700;
+        color: #9994a8;
+    }
+
+    .fv-page-btns {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+    }
+
+    .fv-page-btn {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 .5rem;
+        border-radius: 9px;
+        border: 1.5px solid #e8e3dc;
+        background: #fff;
+        font-family: 'Nunito', sans-serif;
+        font-size: .78rem;
+        font-weight: 800;
+        color: #6b6878;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .15s;
+    }
+
+        .fv-page-btn:hover:not(:disabled) {
+            border-color: #f26522;
+            color: #f26522;
+            background: #fff3ed;
+        }
+
+        .fv-page-btn.active {
+            background: #f26522;
+            border-color: #f26522;
+            color: #fff;
+        }
+
+        .fv-page-btn:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+    /* ── FADE-IN ── */
+    .fv-page {
+        animation: fadeUp .4s ease both;
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px)
+        }
+
+        to {
+            opacity: 1;
+            transform: none
+        }
+    }
+
+    .col-item {
+        animation: fadeUp .4s ease both;
+    }
+
+    @@media (max-width: 600px) {
+        .fv-grid {
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 1rem;
+        }
+
+        .fv-profile-bar {
+            padding: 1rem 1.1rem;
+        }
+    }
+</style>
+
+<div class="re-blob re-blob-tl"></div>
+<div class="re-blob re-blob-br"></div>
+
+@Html.AntiForgeryToken()
+
+<div class="fv-page">
+
+    @* ── Back bar ── *@
+    <div class="fv-back-bar">
+        <a asp-controller="User" asp-action="Profile" class="fv-back-link">← Back to Profile</a>
+    </div>
+
+    @* ── Profile mini header ── *@
+    <div class="fv-profile-bar">
+        <div class="fv-avatar">
+            @{
+                var photo = User.FindFirst("ProfilePhoto")?.Value;
+            }
+            @if (!string.IsNullOrEmpty(photo))
+            {
+                <img src="@photo" alt="avatar" />
+            }
+            else
+            {
+                @(User.Identity!.Name?.Length > 0 ? User.Identity.Name[0].ToString().ToUpper() : "?")
+            }
+        </div>
+        <div>
+            <div class="fv-profile-name">@User.Identity!.Name</div>
+            <div class="fv-profile-tabs">
+                <a class="fv-ptab" asp-controller="User" asp-action="Profile">✏️ Edit Profile</a>
+                <a class="fv-ptab active" asp-controller="Library" asp-action="Favorites">
+                    ❤️ Favorites
+                    <span style="opacity:.75;">(@Model.Books.Count)</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* ── Section header ── *@
+    <div class="fv-section-header">
+        <div class="fv-section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#f26522" stroke="#f26522"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            My Favorites
+            <span class="fv-count-pill">@Model.Books.Count book@(Model.Books.Count != 1 ? "s" : "")</span>
+        </div>
+        @if (Model.Books.Any())
+        {
+            <a asp-controller="Library" asp-action="Index" class="fv-browse-link">Browse more →</a>
+        }
+    </div>
+
+    @* ── Empty state ── *@
+    @if (!Model.Books.Any())
+    {
+        <div class="fv-empty">
+            <span class="fv-empty-icon">💔</span>
+            <div class="fv-empty-title">No favorites yet</div>
+            <div class="fv-empty-sub">Browse the library and tap ❤️ on books you love.</div>
+            <a asp-controller="Library" asp-action="Index" class="fv-discover-btn">📚 Discover Books</a>
+        </div>
+    }
+    else
+    {
+        <div class="fv-grid" id="favGrid">
+            @foreach (var book in Model.Books)
+            {
+                bool canRead = book.IsFree || Model.IsSubscribed;
+                <div class="col-item fv-card-wrap"
+                     onclick="window.location='@Url.Action("Detail", "Library", new { id = book.Id })'">
+                    <div class="fv-card">
+
+                        @* Cover *@
+                        <div class="fv-cover-wrap">
+                            @if (!string.IsNullOrEmpty(book.CoverImage))
+                            {
+                                <img src="@book.CoverImage" class="fv-cover" alt="@book.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="fv-cover-ph">📖</div>
+                            }
+                        </div>
+
+                        @* Body *@
+                        <div class="fv-body">
+                            <div class="fv-title">@book.Title</div>
+                            <div class="fv-author">@book.Author</div>
+                            <div class="fv-meta">
+                                @if (book.IsFree)
+                                {
+                                    <span class="fv-badge fv-badge-free">🆓 Free</span>
+                                }
+                                else
+                                {
+                                    <span class="fv-badge fv-badge-premium">⭐ Premium</span>
+                                }
+                                <button class="fv-remove-btn fav-btn"
+                                        data-id="@book.Id.ToString()"
+                                        onclick="event.stopPropagation()"
+                                        title="Remove from favorites">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+
+                        @* CTA — pinned to bottom *@
+                        <div class="fv-cta">
+                            @if (canRead)
+                            {
+                                <a asp-controller="Library" asp-action="Detail" asp-route-id="@book.Id"
+                                   class="fv-read-btn" onclick="event.stopPropagation()">
+                                    📖 Read Now
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Subscription" asp-action="Index"
+                                   class="fv-read-btn fv-premium-btn" onclick="event.stopPropagation()">
+                                    ⭐ Subscribe to Read
+                                </a>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* ── Pagination ── *@
+        <div class="fv-pagination" id="favPagination">
+            <span class="fv-page-info" id="favPageInfo"></span>
+            <div class="fv-page-btns" id="favPageBtns"></div>
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        // ── Remove from favorites ──
+        document.querySelectorAll('.fav-btn').forEach(btn => {
+            btn.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                const id    = this.dataset.id;
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+                const res   = await fetch('/Library/ToggleFavorite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: `bookId=${id}`
+                });
+                if (res.ok) {
+                    const item = this.closest('.col-item');
+                    if (item) {
+                        item.style.transition = 'opacity .28s, transform .28s';
+                        item.style.opacity    = '0';
+                        item.style.transform  = 'scale(.88)';
+                        setTimeout(() => { item.remove(); renderFavPagination(); }, 290);
+                    }
+                }
+            });
+        });
+
+        // ── Client-side pagination ──
+        const PAGE_SIZE = 12;
+        let favPage = 1;
+
+        function renderFavPagination() {
+            const all        = Array.from(document.querySelectorAll('#favGrid .col-item'));
+            const total      = all.length;
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            favPage          = Math.min(favPage, totalPages);
+            const start      = (favPage - 1) * PAGE_SIZE;
+
+            all.forEach((c, i) => {
+                c.style.display = (i >= start && i < start + PAGE_SIZE) ? '' : 'none';
+            });
+
+            const info    = document.getElementById('favPageInfo');
+            const btns    = document.getElementById('favPageBtns');
+            const pag     = document.getElementById('favPagination');
+            const showing = Math.min(PAGE_SIZE, total - start);
+
+            info.textContent = total === 0
+                ? 'No favorites'
+                : `Showing ${start + 1}–${start + showing} of ${total} book${total !== 1 ? 's' : ''}`;
+
+            btns.innerHTML = '';
+
+            if (totalPages <= 1) { pag.style.display = 'none'; return; }
+            pag.style.display = 'flex';
+
+            const prev = document.createElement('button');
+            prev.className   = 'fv-page-btn';
+            prev.textContent = '← Prev';
+            prev.disabled    = favPage === 1;
+            prev.onclick     = () => { favPage--; renderFavPagination(); };
+            btns.appendChild(prev);
+
+            for (let p = 1; p <= totalPages; p++) {
+                if (totalPages > 7 && p > 2 && p < totalPages - 1 && Math.abs(p - favPage) > 1) {
+                    if (p === 3 || p === totalPages - 2) {
+                        const d = document.createElement('span');
+                        d.className   = 'fv-page-info';
+                        d.style.padding = '0 .2rem';
+                        d.textContent = '…';
+                        btns.appendChild(d);
+                    }
+                    continue;
+                }
+                const b = document.createElement('button');
+                b.className   = 'fv-page-btn' + (p === favPage ? ' active' : '');
+                b.textContent = p;
+                b.onclick     = ((pg) => () => { favPage = pg; renderFavPagination(); })(p);
+                btns.appendChild(b);
+            }
+
+            const next = document.createElement('button');
+            next.className   = 'fv-page-btn';
+            next.textContent = 'Next →';
+            next.disabled    = favPage === totalPages;
+            next.onclick     = () => { favPage++; renderFavPagination(); };
+            btns.appendChild(next);
+        }
+
+        renderFavPagination();
+    </script>
+}

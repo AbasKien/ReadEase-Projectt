@@ -1,0 +1,499 @@
+﻿@model List<ReadEase.ViewModels.Author.ManageBookItem>
+@{
+    ViewData["Title"] = "Archive";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@@400;600;700;800;900&display=swap');
+    /* ── PAGE ── */
+    .arc-page {
+        font-family: 'Nunito', sans-serif;
+    }
+
+    /* ── HEADER ── */
+    .arc-header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 60%, #1a1a2e 100%);
+        border-radius: 18px;
+        padding: 2rem 2.25rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .arc-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(107,99,255,.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    .arc-header-title {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #fff;
+        margin: 0 0 .25rem;
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .arc-header-sub {
+        font-size: .85rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.5);
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .arc-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(255,255,255,.1);
+        border: 1.5px solid rgba(255,255,255,.18);
+        color: rgba(255,255,255,.8);
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        padding: .4rem 1rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all .2s;
+        position: relative;
+        z-index: 1;
+    }
+
+        .arc-back-btn:hover {
+            background: rgba(255,255,255,.2);
+            color: #fff;
+        }
+
+    /* ── EMPTY STATE ── */
+    .arc-empty {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: #fff;
+        border-radius: 18px;
+        border: 2px dashed #e5e7eb;
+    }
+
+    .arc-empty-icon {
+        font-size: 5rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+
+    .arc-empty h4 {
+        font-weight: 900;
+        color: #1a1a2e;
+        font-size: 1.25rem;
+        margin-bottom: .5rem;
+    }
+
+    .arc-empty p {
+        color: #6b6878;
+        font-size: .9rem;
+        margin: 0;
+    }
+
+    /* ── ARCHIVE CARD ── */
+    .arc-card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1.5px solid #e8e3dc;
+        box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        overflow: hidden;
+        display: flex;
+        gap: 0;
+        transition: box-shadow .2s, transform .2s;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+        .arc-card:hover {
+            box-shadow: 0 8px 28px rgba(0,0,0,.1);
+            transform: translateY(-2px);
+        }
+
+        /* deleted stripe on left */
+        .arc-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #6b63ff, #a855f7);
+            border-radius: 16px 0 0 16px;
+        }
+
+    .arc-cover {
+        width: 80px;
+        flex-shrink: 0;
+        object-fit: cover;
+        align-self: stretch;
+        margin-left: 4px;
+    }
+
+    .arc-cover-ph {
+        width: 80px;
+        flex-shrink: 0;
+        margin-left: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: rgba(255,255,255,.8);
+    }
+
+    .arc-body {
+        flex: 1;
+        padding: 1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: .2rem;
+        min-width: 0;
+    }
+
+    .arc-title {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+    }
+
+    .arc-meta {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        flex-wrap: wrap;
+        margin-top: .25rem;
+    }
+
+    .arc-badge {
+        font-size: .65rem;
+        font-weight: 800;
+        padding: .18rem .55rem;
+        border-radius: 20px;
+        letter-spacing: .3px;
+    }
+
+        .arc-badge.cat {
+            background: #ede9ff;
+            color: #6b63ff;
+        }
+
+        .arc-badge.free {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .arc-badge.paid {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+    .arc-date {
+        font-size: .72rem;
+        font-weight: 600;
+        color: #9994a8;
+    }
+
+    .arc-reads {
+        font-size: .72rem;
+        font-weight: 700;
+        color: #9994a8;
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+    }
+
+    .arc-actions {
+        display: flex;
+        align-items: center;
+        padding: 0 1.25rem 0 0;
+        flex-shrink: 0;
+    }
+
+    .btn-restore {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: linear-gradient(135deg, #6b63ff, #a855f7);
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        padding: .55rem 1.2rem;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        transition: all .2s;
+        box-shadow: 0 3px 12px rgba(107,99,255,.35);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+        .btn-restore:hover {
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 6px 20px rgba(107,99,255,.45);
+            color: #fff;
+        }
+
+        .btn-restore:active {
+            transform: scale(.98);
+        }
+
+    .btn-delete-perm {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: transparent;
+        color: #ef4444;
+        font-family: 'Nunito', sans-serif;
+        font-size: .78rem;
+        font-weight: 800;
+        padding: .45rem 1rem;
+        border-radius: 50px;
+        border: 1.5px solid #fca5a5;
+        cursor: pointer;
+        transition: all .2s;
+        white-space: nowrap;
+        text-decoration: none;
+    }
+
+        .btn-delete-perm:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete-perm:active {
+            transform: scale(.98);
+        }
+
+    /* ── COUNTER PILL ── */
+    .arc-count-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        background: #f0eeff;
+        color: #6b63ff;
+        font-size: .78rem;
+        font-weight: 800;
+        padding: .3rem .85rem;
+        border-radius: 50px;
+        border: 1px solid #ddd6fe;
+    }
+
+    /* ── TOAST ── */
+    #arcToast {
+        position: fixed;
+        bottom: 1.75rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(14px);
+        background: linear-gradient(135deg, #6b63ff, #a855f7);
+        color: #fff;
+        padding: .58rem 1.5rem;
+        border-radius: 50px;
+        font-size: .82rem;
+        font-weight: 800;
+        font-family: 'Nunito', sans-serif;
+        box-shadow: 0 8px 28px rgba(107,99,255,.35);
+        opacity: 0;
+        transition: all .3s cubic-bezier(.34,1.56,.64,1);
+        z-index: 9999;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+        #arcToast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+    /* ── MOBILE ── */
+    @@media (max-width: 576px) {
+        .arc-header {
+            padding: 1.4rem 1.25rem;
+        }
+
+        .arc-header-title {
+            font-size: 1.3rem;
+        }
+
+        .arc-cover, .arc-cover-ph {
+            width: 65px;
+        }
+
+        .arc-actions {
+            padding-right: .85rem;
+        }
+
+        .btn-restore {
+            font-size: .72rem;
+            padding: .45rem .9rem;
+        }
+    }
+</style>
+
+<div class="arc-page">
+
+    @* ── Header ── *@
+    <div class="arc-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-0">
+            <div>
+                <h2 class="arc-header-title" style="display:flex;align-items:center;gap:.6rem;">
+                    <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                    </div>
+                    My Archive
+                </h2>
+                <p class="arc-header-sub">Books you deleted — restore them anytime to republish</p>
+            </div>
+            <a asp-controller="Author" asp-action="MyBooks" class="arc-back-btn">
+                ← Back to My Books
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* ── Sub-header with count ── *@
+    @if (Model.Any())
+    {
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="arc-count-pill">
+                @Model.Count archived book@(Model.Count != 1 ? "s" : "")
+            </span>
+            <span class="text-muted small fw-semibold">
+                · Restore a book to make it visible to readers again
+            </span>
+        </div>
+    }
+
+    @* ── Content ── *@
+    @if (!Model.Any())
+    {
+        <div class="arc-empty">
+            <span class="arc-empty-icon" style="display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;color:#c0bdd0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            </span>
+            <h4>Your archive is empty</h4>
+            <p>Books you delete from <strong>My Books</strong> will appear here so you can restore them later.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var book in Model)
+        {
+            <div class="arc-card">
+                @* Cover *@
+                @if (!string.IsNullOrEmpty(book.CoverImage))
+                {
+                    <img src="@book.CoverImage" alt="@book.Title" class="arc-cover" />
+                }
+                else
+                {
+                    <div class="arc-cover-ph">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                }
+
+                @* Info *@
+                <div class="arc-body">
+                    <p class="arc-title" title="@book.Title">@book.Title</p>
+                    <div class="arc-meta">
+                        <span class="arc-badge cat">@book.Category</span>
+                        @if (book.IsFree)
+                        {
+                            <span class="arc-badge free">Free</span>
+                        }
+                        else
+                        {
+                            <span class="arc-badge paid" style="display:inline-flex;align-items:center;gap:.2rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                Premium
+                            </span>
+                        }
+                        <span class="arc-date">Published @book.PublishedAt.ToString("MMM dd, yyyy")</span>
+                        <span class="arc-reads" style="display:inline-flex;align-items:center;gap:.2rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            @book.ReadCount read@(book.ReadCount != 1 ? "s" : "")
+                        </span>
+                    </div>
+                </div>
+
+                @* Actions: Restore + Permanent Delete *@
+                <div class="arc-actions" style="gap:.6rem; display:flex; flex-direction:column; align-items:flex-end; padding: .75rem 1.25rem .75rem 0;">
+                    <form asp-controller="Author" asp-action="Restore" method="post" style="margin:0;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@book.Id" />
+                        <button type="submit" class="btn-restore"
+                                onclick="return confirmRestore('@book.Title.Replace("'", "\'")')">
+                            Restore
+                        </button>
+                    </form>
+                    <form asp-controller="Author" asp-action="PermanentDelete" method="post" style="margin:0;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@book.Id" />
+                        <button type="submit" class="btn-delete-perm"
+                                onclick="return confirmPermanentDelete('@book.Title.Replace("'", "\'")')">
+                            Delete Permanently
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+
+</div>
+
+<div id="arcToast"></div>
+
+@section Scripts {
+    <script>
+        function confirmRestore(title) {
+            return confirm(`Restore "${title}"?\n\nIt will become visible to readers again.`);
+        }
+
+        function confirmPermanentDelete(title) {
+            return confirm(`Permanently delete "${title}"?\n\nThis cannot be undone. The book will be removed forever.`);
+        }
+
+        // Auto-show success toast from TempData
+        @if (TempData["SuccessMessage"] != null)
+        {
+                <text>
+                (function() {
+                    const t = document.getElementById('arcToast');
+                    t.textContent = '@TempData["SuccessMessage"]'.replace(/\\"/g, '"');
+                    t.classList.add('show');
+                    setTimeout(() => t.classList.remove('show'), 3000);
+                })();
+                </text>
+        }
+    </script>
+}

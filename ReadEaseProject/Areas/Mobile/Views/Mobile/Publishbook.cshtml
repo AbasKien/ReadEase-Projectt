@@ -1,0 +1,357 @@
+@model ReadEase.ViewModels.Author.PublishBookViewModel
+@{
+    ViewData["Title"] = "Publish Book";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+
+    var categories = new[] { "Action", "Adventure", "Anime", "Arts", "Comedy", "Drama", "Eastern", "Ecchi", "Fan-Fiction", "Fantasy", "Game", "Gender-Bender", "Harem", "Historical", "Horror", "Isekai", "Josei", "Lgbt+", "Magic", "Magical-Realism", "Manhua", "Martial-Arts", "Mature", "Mecha", "Military", "Modern-Life", "Movies", "Mystery", "Psychological", "Realistic-Fiction", "Reincarnation", "Romance", "School-Life", "Sci-Fi", "Seinen", "Shoujo", "Shoujo-Ai", "Shounen", "Shounen-Ai", "Slice-Of-Life", "Smut", "Sports", "Supernatural", "System", "Tragedy", "Urban", "Urban-Life", "Video-Games", "War", "Wuxia", "Xianxia", "Xuanhuan", "Yaoi", "Yuri" };
+}
+
+<style>
+    /* ── MAUI WebView Compatibility ── */
+    /* Ensure content starts below status bar and doesn't clip */
+    body.maui-host .re-main {
+        padding-top: 0 !important;
+    }
+    .pb-header {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .pb-back {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--re-surface-2);
+        border: 1px solid var(--re-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--re-text);
+        text-decoration: none !important;
+        font-size: .95rem;
+        flex-shrink: 0;
+        transition: background .15s;
+    }
+
+        .pb-back:hover {
+            background: rgba(255,255,255,.1);
+            color: var(--re-text);
+        }
+
+    .pb-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: var(--re-text);
+    }
+
+    .pb-sub {
+        font-size: .72rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-top: .05rem;
+    }
+
+    .pb-cover-picker {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .pb-cover-preview {
+        width: 110px;
+        aspect-ratio: 2/3;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #1c2e3e, #f26522);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        border: 2px dashed rgba(242,101,34,.35);
+        overflow: hidden;
+        cursor: pointer;
+        transition: border-color .2s;
+        position: relative;
+    }
+
+        .pb-cover-preview:hover {
+            border-color: rgba(242,101,34,.7);
+        }
+
+        .pb-cover-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+        }
+
+    .pb-cover-label {
+        font-size: .75rem;
+        color: var(--re-muted);
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .pb-status {
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        font-size: .82rem;
+        font-weight: 700;
+        margin-bottom: .85rem;
+        display: none;
+    }
+
+    .pb-status-err {
+        background: rgba(239,68,68,.1);
+        border: 1px solid rgba(239,68,68,.25);
+        color: #fca5a5;
+    }
+
+    .pb-status-ok {
+        background: rgba(34,197,94,.1);
+        border: 1px solid rgba(34,197,94,.25);
+        color: #86efac;
+    }
+
+    .pb-status-inf {
+        background: rgba(59,130,246,.1);
+        border: 1px solid rgba(59,130,246,.25);
+        color: var(--re-orange);
+    }
+
+    .pb-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 12px;
+        padding: .85rem 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .pb-toggle-label {
+        font-size: .88rem;
+        font-weight: 800;
+        color: var(--re-text);
+    }
+
+    .pb-toggle-desc {
+        font-size: .7rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-top: .05rem;
+    }
+
+    .pb-switch {
+        position: relative;
+        width: 46px;
+        height: 26px;
+        flex-shrink: 0;
+    }
+
+        .pb-switch input {
+            display: none;
+        }
+
+    .pb-switch-track {
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,.12);
+        border-radius: 99px;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+    .pb-switch input:checked + .pb-switch-track {
+        background: var(--re-orange);
+    }
+
+    .pb-switch-track::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform .2s;
+        box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+
+    .pb-switch input:checked + .pb-switch-track::after {
+        transform: translateX(20px);
+    }
+
+    /* ── Genre Chips Mobile ── */
+    .genre-chips-mobile {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        max-height: 180px;
+        overflow-y: auto;
+        padding: 0.5rem;
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 10px;
+    }
+
+    .genre-chip-mobile {
+        padding: 0.4rem 0.75rem;
+        background: rgba(255,255,255,.05);
+        border: 1px solid var(--re-border);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--re-text);
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+    }
+
+        .genre-chip-mobile.selected {
+            background: var(--re-orange);
+            border-color: var(--re-orange);
+            color: #fff;
+        }
+</style>
+
+<!-- Header -->
+<div class="pb-header">
+    <a class="pb-back" href="/Mobile/Write">←</a>
+    <div>
+        <div class="pb-title">Publish New Book</div>
+        <div class="pb-sub">Fill in the details below</div>
+    </div>
+</div>
+
+<!-- Status -->
+<div class="pb-status" id="pbStatus"></div>
+
+<!-- Cover picker -->
+<div class="pb-cover-picker">
+    <div class="pb-cover-preview" id="coverPreview"
+         onclick="document.getElementById('coverInput').click()">
+        
+    </div>
+    <input type="file" id="coverInput" accept="image/*" style="display:none;"
+           onchange="previewCover(this)" />
+    <div class="pb-cover-label">
+        Tap to choose a cover image<br />
+        <span style="font-size:.68rem;opacity:.6;">(optional)</span>
+    </div>
+</div>
+
+<!-- Title -->
+<div class="mob-field">
+    <label>Book Title <span style="color:var(--re-orange)">*</span></label>
+    <input class="mob-input" id="pbTitle" type="text" placeholder="e.g. The Last Light" maxlength="200" />
+</div>
+
+<!-- Genres — multi-select chips -->
+<div class="mob-field">
+    <label>Genres <span style="color:var(--re-orange)">*</span> <span style="font-size:.65rem;opacity:.7;">(Tap to select multiple)</span></label>
+    <input type="hidden" id="pbCategory" />
+    <div class="genre-chips-mobile">
+        @foreach (var cat in categories)
+        {
+            <span class="genre-chip-mobile" data-genre="@cat" onclick="toggleGenreMobile(this)">@cat</span>
+        }
+    </div>
+</div>
+
+<!-- Description -->
+<div class="mob-field">
+    <label>Description</label>
+    <textarea class="mob-input" id="pbDescription" rows="4"
+              placeholder="Give readers a short synopsis of your story…"
+              style="resize:vertical;min-height:100px;"></textarea>
+</div>
+
+<!-- Free / Pro toggle -->
+<div class="pb-toggle-row">
+    <div>
+        <div class="pb-toggle-label">Free to Read</div>
+        <div class="pb-toggle-desc">Toggle off to make this a Pro book</div>
+    </div>
+    <label class="pb-switch">
+        <input type="checkbox" id="pbIsFree" checked="checked" />
+        <span class="pb-switch-track"></span>
+    </label>
+</div>
+
+<!-- Submit -->
+<button class="mob-btn-orange" id="pbSubmit" onclick="submitPublish()" style="width:100%;margin-top:.5rem;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Publish Book
+</button>
+
+@section Scripts {
+    <script>
+        function previewCover(input) {
+            const file = input.files[0];
+            if (!file) return;
+            document.getElementById('coverPreview').innerHTML =
+                '<img src="' + URL.createObjectURL(file) + '" alt="Cover preview" />';
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('pbStatus');
+            el.textContent = msg;
+            el.className = 'pb-status pb-status-' + type;
+            el.style.display = 'block';
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // ── Genre toggle for mobile ──
+        function toggleGenreMobile(chip) {
+            chip.classList.toggle('selected');
+            updateSelectedGenres();
+        }
+
+        function updateSelectedGenres() {
+            const selected = Array.from(document.querySelectorAll('.genre-chip-mobile.selected'))
+                .map(c => c.dataset.genre);
+            document.getElementById('pbCategory').value = selected.join(',');
+        }
+
+        async function submitPublish() {
+            const title    = document.getElementById('pbTitle').value.trim();
+            const category = document.getElementById('pbCategory').value;
+            const desc     = document.getElementById('pbDescription').value.trim();
+            const isFree   = document.getElementById('pbIsFree').checked;
+            const coverFile= document.getElementById('coverInput').files[0];
+            const btn      = document.getElementById('pbSubmit');
+
+            if (!title)    { showStatus('Book title is required.', 'err'); return; }
+            if (!category) { showStatus('Please choose at least one genre.', 'err'); return; }
+
+            btn.disabled = true;
+            btn.textContent = 'Publishing…';
+
+            const fd = new FormData();
+            fd.append('Title',       title);
+            fd.append('Category',    category);
+            fd.append('Description', desc);
+            fd.append('IsFree',      isFree);
+            if (coverFile) fd.append('CoverImage', coverFile);
+
+            try {
+                const res  = await mobileApi('/Areas/Mobile/api/Books/publish', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Publish failed.');
+                showStatus(data.message || 'Book published!', data.isPending ? 'inf' : 'ok');
+                setTimeout(() => window.location.href = '/Mobile/Write', 1800);
+            } catch(e) {
+                showStatus('Error: ' + e.message, 'err');
+                btn.disabled = false;
+                btn.textContent = 'Publish Book';
+            }
+        }
+    </script>
+}

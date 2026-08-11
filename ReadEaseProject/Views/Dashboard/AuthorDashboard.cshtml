@@ -1,0 +1,948 @@
+﻿@model ReadEase.ViewModels.Author.AuthorDashboardViewModel
+@{
+    ViewData["Title"] = "Author Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var topBook = Model.Books
+        .Where(b => !b.IsDeleted)
+        .OrderByDescending(b => b.ReadCount)
+        .FirstOrDefault();
+}
+
+<style>
+    .re-blob {
+        position: fixed;
+        background: #f26522;
+        pointer-events: none;
+        z-index: 0;
+        opacity: .06;
+    }
+
+    .re-blob-tl {
+        width: 320px;
+        height: 640px;
+        top: -180px;
+        left: -120px;
+        border-radius: 38% 62% 55% 45%/42% 38% 62% 58%;
+        animation: blobA 9s ease-in-out infinite;
+    }
+
+    .re-blob-br {
+        width: 300px;
+        height: 580px;
+        bottom: -180px;
+        right: -110px;
+        border-radius: 55% 45% 38% 62%/60% 42% 58% 40%;
+        animation: blobB 11s ease-in-out infinite;
+    }
+
+    @@keyframes blobA {
+        0%, 100% {
+            border-radius: 38% 62% 55% 45%/42% 38% 62% 58%
+        }
+
+        33% {
+            border-radius: 55% 45% 40% 60%/55% 45% 58% 42%
+        }
+
+        66% {
+            border-radius: 45% 55% 62% 38%/40% 58% 42% 60%
+        }
+    }
+
+    @@keyframes blobB {
+        0%, 100% {
+            border-radius: 55% 45% 38% 62%/60% 42% 58% 40%
+        }
+
+        33% {
+            border-radius: 40% 60% 58% 42%/45% 55% 40% 60%
+        }
+
+        66% {
+            border-radius: 62% 38% 45% 55%/55% 45% 62% 38%
+        }
+    }
+
+    /* ── HERO ── */
+    .re-hero {
+        background: linear-gradient(135deg,#064e3b 0%,#065f46 55%,#022c22 100%);
+        border-radius: 20px;
+        padding: 2.25rem 2.5rem;
+        margin-bottom: 1.75rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .re-hero::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle,rgba(16,185,129,.2) 0%,transparent 65%);
+            pointer-events: none;
+        }
+
+        .re-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -30px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle,rgba(242,101,34,.1) 0%,transparent 65%);
+            pointer-events: none;
+        }
+
+    .re-hero-inner {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .au-avatar {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,.3);
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .au-avatar-ph {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #fff;
+        flex-shrink: 0;
+        border: 3px solid rgba(255,255,255,.3);
+    }
+
+    .re-hero-label {
+        font-size: .7rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.45);
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        margin-bottom: .25rem;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .re-hero-title {
+        font-family: 'Nunito',sans-serif;
+        font-size: 1.9rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.1;
+        margin: 0;
+    }
+
+    .re-hero-sub {
+        font-size: .88rem;
+        color: rgba(255,255,255,.5);
+        font-weight: 600;
+        margin-top: .2rem;
+    }
+
+    /* ── STAT CARDS ── */
+    .re-stat {
+        background: #fff;
+        border: 1px solid #e8e3dc;
+        border-radius: 18px;
+        padding: 1.3rem 1.4rem 1.1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        transition: transform .22s, box-shadow .22s;
+        display: block;
+        text-decoration: none !important;
+        color: inherit !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .re-stat::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 0;
+            background: #059669;
+            transition: width .3s ease;
+            border-radius: 0 0 0 18px;
+        }
+
+        .re-stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0,0,0,.1);
+        }
+
+            .re-stat:hover::before {
+                width: 100%;
+            }
+
+    .re-stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: .65rem;
+        flex-shrink: 0;
+    }
+
+        .re-stat-icon.green {
+            background: #f0fdf4;
+        }
+
+        .re-stat-icon.blue {
+            background: #eff6ff;
+        }
+
+        .re-stat-icon.purple {
+            background: #f0eeff;
+        }
+
+    .re-stat-val {
+        font-family: 'Nunito',sans-serif;
+        font-size: 2.1rem;
+        font-weight: 900;
+        color: #065f46;
+        line-height: 1;
+    }
+
+        .re-stat-val.arch {
+            color: #6b63ff;
+        }
+
+        .re-stat-val.blue {
+            color: #2563eb;
+        }
+
+    .re-stat-lbl {
+        font-size: .7rem;
+        font-weight: 800;
+        color: #9994a8;
+        text-transform: uppercase;
+        letter-spacing: .55px;
+        margin-top: .25rem;
+    }
+
+    /* ── SECTION TITLE ── */
+    .re-sec-title {
+        font-family: 'Nunito',sans-serif;
+        font-weight: 900;
+        font-size: 1.05rem;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: 1.1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .re-sec-line {
+        flex: 1;
+        height: 2px;
+        border-radius: 2px;
+        background: linear-gradient(90deg,rgba(5,150,105,.45) 0%,transparent 100%);
+        margin-left: .4rem;
+    }
+
+    /* ── QUICK ACTIONS ── */
+    .re-action {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #fff;
+        border: 1.5px solid #e8e3dc;
+        border-radius: 14px;
+        padding: 1rem 1.15rem;
+        text-decoration: none !important;
+        color: #1a1a2e !important;
+        transition: border-color .18s, box-shadow .18s, transform .22s;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+        .re-action:hover {
+            border-color: #059669;
+            box-shadow: 0 8px 28px rgba(5,150,105,.14);
+            transform: translateY(-3px);
+        }
+
+        .re-action.arch:hover {
+            border-color: #6b63ff;
+            box-shadow: 0 8px 28px rgba(107,99,255,.14);
+        }
+
+    .re-action-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: #f0fdf4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+        .re-action-icon.v {
+            background: #f0eeff;
+        }
+
+    .re-action-title {
+        font-family: 'Nunito',sans-serif;
+        font-size: .9rem;
+        font-weight: 800;
+    }
+
+    .re-action-desc {
+        font-size: .75rem;
+        color: #9994a8;
+        font-weight: 600;
+    }
+
+    .re-action-arrow {
+        margin-left: auto;
+        color: #c0bdd0;
+        font-size: 1.2rem;
+        transition: transform .18s, color .18s;
+    }
+
+    .re-action:hover .re-action-arrow {
+        transform: translateX(4px);
+        color: #059669;
+    }
+
+    .re-action.arch:hover .re-action-arrow {
+        color: #6b63ff;
+    }
+
+    .arch-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 50px;
+        background: linear-gradient(135deg,#6b63ff,#a855f7);
+        color: #fff;
+        font-size: .62rem;
+        font-weight: 900;
+        font-family: 'Nunito',sans-serif;
+        line-height: 1;
+        margin-left: .35rem;
+        flex-shrink: 0;
+    }
+
+    /* ── TOP PERFORMING BOOK CARD ── */
+    .top-book-card {
+        background: #fff;
+        border: 1px solid #e8e3dc;
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .top-book-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #059669, #34d399);
+        }
+
+    .top-book-cover {
+        width: 80px;
+        height: 110px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 6px 20px rgba(0,0,0,.15);
+    }
+
+    .top-book-cover-ph {
+        width: 80px;
+        height: 110px;
+        border-radius: 10px;
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 6px 20px rgba(0,0,0,.15);
+    }
+
+    .top-book-crown {
+        position: absolute;
+        top: .85rem;
+        right: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        background: linear-gradient(135deg,#fef9c3,#fde68a);
+        border: 1px solid #fcd34d;
+        border-radius: 50px;
+        padding: .25rem .75rem;
+        font-size: .72rem;
+        font-weight: 900;
+        color: #92400e;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .top-book-title {
+        font-family: 'Nunito',sans-serif;
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #1a1a2e;
+        margin-bottom: .2rem;
+        line-height: 1.3;
+    }
+
+    .top-book-category {
+        font-size: .72rem;
+        font-weight: 800;
+        background: #f0fdf4;
+        color: #059669;
+        border: 1px solid #bbf7d0;
+        border-radius: 20px;
+        padding: .18rem .6rem;
+        display: inline-block;
+        margin-bottom: .75rem;
+    }
+
+    .top-book-stats {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .top-book-stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .top-book-stat-val {
+        font-family: 'Nunito',sans-serif;
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: #059669;
+        line-height: 1;
+    }
+
+    .top-book-stat-lbl {
+        font-size: .65rem;
+        font-weight: 800;
+        color: #9994a8;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-top: .1rem;
+    }
+
+    .top-book-divider {
+        width: 1px;
+        height: 36px;
+        background: #e8e3dc;
+        flex-shrink: 0;
+    }
+
+    .top-book-view-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        margin-top: 1rem;
+        background: #065f46;
+        color: #fff;
+        font-family: 'Nunito',sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        padding: .45rem 1.1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background .18s, transform .18s;
+        box-shadow: 0 3px 10px rgba(5,150,105,.25);
+    }
+
+        .top-book-view-btn:hover {
+            background: #047857;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .top-book-empty {
+        background: #f9f8f7;
+        border: 2px dashed #e8e3dc;
+        border-radius: 18px;
+        padding: 2.5rem;
+        text-align: center;
+    }
+
+    /* ── TABLE ── */
+    .re-table-wrap {
+        background: #fff;
+        border: 1px solid #e8e3dc;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        position: relative;
+        z-index: 2;
+    }
+
+    .re-table thead th {
+        background: #065f46 !important;
+        color: rgba(255,255,255,.82) !important;
+        font-size: .68rem !important;
+        text-transform: uppercase;
+        letter-spacing: .65px;
+        padding: .85rem 1.1rem !important;
+        border: none !important;
+        white-space: nowrap;
+    }
+
+    .re-table td {
+        padding: .78rem 1.1rem !important;
+        vertical-align: middle;
+        font-size: .855rem;
+        border-color: #f0eeea !important;
+    }
+
+    .re-table tbody tr:hover {
+        background: #f0fdf4 !important;
+    }
+
+    .fade-up {
+        animation: fadeUp .45s ease both;
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(18px)
+        }
+
+        to {
+            opacity: 1;
+            transform: none
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .top-book-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .top-book-crown {
+            top: auto;
+            bottom: 1rem;
+            right: 1rem;
+        }
+    }
+</style>
+
+<div class="re-blob re-blob-tl"></div>
+<div class="re-blob re-blob-br"></div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-3 mb-3">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-3">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ── HERO ── *@
+<div class="re-hero fade-up">
+    <div class="re-hero-inner">
+        @if (!string.IsNullOrEmpty(Model.ProfilePhoto))
+        {
+            <img src="@Model.ProfilePhoto" class="au-avatar" alt="@Model.Name" />
+        }
+        else
+        {
+            <div class="au-avatar-ph">@Model.Name.Substring(0, 1).ToUpper()</div>
+        }
+        <div>
+            <div class="re-hero-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                Author Dashboard
+            </div>
+            <div class="re-hero-title">@Model.Name</div>
+            <div class="re-hero-sub">@Model.Email</div>
+        </div>
+    </div>
+</div>
+
+@* ── STAT CARDS ── *@
+<div class="row g-3 mb-4 fade-up">
+    <div class="col-6 col-md-4">
+        <div class="re-stat">
+            <div class="re-stat-icon green">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+            </div>
+            <div class="re-stat-val">@Model.TotalBooks</div>
+            <div class="re-stat-lbl">Published Books</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="re-stat">
+            <div class="re-stat-icon blue">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+            </div>
+            <div class="re-stat-val blue">@Model.TotalReads</div>
+            <div class="re-stat-lbl">Unique Readers</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <a asp-controller="Author" asp-action="Archive" class="re-stat text-decoration-none d-block">
+            <div class="re-stat-icon purple">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#6b63ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="21 8 21 21 3 21 3 8" />
+                    <rect x="1" y="3" width="22" height="5" />
+                    <line x1="10" y1="12" x2="14" y2="12" />
+                </svg>
+            </div>
+            <div class="re-stat-val arch">@Model.ArchivedCount</div>
+            <div class="re-stat-lbl">Archived Books</div>
+        </a>
+    </div>
+</div>
+
+@* ── TOP PERFORMING BOOK ── *@
+<div class="re-sec-title fade-up">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+         fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+    Top Performing Book
+    <div class="re-sec-line"></div>
+</div>
+
+<div class="mb-4 fade-up">
+    @if (topBook != null)
+    {
+        <div class="top-book-card">
+            <div class="top-book-crown">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                     fill="#f59e0b" stroke="none">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                Most Read
+            </div>
+
+            @if (!string.IsNullOrEmpty(topBook.CoverImage))
+            {
+                <img src="@topBook.CoverImage" class="top-book-cover" alt="@topBook.Title" />
+            }
+            else
+            {
+                <div class="top-book-cover-ph">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                         fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.5"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                </div>
+            }
+
+            <div style="flex:1;min-width:0;">
+                <div class="top-book-title">@topBook.Title</div>
+                <span class="top-book-category">@topBook.Category</span>
+
+                <div class="top-book-stats">
+                    <div class="top-book-stat-item">
+                        <div class="top-book-stat-val">@topBook.ReadCount</div>
+                        <div class="top-book-stat-lbl">Total Reads</div>
+                    </div>
+                    <div class="top-book-divider"></div>
+                    <div class="top-book-stat-item">
+                        <div class="top-book-stat-val" style="color:@(topBook.IsFree ? "#059669" : "#d97706");">
+                            @(topBook.IsFree ? "Free" : "Premium")
+                        </div>
+                        <div class="top-book-stat-lbl">Access Type</div>
+                    </div>
+                    <div class="top-book-divider"></div>
+                    <div class="top-book-stat-item">
+                        <div class="top-book-stat-val" style="color:#64748b;font-size:1rem;">
+                            @topBook.PublishedAt.ToString("MMM yyyy")
+                        </div>
+                        <div class="top-book-stat-lbl">Published</div>
+                    </div>
+                </div>
+
+                <a asp-controller="Library" asp-action="Detail" asp-route-id="@topBook.Id"
+                   class="top-book-view-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    View Book
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="top-book-empty">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                 fill="none" stroke="#c4bfb8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                 style="margin-bottom:.75rem;">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+            <p style="font-family:'Nunito',sans-serif;font-weight:800;color:#9994a8;margin:0;font-size:.9rem;">
+                No published books yet
+            </p>
+        </div>
+    }
+</div>
+
+@* ── QUICK ACTIONS ── *@
+<div class="re-sec-title fade-up">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+         fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+    Quick Actions
+    <div class="re-sec-line"></div>
+</div>
+<div class="row g-3 mb-4 fade-up">
+    <div class="col-md-6 col-lg-3">
+        <a asp-controller="Author" asp-action="MyBooks" class="re-action">
+            <div class="re-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+            </div>
+            <div><div class="re-action-title">My Books</div><div class="re-action-desc">Manage &amp; edit your books</div></div>
+            <span class="re-action-arrow">›</span>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <a asp-controller="Author" asp-action="Create" class="re-action">
+            <div class="re-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+            </div>
+            <div><div class="re-action-title">Publish New Book</div><div class="re-action-desc">Add a new book</div></div>
+            <span class="re-action-arrow">›</span>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <a asp-controller="User" asp-action="Profile" class="re-action">
+            <div class="re-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+            </div>
+            <div><div class="re-action-title">My Profile</div><div class="re-action-desc">Edit your information</div></div>
+            <span class="re-action-arrow">›</span>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <a asp-controller="Author" asp-action="Archive" class="re-action arch">
+            <div class="re-action-icon v">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#6b63ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="21 8 21 21 3 21 3 8" />
+                    <rect x="1" y="3" width="22" height="5" />
+                    <line x1="10" y1="12" x2="14" y2="12" />
+                </svg>
+            </div>
+            <div>
+                <div class="re-action-title">
+                    My Archive
+                    @if (Model.ArchivedCount > 0)
+                    {
+                        <span class="arch-badge">@Model.ArchivedCount</span>
+                    }
+                </div>
+                <div class="re-action-desc">Restore deleted books</div>
+            </div>
+            <span class="re-action-arrow">›</span>
+        </a>
+    </div>
+</div>
+
+@* ── MY BOOKS TABLE ── *@
+<div class="re-sec-title fade-up">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+         fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+    My Published Books
+    <div class="re-sec-line"></div>
+</div>
+
+@if (!Model.Books.Any(b => !b.IsDeleted))
+{
+    <div class="text-center py-5" style="position:relative;z-index:2;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24"
+             fill="none" stroke="#c4bfb8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"
+             style="margin-bottom:1rem;display:block;margin-left:auto;margin-right:auto;">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+        <h5 style="font-family:'Nunito',sans-serif;font-weight:900;color:#1a1a2e;">No books yet</h5>
+        <p class="text-muted">You haven't published any books yet.</p>
+        <a asp-controller="Author" asp-action="Create"
+           style="display:inline-flex;align-items:center;gap:.45rem;background:#059669;color:#fff;
+                      font-family:'Nunito',sans-serif;font-weight:800;font-size:.875rem;
+                      padding:.6rem 1.5rem;border-radius:10px;text-decoration:none;
+                      margin-top:.5rem;box-shadow:0 4px 14px rgba(5,150,105,.3);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            Publish Your First Book
+        </a>
+    </div>
+}
+else
+{
+    <div class="re-table-wrap fade-up">
+        <div class="table-responsive">
+            <table class="table re-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:55px;">Cover</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Published</th>
+                        <th class="text-center">Reads</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var book in Model.Books.Where(b => !b.IsDeleted).OrderByDescending(b => b.ReadCount))
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(book.CoverImage))
+                                {
+                                    <img src="@book.CoverImage" class="rounded" style="width:38px;height:50px;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <div class="rounded d-flex align-items-center justify-content-center" style="width:38px;height:50px;background:linear-gradient(135deg,#667eea,#764ba2);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                             fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"
+                                             stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                        </svg>
+                                    </div>
+                                }
+                            </td>
+                            <td class="fw-semibold">
+                                @book.Title
+                                @if (book.Id == topBook?.Id)
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                         fill="#f59e0b" stroke="none" style="margin-left:.3rem;vertical-align:middle;"
+                                         title="Top performing book">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                }
+                            </td>
+                            <td><span class="badge bg-secondary rounded-pill" style="font-size:.62rem;">@book.Category</span></td>
+                            <td>
+                                <span class="badge rounded-pill @(book.IsFree ? "bg-success" : "bg-warning text-dark")" style="font-size:.62rem;">
+                                    @(book.IsFree ? "Free" : "Premium")
+                                </span>
+                            </td>
+                            <td class="text-muted small">@book.PublishedAt.ToString("MMM dd, yyyy")</td>
+                            <td class="text-center fw-bold" style="color:#059669;" title="@book.ReadCount unique readers">@book.ReadCount</td>
+                            <td>
+                                <a asp-controller="Library" asp-action="Detail" asp-route-id="@book.Id"
+                                   style="display:inline-flex;align-items:center;gap:.3rem;background:#f0fdf4;color:#059669;
+                                                  border:1px solid #bbf7d0;border-radius:8px;padding:.3rem .75rem;
+                                                  font-size:.78rem;font-weight:700;text-decoration:none;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2.5"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (Model.ArchivedCount > 0)
+    {
+        <div class="text-center mt-3">
+            <a asp-controller="Author" asp-action="Archive"
+               style="font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:800;color:#6b63ff;
+                              text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;">
+                @Model.ArchivedCount deleted book@(Model.ArchivedCount != 1 ? "s" : "") in your archive →
+            </a>
+        </div>
+    }
+}

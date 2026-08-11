@@ -1,0 +1,1336 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — ReadEase</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        /* ── LOGO ── */
+        .re-logo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            text-decoration: none !important;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .re-logo-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            background: #f26522;
+            border-radius: 8px;
+            padding: .2rem .35rem;
+        }
+
+        .re-logo-text {
+            display: flex;
+            align-items: baseline;
+            line-height: 1;
+            gap: 0;
+        }
+
+        .re-notif-btn:hover #bellIcon {
+            opacity: .75;
+        }
+
+        .re-notif-btn:hover #bellSvg path {
+            fill: #ff7a35 !important;
+        }
+
+        .re-notif-btn::after {
+            display: none !important;
+        }
+
+        @@keyframes bell-shake {
+            0%, 100% {
+                transform: rotate(0);
+            }
+
+            20% {
+                transform: rotate(12deg);
+            }
+
+            40% {
+                transform: rotate(-10deg);
+            }
+
+            60% {
+                transform: rotate(8deg);
+            }
+
+            80% {
+                transform: rotate(-6deg);
+            }
+        }
+
+        .bell-shake {
+            animation: bell-shake .5s ease;
+        }
+
+        .re-logo-read {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.45rem;
+            font-weight: 900;
+            letter-spacing: -.03em;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            text-shadow: none;
+        }
+
+        .re-logo-ease {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.45rem;
+            font-weight: 900;
+            letter-spacing: -.03em;
+            color: #f26522 !important;
+        }
+
+        .re-logo-link:hover .re-logo-read {
+            color: #e8e8e8 !important;
+        }
+
+        .re-logo-link:hover .re-logo-ease {
+            color: #ff7a35 !important;
+        }
+
+        /* ══ SEARCH BAR ══ */
+        .re-search-wrap {
+            position: relative;
+            flex: 0 0 auto;
+            width: 260px;
+            transition: width .25s ease;
+        }
+
+            .re-search-wrap.focused {
+                width: 340px;
+            }
+
+        .re-search-input {
+            width: 100%;
+            background: rgba(255,255,255,.08);
+            border: 1.5px solid rgba(255,255,255,.12);
+            border-radius: 50px;
+            padding: .42rem 1rem .42rem 2.4rem;
+            font-family: 'Nunito', sans-serif;
+            font-size: .82rem;
+            font-weight: 600;
+            color: #fff;
+            outline: none;
+            transition: background .2s, border-color .2s, box-shadow .2s;
+        }
+
+            .re-search-input::placeholder {
+                color: rgba(255,255,255,.4);
+            }
+
+            .re-search-input:focus {
+                background: rgba(255,255,255,.13);
+                border-color: rgba(242,101,34,.6);
+                box-shadow: 0 0 0 3px rgba(242,101,34,.15);
+            }
+
+        .re-search-icon {
+            position: absolute;
+            left: .78rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,.4);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            transition: color .2s;
+        }
+
+        .re-search-wrap.focused .re-search-icon {
+            color: #f26522;
+        }
+
+        .re-search-clear {
+            position: absolute;
+            right: .65rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,.15);
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: rgba(255,255,255,.7);
+            font-size: .65rem;
+            line-height: 1;
+            transition: background .15s;
+            padding: 0;
+        }
+
+            .re-search-clear:hover {
+                background: rgba(242,101,34,.5);
+                color: #fff;
+            }
+
+            .re-search-clear.visible {
+                display: flex;
+            }
+
+        /* ── DROPDOWN ── */
+        .re-search-dropdown {
+            position: absolute;
+            top: calc(100% + .5rem);
+            left: 0;
+            right: 0;
+            background: #0f1923;
+            border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(0,0,0,.5);
+            border: 1px solid rgba(255,255,255,.07);
+            overflow: hidden;
+            z-index: 2000;
+            display: none;
+            min-width: 360px;
+        }
+
+            .re-search-dropdown.open {
+                display: block;
+            }
+
+        .re-search-section-head {
+            font-family: 'Nunito', sans-serif;
+            font-size: .65rem;
+            font-weight: 900;
+            color: rgba(255,255,255,.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: .75rem 1rem .35rem;
+        }
+
+        .re-search-item {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .55rem 1rem;
+            text-decoration: none !important;
+            transition: background .15s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+            .re-search-item:hover {
+                background: rgba(242,101,34,.12);
+            }
+
+        .re-search-thumb {
+            width: 36px;
+            height: 48px;
+            border-radius: 6px;
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,.4);
+        }
+
+        .re-search-thumb-ph {
+            width: 36px;
+            height: 48px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #f26522, #d97706);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            color: #fff;
+        }
+
+        .re-search-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,.15);
+        }
+
+        .re-search-avatar-ph {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f26522, #d97706);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .9rem;
+            font-weight: 900;
+            color: #fff;
+            flex-shrink: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .re-search-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .re-search-title {
+            font-family: 'Nunito', sans-serif;
+            font-size: .82rem;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .re-search-sub {
+            font-size: .68rem;
+            color: rgba(255,255,255,.4);
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: .08rem;
+        }
+
+        .re-search-tag {
+            font-size: .6rem;
+            font-weight: 900;
+            padding: .15rem .5rem;
+            border-radius: 50px;
+            flex-shrink: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .re-search-tag-book {
+            background: rgba(242,101,34,.2);
+            color: #f26522;
+        }
+
+        .re-search-tag-author {
+            background: rgba(34,197,94,.15);
+            color: #22c55e;
+        }
+
+        .re-search-empty {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            color: rgba(255,255,255,.3);
+            font-size: .8rem;
+            font-weight: 600;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .re-search-footer {
+            border-top: 1px solid rgba(255,255,255,.06);
+            padding: .6rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .re-search-footer a {
+                font-family: 'Nunito', sans-serif;
+                font-size: .75rem;
+                font-weight: 800;
+                color: #f26522 !important;
+                text-decoration: none !important;
+                transition: color .15s;
+            }
+
+                .re-search-footer a:hover {
+                    color: #ff7a35 !important;
+                }
+
+        .re-search-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            gap: .5rem;
+            color: rgba(255,255,255,.3);
+            font-size: .78rem;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 600;
+        }
+
+        .re-spin {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.15);
+            border-top-color: #f26522;
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+        }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .re-hl {
+            color: #f26522;
+            font-weight: 900;
+        }
+
+        /* ── Author block with expanded books ── */
+        .re-search-author-block {
+            border-bottom: 1px solid rgba(255,255,255,.04);
+        }
+
+            .re-search-author-block:last-of-type {
+                border-bottom: none;
+            }
+
+        .re-search-author-row {
+            background: rgba(34,197,94,.04);
+        }
+
+            .re-search-author-row:hover {
+                background: rgba(34,197,94,.1) !important;
+            }
+
+        .re-search-author-books {
+            border-left: 2px solid rgba(242,101,34,.25);
+            margin: 0 0 .25rem 1.25rem;
+            background: rgba(0,0,0,.15);
+        }
+
+        .re-search-item-sub {
+            padding: .4rem .9rem .4rem .75rem;
+        }
+
+            .re-search-item-sub:hover {
+                background: rgba(242,101,34,.1);
+            }
+
+        .re-search-thumb-sm {
+            width: 28px !important;
+            height: 38px !important;
+            border-radius: 4px !important;
+            font-size: .75rem !important;
+        }
+
+        /* ══ MEGA MENU ══ */
+        .mega-browse-item {
+            position: static !important;
+        }
+
+        .mega-menu {
+            position: fixed !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: 56px !important;
+            width: 100% !important;
+            border-radius: 0 0 20px 20px !important;
+            border: none !important;
+            background: #0f1923 !important;
+            box-shadow: 0 16px 48px rgba(0,0,0,.45) !important;
+            z-index: 1050 !important;
+            min-width: unset !important;
+        }
+
+        .mega-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 320px;
+            gap: 0;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.75rem 1.5rem 2rem;
+        }
+
+        .mega-col {
+            padding: 0 1.5rem;
+            border-right: 1px solid rgba(255,255,255,.06);
+        }
+
+            .mega-col:first-child {
+                padding-left: 0;
+            }
+
+            .mega-col:last-child {
+                border-right: none;
+            }
+
+        .mega-col-head {
+            font-family: 'Nunito', sans-serif;
+            font-size: .7rem;
+            font-weight: 900;
+            color: rgba(255,255,255,.35);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: .9rem;
+            display: flex;
+            flex-direction: column;
+            gap: .15rem;
+        }
+
+        .mega-picks-sub {
+            font-size: .62rem;
+            font-weight: 600;
+            color: rgba(255,255,255,.22);
+            text-transform: none;
+            letter-spacing: .3px;
+        }
+
+        .mega-link {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .38rem .3rem;
+            font-size: .83rem;
+            font-weight: 600;
+            color: rgba(255,255,255,.65) !important;
+            text-decoration: none !important;
+            border-radius: 8px;
+            transition: color .15s, background .15s, padding-left .15s;
+        }
+
+            .mega-link::before {
+                content: '';
+                width: 5px;
+                height: 5px;
+                background: rgba(255,255,255,.2);
+                border-radius: 50%;
+                flex-shrink: 0;
+                transition: background .15s;
+            }
+
+            .mega-link:hover {
+                color: #fff !important;
+                background: rgba(242,101,34,.15);
+                padding-left: .65rem;
+            }
+
+                .mega-link:hover::before {
+                    background: #f26522;
+                }
+
+        .mega-picks-col {
+            background: rgba(255,255,255,.03);
+            border-radius: 12px;
+            padding: 1rem 1.25rem !important;
+        }
+
+        .mega-pick-card {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .55rem .5rem;
+            border-radius: 10px;
+            text-decoration: none !important;
+            transition: background .18s;
+            cursor: pointer;
+        }
+
+            .mega-pick-card:hover {
+                background: rgba(242,101,34,.14);
+            }
+
+        .mega-pick-cover {
+            width: 40px;
+            height: 54px;
+            border-radius: 7px;
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,.4);
+        }
+
+        .mega-pick-cover-ph {
+            width: 40px;
+            height: 54px;
+            border-radius: 7px;
+            background: linear-gradient(135deg, #f26522, #d97706);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .mega-pick-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .mega-pick-title {
+            font-family: 'Nunito', sans-serif;
+            font-size: .8rem;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: .1rem;
+        }
+
+        .mega-pick-author {
+            font-size: .68rem;
+            color: rgba(255,255,255,.4);
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: .25rem;
+        }
+
+        .mega-pick-stars {
+            display: flex;
+            align-items: center;
+            gap: .25rem;
+            font-size: .68rem;
+        }
+
+        .mega-pick-avg {
+            font-weight: 800;
+            color: #f59e0b;
+            font-size: .7rem;
+        }
+
+        .mega-pick-votes {
+            color: rgba(255,255,255,.3);
+            font-size: .63rem;
+        }
+
+        .mega-pick-skeleton {
+            height: 54px;
+            background: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.06) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 10px;
+            margin-bottom: .5rem;
+        }
+
+        @@keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .mega-picks-empty {
+            color: rgba(255,255,255,.3);
+            font-size: .78rem;
+            text-align: center;
+            padding: 1.5rem .5rem;
+            font-weight: 600;
+        }
+
+        @@media (max-width: 991px) {
+            .mega-browse-item {
+                position: relative !important;
+            }
+
+            .mega-menu {
+                position: absolute !important;
+                top: 100% !important;
+                width: 260px !important;
+                left: 0 !important;
+                right: auto !important;
+                border-radius: 12px !important;
+            }
+
+            .mega-inner {
+                grid-template-columns: 1fr;
+                gap: .5rem;
+                padding: 1rem;
+            }
+
+            .mega-col {
+                border-right: none;
+                padding: 0 0 .75rem !important;
+                border-bottom: 1px solid rgba(255,255,255,.06);
+            }
+
+                .mega-col:last-child {
+                    border-bottom: none;
+                }
+
+            .mega-picks-col {
+                display: none;
+            }
+
+            .re-search-wrap {
+                width: 100% !important;
+                margin: .5rem 0;
+            }
+
+            .re-search-dropdown {
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ════════════════════ NAVBAR ════════════════════ -->
+    <nav class="navbar navbar-expand-lg re-nav">
+        <div class="container-fluid">
+
+            <a class="navbar-brand p-0 me-3 re-logo-link" asp-controller="Library" asp-action="Index">
+                <img src="~/images/logo.svg" alt="ReadEase" class="re-logo-img" height="38"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                <div class="re-logo-text" style="display:none;">
+                    <span style="color:#ffffff !important;font-family:'Nunito',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:-.03em;">Read</span><span style="color:#f26522 !important;font-family:'Nunito',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:-.03em;">Ease</span>
+                </div>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navMenu"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMenu">
+
+                @* ── SEARCH BAR (authenticated only) ── *@
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="re-search-wrap mx-3" id="searchWrap">
+                        <span class="re-search-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                        </span>
+                        <input type="text" id="reSearchInput" class="re-search-input"
+                               placeholder="Search books or authors…" autocomplete="off" />
+                        <button class="re-search-clear" id="reSearchClear" title="Clear">✕</button>
+                        <div class="re-search-dropdown" id="reSearchDropdown"></div>
+                    </div>
+                }
+
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <!-- ── BROWSE mega-menu ── -->
+                        <li class="nav-item dropdown mega-browse-item">
+                            <a class="nav-link dropdown-toggle fw-bold" href="#"
+                               id="browseMegaBtn" role="button"
+                               data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                               aria-expanded="false">Browse</a>
+                            <div class="dropdown-menu mega-menu p-0" aria-labelledby="browseMegaBtn">
+                                <div class="mega-inner">
+                                    <div class="mega-col">
+                                        <div class="mega-col-head">Action &amp; Adventure</div>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Action">Action</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Adventure">Adventure</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Martial-Arts">Martial Arts</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="War">War</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Military">Military</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Mecha">Mecha</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Sports">Sports</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="System">System</a>
+                                    </div>
+                                    <div class="mega-col">
+                                        <div class="mega-col-head">Fantasy &amp; Magic</div>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Fantasy">Fantasy</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Magic">Magic</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Isekai">Isekai</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Wuxia">Wuxia</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Xianxia">Xianxia</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Xuanhuan">Xuanhuan</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Reincarnation">Reincarnation</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Supernatural">Supernatural</a>
+                                    </div>
+                                    <div class="mega-col">
+                                        <div class="mega-col-head">Romance &amp; Drama</div>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Romance">Romance</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Drama">Drama</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Comedy">Comedy</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Tragedy">Tragedy</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Harem">Harem</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Shoujo">Shoujo</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Josei">Josei</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Shounen">Shounen</a>
+                                    </div>
+                                    <div class="mega-col">
+                                        <div class="mega-col-head">More Genres</div>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Sci-Fi">Sci-Fi</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Horror">Horror</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Mystery">Mystery</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Psychological">Psychological</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Historical">Historical</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="School-Life">School Life</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index" asp-route-category="Slice-Of-Life">Slice of Life</a>
+                                        <a class="mega-link" asp-controller="Library" asp-action="Index">All Books</a>
+                                    </div>
+                                    <div class="mega-col mega-picks-col">
+                                        <div class="mega-col-head">
+                                            ReadEase Top Picks
+                                            <span class="mega-picks-sub">Highest rated by readers</span>
+                                        </div>
+                                        <div id="megaTopPicks">
+                                            <div class="mega-pick-skeleton"></div>
+                                            <div class="mega-pick-skeleton"></div>
+                                            <div class="mega-pick-skeleton"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="nav-item"><a class="nav-link" asp-controller="Library" asp-action="Index">Library</a></li>
+
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-1"
+                               asp-controller="Library" asp-action="Ongoing">
+                                Ongoing
+                                <span id="navOngoingBadge"
+                                      style="display:none;background:#FF6122;color:#fff;font-size:.58rem;
+                                                     font-weight:900;padding:.1rem .42rem;border-radius:99px;
+                                                     min-width:16px;text-align:center;line-height:1.6;
+                                                     font-family:'Nunito',sans-serif;">0</span>
+                            </a>
+                        </li>
+
+                      
+
+                        @* ── Hide Subscribe if Admin OR already subscribed ── *@
+                        @if (!User.IsInRole("Admin") && User.FindFirst("IsSubscribed")?.Value != "true")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link nav-highlight" asp-controller="Subscription" asp-action="Index">Subscribe</a>
+                            </li>
+                        }
+
+                        @* ── My Books / Publish a Book ── *@
+                        @if (User.IsInRole("Author") || User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">My Books</a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-controller="Author" asp-action="MyBooks">Manage Books</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Author" asp-action="Create">Publish New Book</a></li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            @* ✅ Regular users can publish — auto-promoted to Author on first publish *@
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Author" asp-action="Create">Publish a Book</a>
+                            </li>
+                        }
+
+                        @* ── Admin Manage dropdown ── *@
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link nav-highlight dropdown-toggle" href="#" data-bs-toggle="dropdown">Manage</a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Books">All Books</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Users">Users</a></li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center justify-content-between gap-2"
+                                           asp-controller="Admin" asp-action="PendingBooks">
+                                            Pending Books
+                                            <span id="navPendingBooksBadge"
+                                                  style="display:none;background:#f26522;color:#fff;font-size:.58rem;
+                                                                         font-weight:900;padding:.1rem .42rem;border-radius:99px;
+                                                                         min-width:16px;text-align:center;line-height:1.6;
+                                                                         font-family:'Nunito',sans-serif;">0</span>
+                                        </a>
+                                    </li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Subscriptions">Subscriptions</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="AuditLogs">Audit Logs</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Archive">Archive</a></li>
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- ── Notification Bell ── -->
+                        <li class="nav-item dropdown">
+                            <a class="re-notif-btn" href="#" id="notifBell" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false"
+                               style="text-decoration:none;position:relative;display:flex;align-items:center;">
+                                <span id="bellIcon" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;transition:opacity .2s;">
+                                    <svg id="bellSvg" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" style="display:block;transition:fill .2s;">
+                                        <path fill="#f26522" d="M12 2a1 1 0 0 1 1 1v.27A7 7 0 0 1 19 10v4.586l1.707 1.707A1 1 0 0 1 20 18H4a1 1 0 0 1-.707-1.707L5 14.586V10a7 7 0 0 1 6-6.93V3a1 1 0 0 1 1-1z" />
+                                        <path fill="#f26522" d="M12 22a3 3 0 0 0 2.83-2H9.17A3 3 0 0 0 12 22z" />
+                                    </svg>
+                                </span>
+                                <span id="notifBadge"
+                                      style="display:none;position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;
+                                                     padding:0 4px;background:#f26522;color:#fff;font-size:.58rem;font-weight:900;
+                                                     line-height:16px;border-radius:99px;text-align:center;
+                                                     border:2px solid #0f1923;pointer-events:none;z-index:1;">0</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end p-0 notif-dropdown" id="notifPanel">
+                                <div class="notif-header">
+                                    <span>Notifications</span>
+                                    <button class="btn btn-link btn-sm p-0 text-muted small fw-bold"
+                                            onclick="markAllRead(event)" style="text-decoration:none;">
+                                        Mark all read
+                                    </button>
+                                </div>
+                                <div id="notifItems">
+                                    <div class="text-center py-4 small" style="color:var(--re-muted);">No notifications yet</div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- ── Dashboard ── -->
+                        <li class="nav-item">
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a class="nav-link nav-highlight fw-bold" asp-controller="Admin" asp-action="Index">Dashboard</a>
+                            }
+                            else if (User.IsInRole("Author"))
+                            {
+                                <a class="nav-link" asp-controller="Dashboard" asp-action="AuthorDashboard">Dashboard</a>
+                            }
+                            else
+                            {
+                                <a class="nav-link" asp-controller="Dashboard" asp-action="UserDashboard">Dashboard</a>
+                            }
+                        </li>
+
+                        <!-- ── User pill ── -->
+                        <li class="nav-item dropdown">
+                            <a class="user-pill dropdown-toggle" href="#" data-bs-toggle="dropdown" style="text-decoration:none;">
+                                <div class="user-avatar" style="overflow:hidden;padding:0;">
+                                    @{
+                                        var profilePhoto = User.FindFirst("ProfilePhoto")?.Value;
+                                    }
+                                    @if (!string.IsNullOrEmpty(profilePhoto))
+                                    {
+                                        <img src="@profilePhoto" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" alt="avatar" />
+                                    }
+                                    else
+                                    {
+                                        @(User.Identity!.Name?.Length > 0 ? User.Identity.Name[0].ToString().ToUpper() : "?")
+                                    }
+                                </div>
+                                <span class="user-name d-none d-lg-block">@User.Identity.Name</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="Profile">My Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" asp-controller="Auth" asp-action="Logout" class="mb-0">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item text-danger fw-bold">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light btn-sm fw-bold" asp-controller="Auth" asp-action="Login">Log In</a>
+                        </li>
+                        <li class="nav-item ms-1">
+                            <a class="btn btn-sm fw-bold"
+                               style="background:var(--re-orange);color:#fff;border:none;"
+                               asp-controller="Auth" asp-action="Register">Get Started</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ════════════════════ PAGE BODY ════════════════════ -->
+    <div class="re-main">
+        @RenderBody()
+    </div>
+
+    <!-- Scroll-to-top -->
+    <button id="scrollTopBtn"
+            style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;
+                   width:42px;height:42px;border-radius:14px;
+                   background:linear-gradient(135deg,#f26522,#d9541a);color:#fff;
+                   border:none;cursor:pointer;align-items:center;justify-content:center;
+                   box-shadow:0 6px 20px rgba(242,101,34,.4);
+                   z-index:999;transition:all .2s ease;"
+            title="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+
+    <!-- ════════════════════ SCRIPTS ════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+        <script>
+            let notifications = [];
+            const badge    = document.getElementById('notifBadge');
+            const bellIcon = document.getElementById('bellIcon');
+            const itemsEl  = document.getElementById('notifItems');
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/notifications')
+                .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                .configureLogging(signalR.LogLevel.Warning)
+                .build();
+
+            connection.on('ReceiveNotification', (notif) => {
+                notifications.unshift(notif);
+                updateBadge(notif.unreadCount);
+                bellIcon.classList.remove('bell-shake');
+                void bellIcon.offsetWidth;
+                bellIcon.classList.add('bell-shake');
+                if (document.hidden && Notification.permission === 'granted') {
+                    new Notification('ReadEase', { body: notif.message, icon: '/favicon.ico' });
+                }
+                renderNotifications();
+            });
+
+            connection.on('UpdateUnreadCount', (count) => {
+                updateBadge(count);
+                notifications.forEach(n => n.isRead = true);
+                renderNotifications();
+            });
+
+            async function startConnection() {
+                try { await connection.start(); await loadInitialNotifications(); }
+                catch (err) { setTimeout(startConnection, 5000); }
+            }
+            connection.onreconnected(() => loadInitialNotifications());
+            startConnection();
+
+            async function loadInitialNotifications() {
+                try {
+                    const res = await fetch('/Notification/GetDropdown');
+                    notifications = await res.json();
+                    updateBadge(notifications.filter(n => !n.isRead).length);
+                    renderNotifications();
+                    if (Notification.permission === 'default') Notification.requestPermission();
+                } catch (e) {}
+            }
+
+            function renderNotifications() {
+                if (!notifications.length) {
+                    itemsEl.innerHTML = '<div class="text-center py-4 small" style="color:var(--re-muted)">No notifications yet</div>';
+                    return;
+                }
+                itemsEl.innerHTML = notifications.map(n => `
+                    <div class="notif-item ${n.isRead ? '' : 'unread'}"
+                         onclick="handleNotifClick('${n.id}','${n.link || ''}')">
+                        <div class="notif-msg">${escHtml(n.message)}</div>
+                        <div class="notif-time">${formatTime(n.createdAt)}</div>
+                    </div>`).join('');
+            }
+
+            async function handleNotifClick(id, link) {
+                try {
+                    const res  = await fetch(`/Notification/MarkRead/${id}`, { method: 'POST' });
+                    const data = await res.json();
+                    updateBadge(data.unreadCount);
+                    const idx = notifications.findIndex(n => n.id === id);
+                    if (idx !== -1) notifications[idx].isRead = true;
+                    renderNotifications();
+                } catch(e) {}
+                if (link && link !== 'null' && link !== '') window.location.href = link;
+            }
+
+            async function markAllRead(e) {
+                e.stopPropagation();
+                try {
+                    await fetch('/Notification/MarkAllRead', { method: 'POST' });
+                    notifications.forEach(n => n.isRead = true);
+                    updateBadge(0);
+                    renderNotifications();
+                } catch(e) {}
+            }
+
+            document.getElementById('notifBell').addEventListener('shown.bs.dropdown', loadInitialNotifications);
+
+            function updateBadge(count) {
+                badge.textContent   = count > 99 ? '99+' : count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+            function formatTime(iso) {
+                if (!iso) return '';
+                const diff = Math.floor((new Date() - new Date(iso)) / 1000);
+                if (diff < 60)    return 'just now';
+                if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
+                if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+                return new Date(iso).toLocaleDateString();
+            }
+            function escHtml(str) {
+                return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+        </script>
+    }
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script>
+            (function () {
+                const input    = document.getElementById('reSearchInput');
+                const dropdown = document.getElementById('reSearchDropdown');
+                const clearBtn = document.getElementById('reSearchClear');
+                const wrap     = document.getElementById('searchWrap');
+
+                if (!input) return;
+
+                let debounceTimer = null;
+                let currentQuery  = '';
+                const cache       = {};
+
+                function escH(s) {
+                    return String(s ?? '')
+                        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                }
+
+                function highlight(text, query) {
+                    if (!query) return escH(text);
+                    const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    return escH(text).replace(new RegExp(`(${esc})`, 'gi'), '<span class="re-hl">$1</span>');
+                }
+
+                function showDropdown(html) { dropdown.innerHTML = html; dropdown.classList.add('open'); }
+                function hideDropdown()     { dropdown.classList.remove('open'); dropdown.innerHTML = ''; }
+
+                async function doSearch(q) {
+                    if (q.length < 2) { hideDropdown(); return; }
+                    currentQuery = q;
+                    if (cache[q]) { renderResults(cache[q], q); return; }
+                    showDropdown(`<div class="re-search-spinner"><div class="re-spin"></div> Searching…</div>`);
+                    try {
+                        const res = await fetch(`/Library/SearchJson?q=${encodeURIComponent(q)}`);
+                        if (!res.ok) throw new Error('bad response');
+                        const data = await res.json();
+                        if (currentQuery !== q) return;
+                        cache[q] = data;
+                        renderResults(data, q);
+                    } catch (_) {
+                        if (currentQuery === q)
+                            showDropdown(`<div class="re-search-empty">Something went wrong. Please try again.</div>`);
+                    }
+                }
+
+                function renderResults(data, q) {
+                    const books   = (data.books   || []).slice(0, 5);
+                    const authors = (data.authors || []).slice(0, 3);
+
+                    if (!books.length && !authors.length) {
+                        showDropdown(`<div class="re-search-empty">No results for "<strong style="color:#f26522">${escH(q)}</strong>"</div>`);
+                        return;
+                    }
+
+                    let html = '';
+
+                    if (authors.length) {
+                        html += `<div class="re-search-section-head">Authors</div>`;
+                        authors.forEach(a => {
+                            const initial   = escH((a.name || '?')[0].toUpperCase());
+                            const bookCount = (a.books || []).length;
+                            const authorUrl = `/Library/Index?search=${encodeURIComponent(a.name)}`;
+
+                            html += `<div class="re-search-author-block">
+                                <a class="re-search-item re-search-author-row" href="${escH(authorUrl)}">
+                                    <div class="re-search-avatar-ph">${initial}</div>
+                                    <div class="re-search-info">
+                                        <div class="re-search-title">${highlight(a.name, q)}</div>
+                                        <div class="re-search-sub">${bookCount} book${bookCount !== 1 ? 's' : ''}</div>
+                                    </div>
+                                    <span class="re-search-tag re-search-tag-author">Author</span>
+                                </a>`;
+
+                            if (a.books && a.books.length) {
+                                html += `<div class="re-search-author-books">`;
+                                a.books.forEach(b => {
+                                    const cover = b.coverImage
+                                        ? `<img src="${escH(b.coverImage)}" class="re-search-thumb re-search-thumb-sm" alt="" loading="lazy" />`
+                                        : `<div class="re-search-thumb-ph re-search-thumb-sm">📖</div>`;
+                                    html += `<a class="re-search-item re-search-item-sub" href="${escH(b.url || '#')}">
+                                        ${cover}
+                                        <div class="re-search-info">
+                                            <div class="re-search-title">${escH(b.title)}</div>
+                                            <div class="re-search-sub">${escH(b.category || '')}</div>
+                                        </div>
+                                        <span class="re-search-tag re-search-tag-book">Book</span>
+                                    </a>`;
+                                });
+                                html += `</div>`;
+                            }
+                            html += `</div>`;
+                        });
+                    }
+
+                    if (books.length) {
+                        html += `<div class="re-search-section-head">Books</div>`;
+                        html += books.map(b => {
+                            const cover = b.coverImage
+                                ? `<img src="${escH(b.coverImage)}" class="re-search-thumb" alt="" loading="lazy" />`
+                                : `<div class="re-search-thumb-ph">📖</div>`;
+                            return `<a class="re-search-item" href="${escH(b.url)}">
+                                ${cover}
+                                <div class="re-search-info">
+                                    <div class="re-search-title">${highlight(b.title, q)}</div>
+                                    <div class="re-search-sub">by ${escH(b.author)}${b.category ? ' · ' + escH(b.category) : ''}</div>
+                                </div>
+                                <span class="re-search-tag re-search-tag-book">Book</span>
+                            </a>`;
+                        }).join('');
+                    }
+
+                    html += `<div class="re-search-footer">
+                        <a href="/Library/Index?search=${encodeURIComponent(q)}">See all results for "${escH(q)}" →</a>
+                    </div>`;
+
+                    showDropdown(html);
+                }
+
+                input.addEventListener('input', () => {
+                    const q = input.value.trim();
+                    clearBtn.classList.toggle('visible', q.length > 0);
+                    clearTimeout(debounceTimer);
+                    if (!q) { hideDropdown(); return; }
+                    debounceTimer = setTimeout(() => doSearch(q), 300);
+                });
+
+                input.addEventListener('focus', () => {
+                    wrap.classList.add('focused');
+                    const q = input.value.trim();
+                    if (q.length >= 2) {
+                        if (cache[q]) renderResults(cache[q], q);
+                        else doSearch(q);
+                    }
+                });
+
+                clearBtn.addEventListener('click', () => {
+                    input.value = '';
+                    clearBtn.classList.remove('visible');
+                    hideDropdown();
+                    input.focus();
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!wrap.contains(e.target)) {
+                        hideDropdown();
+                        wrap.classList.remove('focused');
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const q = input.value.trim();
+                        if (q) window.location.href = `/Library/Index?search=${encodeURIComponent(q)}`;
+                    }
+                    if (e.key === 'Escape') { hideDropdown(); input.blur(); }
+                });
+            })();
+
+            (function () {
+                let loaded = false;
+
+                function escH(s) {
+                    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                }
+
+                function renderStars(avg) {
+                    const full = Math.floor(avg), half = avg - full >= 0.5, empty = 5 - full - (half ? 1 : 0);
+                    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+                }
+
+                function buildCard(p) {
+                    const cover = p.coverImage
+                        ? `<img src="${escH(p.coverImage)}" class="mega-pick-cover" alt="${escH(p.title)}" loading="lazy" />`
+                        : `<div class="mega-pick-cover-ph">📖</div>`;
+                    return `<a class="mega-pick-card" href="${escH(p.url)}">
+                        ${cover}
+                        <div class="mega-pick-info">
+                            <div class="mega-pick-title">${escH(p.title)}</div>
+                            <div class="mega-pick-author">${escH(p.author)}</div>
+                            <div class="mega-pick-stars">
+                                <span>${renderStars(p.avgRating)}</span>
+                                <span class="mega-pick-avg">${p.avgRating.toFixed(1)}</span>
+                                <span class="mega-pick-votes">(${p.ratingCount})</span>
+                            </div>
+                        </div>
+                    </a>`;
+                }
+
+                async function loadTopPicks() {
+                    if (loaded) return;
+                    const container = document.getElementById('megaTopPicks');
+                    if (!container) return;
+                    try {
+                        const res = await fetch('/Library/GetTopPicks');
+                        if (!res.ok) throw new Error();
+                        const picks = await res.json();
+                        loaded = true;
+                        container.innerHTML = picks.length
+                            ? picks.map(buildCard).join('')
+                            : `<div class="mega-picks-empty">No ratings yet. Be the first to rate a book!</div>`;
+                    } catch (_) {
+                        container.innerHTML = `<div class="mega-picks-empty">Could not load top picks.</div>`;
+                    }
+                }
+
+                const btn = document.getElementById('browseMegaBtn');
+                if (btn) btn.addEventListener('show.bs.dropdown', loadTopPicks);
+                setTimeout(loadTopPicks, 2000);
+            })();
+        </script>
+    }
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script>
+            (function () {
+                // ── Reading counts (Ongoing / Completed badges) ───────────────
+                async function loadReadingCounts() {
+                    try {
+                        const res = await fetch('/Library/GetReadingCounts');
+                        if (!res.ok) return;
+                        const { ongoing, completed } = await res.json();
+                        const ob = document.getElementById('navOngoingBadge');
+                        const cb = document.getElementById('navCompletedBadge');
+                        if (ob) { ob.textContent = ongoing;   ob.style.display = ongoing   > 0 ? 'inline-block' : 'none'; }
+                        if (cb) { cb.textContent = completed; cb.style.display = completed > 0 ? 'inline-block' : 'none'; }
+                    } catch (_) {}
+                }
+
+                // ── Pending premium books badge (Admin only) ──────────────────
+                async function loadPendingBooksBadge() {
+                    @if (User.IsInRole("Admin"))
+                    {
+                                <text>
+                                try {
+                                    const res = await fetch('/Admin/GetPendingBooksCount');
+                                    if (!res.ok) return;
+                                    const { count } = await res.json();
+                                    const el = document.getElementById('navPendingBooksBadge');
+                                    if (el) {
+                                        el.textContent    = count;
+                                        el.style.display  = count > 0 ? 'inline-block' : 'none';
+                                    }
+                                } catch (_) {}
+                                </text>
+                    }
+                }
+
+                loadReadingCounts();
+                loadPendingBooksBadge();
+            })();
+        </script>
+    }
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

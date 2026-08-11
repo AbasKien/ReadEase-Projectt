@@ -1,0 +1,2075 @@
+﻿@model ReadEase.ViewModels.Library.BookReaderViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Nunito:wght@400;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --re-orange: #FF6122;
+        --re-orange-soft: #FF8C5A;
+        --re-orange-glow: rgba(255,97,34,.18);
+        --re-dark: #1A1A2E;
+        --re-radius: 16px;
+        --re-shadow: 0 2px 20px rgba(0,0,0,.09);
+        --re-shadow-lg: 0 10px 50px rgba(0,0,0,.15);
+    }
+
+    /* ══ READING PROGRESS BAR ══ */
+    #readingProgressBar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--re-orange), var(--re-orange-soft));
+        z-index: 9999;
+        transition: width .1s linear;
+        border-radius: 0 2px 2px 0;
+        box-shadow: 0 0 8px rgba(255,97,34,.5);
+    }
+
+    /* ══ BOOK HERO BANNER ══ */
+    .book-hero {
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        margin-bottom: 1.25rem;
+        min-height: 180px;
+    }
+
+    .book-hero-bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        filter: blur(22px) brightness(.55) saturate(1.4);
+        transform: scale(1.08);
+        z-index: 0;
+    }
+
+    .book-hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.35) 60%, rgba(0,0,0,.15) 100%);
+        z-index: 1;
+    }
+
+    .book-hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+        padding: 1.75rem 2rem;
+    }
+
+    .book-hero-cover {
+        width: 110px;
+        min-width: 110px;
+        height: 155px;
+        border-radius: 10px;
+        object-fit: cover;
+        box-shadow: 0 8px 32px rgba(0,0,0,.55);
+        border: 2px solid rgba(255,255,255,.15);
+        flex-shrink: 0;
+    }
+
+    .book-hero-cover-ph {
+        width: 110px;
+        min-width: 110px;
+        height: 155px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 32px rgba(0,0,0,.55);
+    }
+
+    .book-hero-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .book-hero-eyebrow {
+        font-family: 'Nunito', sans-serif;
+        font-size: .65rem;
+        font-weight: 900;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,.55);
+        margin-bottom: .45rem;
+    }
+
+    .book-hero-title {
+        font-family: 'Lora', 'PT Serif', Georgia, serif;
+        font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.2;
+        margin: 0 0 .3rem;
+        text-shadow: 0 2px 8px rgba(0,0,0,.4);
+    }
+
+    .book-hero-category {
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.55);
+        text-transform: uppercase;
+        letter-spacing: .09em;
+        margin-bottom: .65rem;
+    }
+
+    .book-hero-desc {
+        font-family: 'Nunito', sans-serif;
+        font-size: .83rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.75);
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: .75rem;
+    }
+
+    .book-hero-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
+        align-items: center;
+    }
+
+    .book-hero-tag {
+        font-family: 'Nunito', sans-serif;
+        font-size: .68rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.7);
+        text-decoration: none;
+    }
+
+        .book-hero-tag:hover {
+            color: #ff8c5a;
+        }
+
+    /* ══ TOPBAR ══ */
+    .wp-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: .75rem 0 1.1rem;
+        flex-wrap: wrap;
+    }
+
+    .wp-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: #fff;
+        border: 1.5px solid #e2ddd8;
+        color: var(--re-dark);
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .8rem;
+        padding: .45rem 1rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all .2s;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+
+        .wp-back-btn:hover {
+            border-color: var(--re-orange);
+            color: var(--re-orange);
+            transform: translateX(-3px);
+            box-shadow: 0 4px 16px rgba(255,97,34,.15);
+        }
+
+    .wp-fav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .8rem;
+        padding: .45rem 1.1rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all .2s;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+
+        .wp-fav-btn:hover {
+            transform: scale(1.05);
+        }
+
+    /* ══ READER SHELL ══ */
+    #readerWrap {
+        border-radius: var(--re-radius);
+        overflow: hidden;
+        overflow-x: hidden;
+        box-shadow: var(--re-shadow-lg);
+        transition: background .3s, color .3s;
+        border: 1px solid rgba(0,0,0,.06);
+        max-width: 100%;
+    }
+
+        #readerWrap.theme-light {
+            background: #FDFCFA;
+            color: #2b2720;
+        }
+
+        #readerWrap.theme-dark {
+            background: #111118;
+            color: #d9d4cb;
+        }
+
+        #readerWrap.theme-sepia {
+            background: #F8F1E4;
+            color: #3a2e1e;
+        }
+
+    /* ══ TOOLBAR ══ */
+    #readerToolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+        padding: .55rem 1.1rem;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(0,0,0,.07);
+        transition: background .3s, border-color .3s;
+        flex-wrap: nowrap;
+    }
+
+    .theme-light #readerToolbar {
+        background: rgba(253,252,250,.96);
+    }
+
+    .theme-dark #readerToolbar {
+        background: rgba(17,17,24,.96);
+        border-color: rgba(255,255,255,.06);
+    }
+
+    .theme-sepia #readerToolbar {
+        background: rgba(248,241,228,.96);
+    }
+
+    .wp-title-chip {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+        .wp-title-chip .chip-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--re-orange), var(--re-orange-soft));
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(255,97,34,.35);
+        }
+
+        .wp-title-chip span {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: .79rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+    .tb-controls {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        flex-shrink: 0;
+    }
+
+    .tb-group {
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+    }
+
+    /* Pills */
+    .tb-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        height: 30px;
+        padding: 0 .7rem;
+        border-radius: 50px;
+        border: 1.5px solid rgba(0,0,0,.09);
+        background: transparent;
+        cursor: pointer;
+        font-size: .74rem;
+        font-weight: 800;
+        font-family: 'Nunito', sans-serif;
+        transition: all .16s;
+        white-space: nowrap;
+    }
+
+    .theme-light .tb-pill {
+        color: #2b2720;
+    }
+
+    .theme-dark .tb-pill {
+        color: #d9d4cb;
+        border-color: rgba(255,255,255,.11);
+    }
+
+    .theme-sepia .tb-pill {
+        color: #3a2e1e;
+    }
+
+    .tb-pill:hover {
+        border-color: var(--re-orange);
+        color: var(--re-orange);
+        background: var(--re-orange-glow);
+    }
+
+    .tb-pill-orange {
+        background: var(--re-orange) !important;
+        color: #fff !important;
+        border-color: var(--re-orange) !important;
+        box-shadow: 0 2px 10px rgba(255,97,34,.3);
+    }
+
+        .tb-pill-orange:hover {
+            background: #e04d10 !important;
+            color: #fff !important;
+        }
+
+    .tb-pill-outline {
+        border-color: var(--re-orange) !important;
+        color: var(--re-orange) !important;
+    }
+
+        .tb-pill-outline:hover {
+            background: var(--re-orange) !important;
+            color: #fff !important;
+        }
+
+    .tb-pill-locked {
+        border-style: dashed !important;
+        opacity: .5;
+        text-decoration: none;
+    }
+
+    .theme-light .tb-pill-locked {
+        color: #2b2720;
+    }
+
+    .theme-dark .tb-pill-locked {
+        color: #d9d4cb;
+    }
+
+    .tb-caret {
+        font-size: .55rem;
+        opacity: .7;
+    }
+
+    #fontSizeLabel {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .7rem;
+        min-width: 20px;
+        text-align: center;
+        opacity: .4;
+    }
+
+    .rd-sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(128,128,128,.13);
+        flex-shrink: 0;
+    }
+
+    /* Theme pills */
+    .theme-pill {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        transition: transform .16s, border-color .16s, box-shadow .16s;
+        flex-shrink: 0;
+    }
+
+        .theme-pill:hover {
+            transform: scale(1.22);
+        }
+
+        .theme-pill.active {
+            border-color: var(--re-orange);
+            box-shadow: 0 0 0 2.5px rgba(255,97,34,.22);
+            transform: scale(1.15);
+        }
+
+    /* ══ DROPDOWNS ══ */
+    .tb-dropdown-wrap {
+        position: relative;
+    }
+
+    .tb-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        min-width: 220px;
+        border-radius: 14px;
+        padding: .5rem;
+        z-index: 200;
+        box-shadow: 0 12px 40px rgba(0,0,0,.18);
+        border: 1px solid rgba(0,0,0,.07);
+    }
+
+        .tb-dropdown-menu.open {
+            display: block;
+            animation: dropIn .18s cubic-bezier(.34,1.56,.64,1);
+        }
+
+    .tb-dropdown-menu-right {
+        left: auto;
+        right: 0;
+    }
+
+    .theme-light .tb-dropdown-menu {
+        background: #fff;
+        border-color: rgba(0,0,0,.07);
+    }
+
+    .theme-dark .tb-dropdown-menu {
+        background: #1a1a26;
+        border-color: rgba(255,255,255,.08);
+    }
+
+    .theme-sepia .tb-dropdown-menu {
+        background: #faf4e8;
+        border-color: rgba(0,0,0,.08);
+    }
+
+    @@keyframes dropIn {
+        from {
+            opacity: 0;
+            transform: translateY(-6px) scale(.97);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .tb-drop-item {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        padding: .55rem .75rem;
+        border-radius: 10px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: background .14s, color .14s;
+    }
+
+    .theme-light .tb-drop-item {
+        color: #2b2720;
+    }
+
+    .theme-dark .tb-drop-item {
+        color: #d9d4cb;
+    }
+
+    .theme-sepia .tb-drop-item {
+        color: #3a2e1e;
+    }
+
+    .tb-drop-item:hover {
+        background: var(--re-orange-glow);
+        color: var(--re-orange);
+    }
+
+    .tb-drop-sep {
+        height: 1px;
+        margin: .35rem .5rem;
+        background: rgba(128,128,128,.1);
+    }
+
+    /* Find row inside dropdown */
+    .tb-drop-find {
+        cursor: default;
+        gap: .35rem;
+        flex-wrap: nowrap;
+        padding: .45rem .6rem;
+    }
+
+        .tb-drop-find:hover {
+            background: transparent !important;
+            color: inherit !important;
+        }
+
+    #filterInput {
+        flex: 1;
+        height: 26px;
+        border: 1.5px solid rgba(128,128,128,.18);
+        border-radius: 50px;
+        padding: 0 .6rem;
+        font-size: .72rem;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 700;
+        background: transparent;
+        min-width: 0;
+        outline: none;
+        transition: border-color .18s;
+    }
+
+    .theme-dark #filterInput {
+        color: #d9d4cb;
+    }
+
+    #filterInput:focus {
+        border-color: var(--re-orange);
+    }
+
+    .tb-find-go {
+        height: 26px;
+        padding: 0 .55rem;
+        border-radius: 50px;
+        border: 1.5px solid var(--re-orange);
+        background: transparent;
+        color: var(--re-orange);
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .7rem;
+        cursor: pointer;
+        transition: all .15s;
+        white-space: nowrap;
+    }
+
+        .tb-find-go:hover {
+            background: var(--re-orange);
+            color: #fff;
+        }
+
+    .tb-find-clear {
+        height: 26px;
+        padding: 0 .5rem;
+        border-radius: 50px;
+        border: 1.5px solid #ef4444;
+        background: transparent;
+        color: #ef4444;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .7rem;
+        cursor: pointer;
+        transition: all .15s;
+        display: none;
+    }
+
+        .tb-find-clear:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+    /* AI Read dropdown */
+    .tb-drop-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+        padding: .45rem .75rem;
+    }
+
+    .tb-drop-label {
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 800;
+        opacity: .5;
+        white-space: nowrap;
+    }
+
+    .tb-drop-select {
+        height: 28px;
+        padding: 0 .5rem;
+        border-radius: 50px;
+        border: 1.5px solid rgba(0,0,0,.09);
+        background: transparent;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .72rem;
+        cursor: pointer;
+    }
+
+    .theme-dark .tb-drop-select {
+        color: #d9d4cb;
+        border-color: rgba(255,255,255,.11);
+    }
+
+    .tb-drop-tts-controls {
+        justify-content: center;
+        gap: .5rem;
+        padding: .5rem .75rem;
+    }
+
+    .tb-tts-play {
+        flex: 1;
+        height: 32px;
+        border-radius: 50px;
+        border: none;
+        background: linear-gradient(135deg, var(--re-orange), var(--re-orange-soft));
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .78rem;
+        cursor: pointer;
+        box-shadow: 0 3px 12px rgba(255,97,34,.35);
+        transition: all .18s;
+    }
+
+        .tb-tts-play:hover {
+            background: linear-gradient(135deg, #e04d10, #f26522);
+            box-shadow: 0 5px 18px rgba(255,97,34,.45);
+        }
+
+    .tb-tts-stop {
+        height: 32px;
+        padding: 0 .9rem;
+        border-radius: 50px;
+        border: 1.5px solid #ef4444;
+        background: transparent;
+        color: #ef4444;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .74rem;
+        cursor: pointer;
+        transition: all .18s;
+        display: none;
+    }
+
+        .tb-tts-stop:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+    #nowReading {
+        display: none;
+        align-items: center;
+        gap: .3rem;
+        padding: .35rem .75rem .55rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .68rem;
+        font-weight: 800;
+        color: var(--re-orange);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+        #nowReading.visible {
+            display: flex;
+        }
+
+    @@keyframes pulse-ring {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255,97,34,.55);
+        }
+
+        70% {
+            box-shadow: 0 0 0 9px rgba(255,97,34,0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(255,97,34,0);
+        }
+    }
+
+    .tb-tts-play.playing {
+        background: linear-gradient(135deg, #0f3460, #1a4a8a);
+        animation: pulse-ring 1.4s ease infinite;
+    }
+
+    /* ══ TTS BAR ══ */
+    #ttsBar {
+        height: 3px;
+        background: rgba(128,128,128,.07);
+    }
+
+    #ttsProgress {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--re-orange), var(--re-orange-soft));
+        transition: width .3s;
+        border-radius: 0 2px 2px 0;
+    }
+
+    /* ══ CHAPTER DROPDOWN NAV ══ */
+    .ch-dropdown-wrap {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .8rem 1.25rem;
+        border-bottom: 1px solid rgba(0,0,0,.06);
+        flex-wrap: wrap;
+    }
+
+    .theme-dark .ch-dropdown-wrap {
+        border-color: rgba(255,255,255,.07);
+    }
+
+    .theme-sepia .ch-dropdown-wrap {
+        border-color: rgba(0,0,0,.08);
+    }
+
+    .ch-dropdown-label {
+        font-family: 'Nunito', sans-serif;
+        font-size: .65rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .09em;
+        opacity: .4;
+        flex-shrink: 0;
+    }
+
+    .ch-select-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+        max-width: 320px;
+    }
+
+    .ch-select {
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .82rem;
+        padding: .42rem 2.2rem .42rem .9rem;
+        border-radius: 50px;
+        border: 1.5px solid rgba(255,97,34,.3);
+        background: transparent;
+        cursor: pointer;
+        outline: none;
+        transition: border-color .18s, box-shadow .18s;
+    }
+
+    .theme-light .ch-select {
+        color: #2b2720;
+        background: rgba(255,97,34,.04);
+    }
+
+    .theme-dark .ch-select {
+        color: #d9d4cb;
+        background: rgba(255,97,34,.08);
+        border-color: rgba(255,97,34,.25);
+    }
+
+    .theme-sepia .ch-select {
+        color: #3a2e1e;
+        background: rgba(255,97,34,.05);
+    }
+
+    .ch-select:focus {
+        border-color: var(--re-orange);
+        box-shadow: 0 0 0 3px rgba(255,97,34,.12);
+    }
+
+    .ch-select-arrow {
+        position: absolute;
+        right: .75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: var(--re-orange);
+        font-size: .65rem;
+        font-weight: 900;
+    }
+
+    .ch-nav-arrows {
+        display: flex;
+        gap: .45rem;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .ch-arrow-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .75rem;
+        font-weight: 900;
+        padding: .38rem .9rem;
+        border-radius: 50px;
+        text-decoration: none;
+        border: 1.5px solid rgba(255,97,34,.35);
+        color: var(--re-orange);
+        transition: all .15s;
+        white-space: nowrap;
+    }
+
+        .ch-arrow-btn:hover {
+            background: var(--re-orange);
+            color: #fff;
+        }
+
+    /* ══ BOOKMARK PICK BANNER ══ */
+    #bmPickBanner {
+        display: none;
+        align-items: center;
+        gap: .6rem;
+        padding: .55rem 1.1rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .76rem;
+        font-weight: 800;
+        border-bottom: 2px dashed var(--re-orange);
+        animation: blink-bm 1s ease infinite alternate;
+    }
+
+        #bmPickBanner.visible {
+            display: flex;
+        }
+
+    .theme-light #bmPickBanner {
+        background: rgba(255,97,34,.05);
+        color: #b84000;
+    }
+
+    .theme-dark #bmPickBanner {
+        background: rgba(255,97,34,.12);
+        color: #ffb085;
+    }
+
+    .theme-sepia #bmPickBanner {
+        background: rgba(180,90,20,.07);
+        color: #7a3800;
+    }
+
+    @@keyframes blink-bm {
+        from {
+            border-color: var(--re-orange);
+        }
+
+        to {
+            border-color: rgba(255,97,34,.1);
+        }
+    }
+
+    /* ══ FILTER BAR ══ */
+    #filterBar {
+        display: none;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+        padding: .5rem 1.1rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .74rem;
+        font-weight: 700;
+        border-bottom: 1px solid rgba(250,204,21,.25);
+    }
+
+        #filterBar.visible {
+            display: flex;
+        }
+
+    .theme-light #filterBar {
+        background: rgba(255,252,220,.88);
+        color: #854d0e;
+    }
+
+    .theme-dark #filterBar {
+        background: rgba(41,37,10,.65);
+        color: #fef08a;
+    }
+
+    .theme-sepia #filterBar {
+        background: rgba(254,243,199,.88);
+        color: #78350f;
+    }
+
+    /* ══ STORY HEADER ══ */
+    .wp-story-header {
+        position: relative;
+        padding: 3rem 2.5rem 2.2rem;
+        text-align: center;
+    }
+
+        .wp-story-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(160deg, rgba(255,97,34,.07) 0%, transparent 55%);
+            pointer-events: none;
+        }
+
+    .wp-story-eyebrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .68rem;
+        font-weight: 900;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--re-orange);
+        margin-bottom: .9rem;
+        position: relative;
+        z-index: 1;
+        flex-wrap: nowrap;
+    }
+
+        .wp-story-eyebrow::before {
+            content: '';
+            display: inline-block;
+            width: 22px;
+            height: 2px;
+            background: var(--re-orange);
+            border-radius: 2px;
+            opacity: .6;
+            flex-shrink: 0;
+        }
+
+    .wp-story-title {
+        font-family: 'Lora', 'PT Serif', Georgia, serif;
+        font-size: clamp(1.6rem, 3vw, 2.3rem);
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -.02em;
+        margin: 0 0 .5rem;
+        position: relative;
+        z-index: 1;
+        display: block;
+        width: 100%;
+    }
+
+    .theme-light .wp-story-title {
+        color: #1a140d;
+    }
+
+    .theme-dark .wp-story-title {
+        color: #f0ece2;
+    }
+
+    .theme-sepia .wp-story-title {
+        color: #261a0a;
+    }
+
+    .wp-story-divider {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-top: 1.5rem;
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        clear: both;
+    }
+
+        .wp-story-divider::before, .wp-story-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+        }
+
+    .theme-light .wp-story-divider::before, .theme-light .wp-story-divider::after {
+        background: rgba(0,0,0,.10);
+    }
+
+    .theme-dark .wp-story-divider::before, .theme-dark .wp-story-divider::after {
+        background: rgba(255,255,255,.08);
+    }
+
+    .theme-sepia .wp-story-divider::before, .theme-sepia .wp-story-divider::after {
+        background: rgba(0,0,0,.12);
+    }
+
+    .wp-story-divider-ornament {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        opacity: .45;
+        flex-shrink: 0;
+    }
+
+        .wp-story-divider-ornament span {
+            font-size: .5rem;
+            color: var(--re-orange);
+            display: inline;
+        }
+
+    .wp-chapter-progress {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .3rem;
+        margin-top: .5rem;
+        position: relative;
+        z-index: 1;
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+
+    .wp-progress-dot {
+        width: 6px;
+        height: 6px;
+        min-width: 6px;
+        min-height: 6px;
+        border-radius: 50%;
+        background: var(--re-orange);
+        opacity: .22;
+        display: block;
+        flex-shrink: 0;
+    }
+
+        .wp-progress-dot.filled {
+            opacity: 1;
+        }
+
+    /* ══ BOOK CONTENT ══ */
+    #bookContent {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2.8rem 2.5rem 5.5rem;
+        font-family: 'PT Serif', 'Lora', Georgia, serif;
+        font-size: 17px;
+        line-height: 2.05;
+        transition: font-size .2s;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        overflow-x: hidden;
+    }
+
+    .tts-sent {
+        border-radius: 3px;
+        transition: background .18s, color .18s;
+        cursor: pointer;
+    }
+
+    .theme-light .tts-sent.tts-active {
+        background: rgba(255,97,34,.13);
+        color: #b84000;
+    }
+
+    .theme-dark .tts-sent.tts-active {
+        background: rgba(255,97,34,.24);
+        color: #ffb085;
+    }
+
+    .theme-sepia .tts-sent.tts-active {
+        background: rgba(180,90,20,.16);
+        color: #7a3800;
+    }
+
+    .bookmark-marker {
+        display: inline-block;
+        background: var(--re-orange);
+        color: #fff;
+        font-size: .6rem;
+        font-weight: 900;
+        font-family: 'Nunito', sans-serif;
+        padding: .04rem .32rem;
+        border-radius: 4px;
+        margin: 0 3px;
+        vertical-align: middle;
+        cursor: default;
+        user-select: none;
+        animation: bm-pop .32s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    @@keyframes bm-pop {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        70% {
+            transform: scale(1.28);
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    #bookContent.bm-pick-mode {
+        cursor: crosshair;
+    }
+
+        #bookContent.bm-pick-mode .tts-sent {
+            transition: background .14s, outline .14s;
+        }
+
+            #bookContent.bm-pick-mode .tts-sent:hover {
+                background: rgba(255,97,34,.11);
+                outline: 2px dashed var(--re-orange);
+                border-radius: 4px;
+            }
+
+    .theme-dark #bookContent.bm-pick-mode .tts-sent:hover {
+        background: rgba(255,97,34,.2);
+    }
+
+    .theme-sepia #bookContent.bm-pick-mode .tts-sent:hover {
+        background: rgba(180,90,20,.12);
+    }
+
+    .word-filter-match {
+        background: rgba(250,204,21,.42);
+        border-radius: 3px;
+        padding: 0 1px;
+    }
+
+    .theme-dark .word-filter-match {
+        background: rgba(250,204,21,.26);
+        color: #fef08a;
+    }
+
+    /* ══ BOTTOM NAV ══ */
+    .ch-bottom-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1rem 2.5rem 2rem;
+        flex-wrap: wrap;
+    }
+
+    .ch-bottom-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 900;
+        font-size: .88rem;
+        padding: .7rem 1.75rem;
+        border-radius: 50px;
+        text-decoration: none;
+        border: 1.5px solid var(--re-orange);
+        color: var(--re-orange);
+        transition: all .2s;
+        white-space: nowrap;
+    }
+
+        .ch-bottom-btn:hover, .ch-bottom-btn.primary {
+            background: var(--re-orange);
+            color: #fff;
+            box-shadow: 0 4px 18px rgba(255,97,34,.4);
+        }
+
+            .ch-bottom-btn.primary:hover {
+                background: #e04d10;
+            }
+
+    .theme-dark .ch-bottom-btn {
+        border-color: var(--re-orange);
+        color: #ffb085;
+    }
+
+    .theme-sepia .ch-bottom-btn {
+        border-color: var(--re-orange);
+        color: #b84000;
+    }
+
+    /* ══ READING FOOTER ══ */
+    .wp-reading-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1.6rem 2.5rem;
+        border-top: 1px solid rgba(0,0,0,.06);
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        opacity: .35;
+    }
+
+    .theme-dark .wp-reading-footer {
+        border-color: rgba(255,255,255,.06);
+    }
+
+    /* ══ TOAST ══ */
+    #bmToast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(16px);
+        background: linear-gradient(135deg, #1A1A2E, #262640);
+        color: #fff;
+        padding: .65rem 1.5rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        box-shadow: 0 8px 28px rgba(0,0,0,.3);
+        opacity: 0;
+        transition: all .3s cubic-bezier(.34,1.56,.64,1);
+        z-index: 9999;
+        pointer-events: none;
+        white-space: nowrap;
+        border: 1px solid rgba(255,255,255,.07);
+    }
+
+        #bmToast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+    /* ══ FULLSCREEN ══ */
+    #readerWrap.fullscreen {
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+        overflow-y: auto;
+        border-radius: 0 !important;
+    }
+
+    /* ══ DANGER BTN ══ */
+    .rd-btn-danger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 26px;
+        padding: 0 .6rem;
+        border-radius: 50px;
+        border: 1.5px solid #ef4444;
+        background: transparent;
+        color: #ef4444;
+        font-family: 'Nunito', sans-serif;
+        font-size: .7rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+        .rd-btn-danger:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+    @@media (max-width: 640px) {
+        .wp-title-chip span {
+            display: none;
+        }
+
+        #readerToolbar {
+            padding: .45rem .75rem;
+        }
+
+        #bookContent {
+            padding: 2rem 1.3rem 4rem;
+            font-size: 15.5px;
+        }
+
+        .wp-story-header {
+            padding: 2rem 1.3rem 1.6rem;
+        }
+
+        .ch-bottom-nav {
+            padding: .75rem 1.25rem 1.5rem;
+            gap: .65rem;
+        }
+
+        .ch-bottom-btn {
+            font-size: .8rem;
+            padding: .6rem 1.25rem;
+        }
+
+        .ch-dropdown-wrap {
+            padding: .6rem .9rem;
+        }
+
+        .book-hero-content {
+            padding: 1.25rem;
+            gap: 1rem;
+        }
+
+        .book-hero-cover {
+            width: 80px;
+            min-width: 80px;
+            height: 112px;
+        }
+
+        .book-hero-cover-ph {
+            width: 80px;
+            min-width: 80px;
+            height: 112px;
+            font-size: 1.8rem;
+        }
+
+        .book-hero-desc {
+            -webkit-line-clamp: 2;
+        }
+    }
+
+    .tb-dropdown-menu-right {
+        left: auto;
+        right: 0;
+    }
+</style>
+
+<div id="readingProgressBar"></div>
+
+<div class="wp-topbar">
+    <a asp-controller="Library" asp-action="Detail" asp-route-id="@Model.Id" class="wp-back-btn">← Back to Detail</a>
+    <button id="favBtn" class="wp-fav-btn"
+            data-id="@Model.Id" data-fav="@Model.IsFavorite.ToString().ToLower()"
+            style="border:1.5px solid @(Model.IsFavorite ? "#fecaca" : "#e2ddd8");
+                   color:@(Model.IsFavorite ? "#ef4444" : "#1A1A2E");
+                   background:@(Model.IsFavorite ? "#fef2f2" : "#fff");">
+        @(Model.IsFavorite ? "❤️ Saved" : "🤍 Save")
+    </button>
+</div>
+
+<div class="book-hero">
+    <div class="book-hero-bg" style="background-image:url('@(string.IsNullOrEmpty(Model.CoverImage) ? "" : Model.CoverImage)');"></div>
+    <div class="book-hero-overlay"></div>
+    <div class="book-hero-content">
+        @if (!string.IsNullOrEmpty(Model.CoverImage))
+        {
+            <img src="@Model.CoverImage" alt="@Model.Title" class="book-hero-cover" />
+        }
+        else
+        {
+            <div class="book-hero-cover-ph">📚</div>
+        }
+        <div class="book-hero-info">
+            <div class="book-hero-eyebrow">You are reading</div>
+            <h2 class="book-hero-title">@Model.Title</h2>
+            <div class="book-hero-category">@Model.Category</div>
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <div class="book-hero-desc">@Model.Description</div>
+            }
+            <div class="book-hero-tags">
+                <span class="book-hero-tag">by @Model.Author</span>
+                @if (Model.IsFree)
+                {
+                    <span style="background:rgba(34,197,94,.2);color:#86efac;font-family:'Nunito',sans-serif;font-size:.62rem;font-weight:900;padding:.12rem .5rem;border-radius:99px;">🆓 Free</span>
+                }
+                else
+                {
+                    <span style="background:rgba(251,191,36,.2);color:#fde68a;font-family:'Nunito',sans-serif;font-size:.62rem;font-weight:900;padding:.12rem .5rem;border-radius:99px;">⭐ Premium</span>
+                }
+                @if (Model.HasChapters)
+                {
+                    <span style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.65);font-family:'Nunito',sans-serif;font-size:.62rem;font-weight:900;padding:.12rem .5rem;border-radius:99px;">📑 @Model.Chapters.Count @(Model.Chapters.Count == 1 ? "Chapter" : "Chapters")</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="readerWrap" class="theme-light">
+
+    <div id="readerToolbar">
+        <div class="wp-title-chip">
+            <div class="chip-icon">📖</div>
+            <span>@Model.Title</span>
+        </div>
+
+        <div class="tb-controls">
+
+            @* Search *@
+            <div class="tb-dropdown-wrap">
+                <button class="tb-pill tb-pill-outline" onclick="toggleSearchMenu()" id="searchDropBtn">🔍 Search <span class="tb-caret">▾</span></button>
+                <div class="tb-dropdown-menu" id="searchDropMenu">
+                    <div class="tb-drop-item tb-drop-find">
+                        <input id="filterInput" type="text" placeholder="Find word…"
+                               oninput="onFilterInput()"
+                               onkeydown="if(event.key==='Enter')applyFilter()" />
+                        <button class="tb-find-go" onclick="applyFilter()">Go</button>
+                        <button class="tb-find-clear" id="clearFilterBtn" onclick="clearFilter()">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rd-sep"></div>
+
+            @* Tools (Text Size + Theme + Fullscreen + Bookmark) *@
+            <div class="tb-dropdown-wrap">
+                <button class="tb-pill" onclick="toggleToolsMenu()" id="toolsDropBtn">⚙ Tools <span class="tb-caret">▾</span></button>
+                <div class="tb-dropdown-menu tb-dropdown-menu-right" id="toolsDropMenu" style="min-width:270px;">
+
+                    @* Text Size *@
+                    <div style="padding:.55rem .75rem .3rem;">
+                        <div style="font-family:'Nunito',sans-serif;font-size:.62rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;opacity:.4;margin-bottom:.45rem;">Text Size</div>
+                        <div style="display:flex;align-items:center;gap:.4rem;">
+                            <button class="tb-pill" style="height:26px;padding:0 .65rem;font-size:.8rem;" onclick="changeFontSize(-1)">A−</button>
+                            <span id="fontSizeLabel" style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.75rem;min-width:26px;text-align:center;opacity:.5;">17</span>
+                            <button class="tb-pill" style="height:26px;padding:0 .65rem;font-size:.8rem;" onclick="changeFontSize(1)">A+</button>
+                        </div>
+                    </div>
+
+                    <div class="tb-drop-sep"></div>
+
+                    @* Theme *@
+                    <div style="padding:.3rem .75rem .55rem;">
+                        <div style="font-family:'Nunito',sans-serif;font-size:.62rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;opacity:.4;margin-bottom:.5rem;">Theme</div>
+                        <div style="display:flex;gap:.35rem;flex-wrap:nowrap;">
+                            <button id="pill-light" onclick="setTheme('light')"
+                                    style="flex:1;height:28px;border-radius:50px;border:2px solid transparent;
+   background:#FDFCFA;font-family:'Nunito',sans-serif;font-size:.64rem;
+   font-weight:800;color:#2b2720;cursor:pointer;transition:all .15s;min-width:0;padding:0 4px;">
+                                ☀ Light
+                            </button>
+                            <button id="pill-dark" onclick="setTheme('dark')"
+                                    style="flex:1;height:28px;border-radius:50px;border:2px solid transparent;
+   background:#111118;font-family:'Nunito',sans-serif;font-size:.64rem;
+   font-weight:800;color:#d9d4cb;cursor:pointer;transition:all .15s;min-width:0;padding:0 4px;">
+                                🌙 Dark
+                            </button>
+                            <button id="pill-sepia" onclick="setTheme('sepia')"
+                                    style="flex:1;height:28px;border-radius:50px;border:2px solid transparent;
+   background:#F8F1E4;font-family:'Nunito',sans-serif;font-size:.64rem;
+   font-weight:800;color:#3a2e1e;cursor:pointer;transition:all .15s;min-width:0;padding:0 4px;">
+                                📜 Sepia
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tb-drop-sep"></div>
+
+                    @* Fullscreen & Bookmark *@
+                    <div class="tb-drop-item" onclick="toggleFullscreen(); closeAllMenus()">
+                        <span>⛶</span> Fullscreen
+                    </div>
+                    <div class="tb-drop-sep"></div>
+                    <div class="tb-drop-item" onclick="saveBookmark(); closeAllMenus()">
+                        <span>🔖</span> Bookmark
+                    </div>
+                    <div class="tb-drop-item" id="bmJumpItem" onclick="jumpToBookmark(); closeAllMenus()" style="display:none;">
+                        <span>📍</span> Resume Reading
+                    </div>
+                    <div class="tb-drop-item" id="bmRemoveItem" onclick="removeBookmark(); closeAllMenus()" style="display:none;color:#ef4444;">
+                        <span>🗑️</span> Remove Bookmark
+                    </div>
+                </div>
+            </div>
+
+            <div class="rd-sep"></div>
+
+
+            @if (Model.CanUseAiRead)
+            {
+                <div class="tb-dropdown-wrap">
+                    <button class="tb-pill tb-pill-orange" onclick="toggleTtsMenu()" id="ttsDropBtn">🤖 AI Read <span class="tb-caret">▾</span></button>
+                    <div class="tb-dropdown-menu tb-dropdown-menu-right" id="ttsDropMenu">
+                        <div class="tb-drop-row">
+                            <label class="tb-drop-label">Language</label>
+                            <select id="ttsLang" class="tb-drop-select">
+                                <option value="en-US">🇺🇸 English</option>
+                                <option value="fil-PH">🇵🇭 Filipino</option>
+                            </select>
+                        </div>
+                        <div class="tb-drop-row">
+                            <label class="tb-drop-label">Speed</label>
+                            <select id="ttsRate" class="tb-drop-select">
+                                <option value="0.8">0.8×</option>
+                                <option value="1" selected>1×</option>
+                                <option value="1.2">1.2×</option>
+                                <option value="1.5">1.5×</option>
+                            </select>
+                        </div>
+                        <div class="tb-drop-sep"></div>
+                        <div class="tb-drop-row tb-drop-tts-controls">
+                            <button id="ttsBtn" onclick="ttsToggle()" class="tb-tts-play">🤖🔊 Play</button>
+                            <button id="ttsStopBtn" class="tb-tts-stop" onclick="ttsStop()">⏹ Stop</button>
+                        </div>
+                        <div id="nowReading" class="tb-now-reading">
+                            🎧 <span id="nowReadingText"></span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a asp-controller="Subscription" asp-action="Index" class="tb-pill tb-pill-locked" title="Upgrade to use AI Read">🔒 AI Read</a>
+            }
+
+        </div>
+    </div>
+
+    <div id="ttsBar"><div id="ttsProgress"></div></div>
+
+    <div id="bmPickBanner">
+        <span>🔖 Click any sentence to place your bookmark</span>
+        <span style="flex:1;"></span>
+        <button class="rd-btn-danger" onclick="cancelBookmarkPick()">✕ Cancel</button>
+    </div>
+
+    <div id="filterBar">
+        <span>🔍 Showing matches for:</span>
+        <strong id="filterLabel" style="font-size:.8rem;"></strong>
+        <span id="filterCount" style="opacity:.55;"></span>
+        <span style="flex:1;"></span>
+        <button class="rd-btn-danger" onclick="clearFilter()">✕ Remove</button>
+    </div>
+
+    @if (Model.HasChapters)
+    {
+        var prevCh = Model.Chapters.LastOrDefault(c => c.ChapterNumber < Model.CurrentChapter);
+        var nextCh = Model.Chapters.FirstOrDefault(c => c.ChapterNumber > Model.CurrentChapter);
+        <div class="ch-dropdown-wrap">
+            <span class="ch-dropdown-label">Chapter</span>
+            <div class="ch-select-wrap">
+                <select class="ch-select" id="chapterSelect"
+                        onchange="window.location.href='/Library/Read/@Model.Id?chapter='+this.value">
+                    @foreach (var ch in Model.Chapters)
+                    {
+                        if (ch.ChapterNumber == Model.CurrentChapter)
+                        {
+                            <option value="@ch.ChapterNumber" selected>Ch.@ch.ChapterNumber — @ch.Title</option>
+                        }
+                        else
+                        {
+                            <option value="@ch.ChapterNumber">Ch.@ch.ChapterNumber — @ch.Title</option>
+                        }
+                    }
+                </select>
+                <span class="ch-select-arrow">▾</span>
+            </div>
+            <div class="ch-nav-arrows">
+                @if (prevCh is not null)
+                {
+                    <a href="/Library/Read/@Model.Id?chapter=@prevCh.ChapterNumber" class="ch-arrow-btn">← Prev</a>
+                }
+                @if (nextCh is not null)
+                {
+                    <a href="/Library/Read/@Model.Id?chapter=@nextCh.ChapterNumber" class="ch-arrow-btn">Next →</a>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="wp-story-header">
+        <div class="wp-story-eyebrow">
+            @if (Model.HasChapters)
+            {
+                <span>Chapter @Model.CurrentChapter</span>
+            }
+            else
+            {
+                <span>Now Reading</span>
+            }
+        </div>
+        <h1 class="wp-story-title">
+            @if (Model.HasChapters)
+            {
+                @(Model.Chapters.FirstOrDefault(c => c.ChapterNumber == Model.CurrentChapter)?.Title ?? Model.Title)
+            }
+            else
+            {
+                @Model.Title
+            }
+        </h1>
+        <div class="wp-chapter-progress">
+            @if (Model.HasChapters)
+            {
+                @foreach (var ch in Model.Chapters)
+                {
+                    <div class="wp-progress-dot @(ch.ChapterNumber <= Model.CurrentChapter ? "filled" : "")"
+                         title="Ch.@ch.ChapterNumber: @ch.Title"></div>
+                }
+            }
+            else
+            {
+                @for (int i = 0; i < 8; i++)
+                {
+                    <div class="wp-progress-dot @(i == 0 ? "filled" : "")"></div>
+                }
+            }
+        </div>
+        <div class="wp-story-divider">
+            <div class="wp-story-divider-ornament">
+                <span>✦</span><span>✦</span><span>✦</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="bookContent">
+        @Html.Raw(Model.Content.Replace("\n", "<br/>"))
+    </div>
+
+    @if (Model.HasChapters)
+    {
+        var bPrev = Model.Chapters.LastOrDefault(c => c.ChapterNumber < Model.CurrentChapter);
+        var bNext = Model.Chapters.FirstOrDefault(c => c.ChapterNumber > Model.CurrentChapter);
+        <div class="ch-bottom-nav">
+            @if (bPrev is not null)
+            {
+                <a href="/Library/Read/@Model.Id?chapter=@bPrev.ChapterNumber" class="ch-bottom-btn">← Ch.@bPrev.ChapterNumber: @bPrev.Title</a>
+            }
+            @if (bNext is not null)
+            {
+                <a href="/Library/Read/@Model.Id?chapter=@bNext.ChapterNumber" class="ch-bottom-btn primary">Ch.@bNext.ChapterNumber: @bNext.Title →</a>
+            }
+        </div>
+    }
+
+    <div class="wp-reading-footer">
+        <span>✦</span>
+        <span>
+            @if (Model.HasChapters && Model.Chapters.All(c => c.ChapterNumber <= Model.CurrentChapter))
+            {
+                <span>You're all caught up!</span>
+            }
+            else
+            {
+                <span>End of Chapter</span>
+            }
+        </span>
+        <span>✦</span>
+    </div>
+
+</div>
+
+<div id="bmToast">🔖 Bookmark saved!</div>
+
+@section Scripts {
+    <script>
+        const IS_PREMIUM     = @(Model.CanUseAiRead ? "true" : "false");
+        const bookId         = '@Model.Id';
+        const userId         = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+        const chapterNum      = @(Model.CurrentChapter);
+        const bmKey          = 're_bm_' + userId + '_' + bookId + '_ch' + chapterNum;
+        const contentEl      = document.getElementById('bookContent');
+        const wrap           = document.getElementById('readerWrap');
+        const bmPickBanner   = document.getElementById('bmPickBanner');
+        const ttsBtn         = IS_PREMIUM ? document.getElementById('ttsBtn')         : null;
+        const ttsStopBtn     = IS_PREMIUM ? document.getElementById('ttsStopBtn')     : null;
+        const progressEl     = document.getElementById('ttsProgress');
+        const rateEl         = IS_PREMIUM ? document.getElementById('ttsRate')        : null;
+        const langEl         = IS_PREMIUM ? document.getElementById('ttsLang')        : null;
+        const nowReading     = IS_PREMIUM ? document.getElementById('nowReading')     : null;
+        const nowText        = IS_PREMIUM ? document.getElementById('nowReadingText') : null;
+        const filterBar      = document.getElementById('filterBar');
+        const filterLabel    = document.getElementById('filterLabel');
+        const filterCount    = document.getElementById('filterCount');
+        const filterInput    = document.getElementById('filterInput');
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+        const bmJumpItem     = document.getElementById('bmJumpItem');
+
+        // ══ READING PROGRESS BAR ══
+        const readingBar = document.getElementById('readingProgressBar');
+        function updateReadingProgress() {
+            const doc = document.documentElement;
+            const scrollTop = window.scrollY || doc.scrollTop;
+            const scrollHeight = doc.scrollHeight - doc.clientHeight;
+            const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+            readingBar.style.width = Math.min(100, pct) + '%';
+        }
+        window.addEventListener('scroll', updateReadingProgress, { passive: true });
+        wrap.addEventListener('scroll', updateReadingProgress, { passive: true });
+        updateReadingProgress();
+
+        // ══ SCROLL SAVE ══
+        let scrollTimer;
+        function saveScroll() {
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => {
+                const pos = wrap.classList.contains('fullscreen') ? wrap.scrollTop : window.scrollY;
+                fetch('/Library/SaveScroll', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookId, scrollPosition: pos })
+                });
+            }, 800);
+        }
+        wrap.addEventListener('scroll', saveScroll);
+        window.addEventListener('scroll', saveScroll);
+
+        // ══ FAVORITE ══
+        const favBtn = document.getElementById('favBtn');
+        let isFav = favBtn.dataset.fav === 'true';
+        favBtn.addEventListener('click', async () => {
+            const res = await fetch('/Library/ToggleFavorite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `bookId=${bookId}`
+            });
+            if (res.ok) {
+                const data = await res.json();
+                isFav = data.isFavorite;
+                favBtn.textContent = isFav ? '❤️ Saved' : '🤍 Save';
+                favBtn.style.background  = isFav ? '#fef2f2' : '#fff';
+                favBtn.style.borderColor = isFav ? '#fecaca' : '#e2ddd8';
+                favBtn.style.color       = isFav ? '#ef4444' : '#1A1A2E';
+            }
+        });
+
+        // ══ FONT SIZE ══
+        let fontSize = parseInt(localStorage.getItem('re_fontSize') || '17');
+        applyFontSize();
+        function applyFontSize() {
+            fontSize = Math.min(28, Math.max(12, fontSize));
+            contentEl.style.fontSize = fontSize + 'px';
+            document.getElementById('fontSizeLabel').textContent = fontSize;
+            localStorage.setItem('re_fontSize', fontSize);
+        }
+        function changeFontSize(d) { fontSize += d; applyFontSize(); }
+
+        // ══ THEME ══
+        let currentTheme = localStorage.getItem('re_theme') || 'light';
+        // Apply theme on load (also highlights the correct button)
+        setTheme(currentTheme);
+        function setTheme(t) {
+            currentTheme = t;
+            wrap.className = wrap.className.replace(/theme-\w+/g, '').trim() + ' theme-' + t;
+            // Highlight active theme button in dropdown
+            [['light','#2b2720'], ['dark','#d9d4cb'], ['sepia','#3a2e1e']].forEach(([n, fg]) => {
+                const el = document.getElementById('pill-' + n);
+                if (!el) return;
+                el.style.borderColor = n === t ? 'var(--re-orange)' : 'transparent';
+                el.style.boxShadow   = n === t ? '0 0 0 2px rgba(255,97,34,.25)' : 'none';
+                el.style.fontWeight  = n === t ? '900' : '800';
+            });
+            localStorage.setItem('re_theme', t);
+        }
+
+        // ══ FULLSCREEN ══
+        let isFS = false;
+        function toggleFullscreen() {
+            isFS = !isFS;
+            wrap.classList.toggle('fullscreen', isFS);
+            document.body.style.overflow = isFS ? 'hidden' : '';
+        }
+
+        // ══ DROPDOWN MENUS ══
+        function closeAllMenus() {
+            document.querySelectorAll('.tb-dropdown-menu').forEach(m => m.classList.remove('open'));
+        }
+        function toggleSearchMenu() {
+            const m = document.getElementById('searchDropMenu');
+            const wasOpen = m.classList.contains('open');
+            closeAllMenus();
+            if (!wasOpen) { m.classList.add('open'); filterInput.focus(); }
+        }
+        function toggleToolsMenu() {
+            const m = document.getElementById('toolsDropMenu');
+            const wasOpen = m.classList.contains('open');
+            closeAllMenus();
+            if (!wasOpen) m.classList.add('open');
+        }
+        function toggleTtsMenu() {
+            const m = document.getElementById('ttsDropMenu');
+            const wasOpen = m.classList.contains('open');
+            closeAllMenus();
+            if (!wasOpen) m.classList.add('open');
+        }
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.tb-dropdown-wrap')) closeAllMenus();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (bmPickMode) { cancelBookmarkPick(); return; }
+                if (isFS) { toggleFullscreen(); return; }
+                closeAllMenus();
+            }
+        });
+
+        // ══ SENTENCES ══
+        let sentenceSpans = [];
+        function wrapSentences() {
+            const fullText = contentEl.innerText;
+            const parts = fullText.match(/[^.!?…]+[.!?…]*[\s]*/g) || [fullText];
+            let rebuilt = '';
+            parts.forEach((part, i) => {
+                if (part.trim() === '') rebuilt += part;
+                else rebuilt += `<span class="tts-sent" data-idx="${i}">${escHtml(part)}</span>`;
+            });
+            contentEl.innerHTML = rebuilt;
+            sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+        }
+        function escHtml(t) {
+            return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+        wrapSentences();
+
+        // ══ TOAST ══
+        function showToast(msg) {
+            const t = document.getElementById('bmToast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // ══ BOOKMARK ══
+        let bmPickMode = false;
+        function saveBookmark() { bmPickMode ? cancelBookmarkPick() : enterBookmarkPick(); }
+        function enterBookmarkPick() {
+            bmPickMode = true;
+            contentEl.classList.add('bm-pick-mode');
+            bmPickBanner.classList.add('visible');
+            showToast('🔖 Click any sentence to place your bookmark');
+        }
+        function cancelBookmarkPick() {
+            bmPickMode = false;
+            contentEl.classList.remove('bm-pick-mode');
+            bmPickBanner.classList.remove('visible');
+            showToast('Bookmark placement cancelled');
+        }
+        function placeBookmarkAt(span) {
+            bmPickMode = false;
+            contentEl.classList.remove('bm-pick-mode');
+            bmPickBanner.classList.remove('visible');
+            const idx  = parseInt(span.dataset.idx);
+            const text = span.innerText.trim().substring(0, 60);
+            document.querySelectorAll('.bookmark-marker').forEach(m => m.remove());
+            const marker = document.createElement('span');
+            marker.className = 'bookmark-marker';
+            marker.title = 'Your bookmark';
+            marker.textContent = '🔖';
+            span.parentNode.insertBefore(marker, span);
+            localStorage.setItem(bmKey, JSON.stringify({ idx, text, scroll: window.scrollY }));
+            const bmRemoveItem2 = document.getElementById('bmRemoveItem');
+            if (bmJumpItem)    bmJumpItem.style.display   = 'flex';
+            if (bmRemoveItem2) bmRemoveItem2.style.display = 'flex';
+            showToast('🔖 Bookmark placed — "' + text.substring(0, 30) + '…"');
+        }
+        function jumpToBookmark() {
+            const raw = localStorage.getItem(bmKey);
+            if (!raw) { showToast('No bookmark saved yet.'); return; }
+            const bm   = JSON.parse(raw);
+            const span = sentenceSpans[bm.idx];
+            if (span) {
+                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                span.style.transition = 'background .1s';
+                span.style.background = 'rgba(255,97,34,.3)';
+                setTimeout(() => { span.style.background = ''; }, 1200);
+            }
+            showToast('📍 Jumped to your bookmark!');
+        }
+        function restoreBookmark() {
+            const raw = localStorage.getItem(bmKey);
+            if (!raw) return;
+            const bm   = JSON.parse(raw);
+            const span = sentenceSpans[bm.idx];
+            if (!span) return;
+            const marker = document.createElement('span');
+            marker.className = 'bookmark-marker';
+            marker.title = 'Your bookmark';
+            marker.textContent = '🔖';
+            span.parentNode.insertBefore(marker, span);
+            const bmRemoveItem3 = document.getElementById('bmRemoveItem');
+            if (bmJumpItem)    bmJumpItem.style.display    = 'flex';
+            if (bmRemoveItem3) bmRemoveItem3.style.display  = 'flex';
+            setTimeout(() => {
+                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('📍 Resumed from "' + bm.text.substring(0, 30) + '…"');
+            }, 500);
+        }
+        function removeBookmark() {
+            const had = localStorage.getItem(bmKey);
+            if (!had) { showToast('No bookmark on this chapter.'); return; }
+            localStorage.removeItem(bmKey);
+            document.querySelectorAll('.bookmark-marker').forEach(m => m.remove());
+            const bmRemoveItem = document.getElementById('bmRemoveItem');
+            if (bmJumpItem)    bmJumpItem.style.display    = 'none';
+            if (bmRemoveItem)  bmRemoveItem.style.display  = 'none';
+            showToast('🗑️ Bookmark removed');
+        }
+        restoreBookmark();
+        function restoreBookmarkMarkerOnly() {
+            const raw = localStorage.getItem(bmKey);
+            if (!raw) return;
+            const bm   = JSON.parse(raw);
+            const span = sentenceSpans[bm.idx];
+            if (!span) return;
+            document.querySelectorAll('.bookmark-marker').forEach(m => m.remove());
+            const marker = document.createElement('span');
+            marker.className = 'bookmark-marker';
+            marker.title = 'Your bookmark';
+            marker.textContent = '🔖';
+            span.parentNode.insertBefore(marker, span);
+        }
+
+        // ══ WORD FILTER ══
+        let filterActive = false, originalHTML = null;
+        function onFilterInput() {
+            filterInput.style.borderColor = filterInput.value.trim()
+                ? 'var(--re-orange)' : 'rgba(128,128,128,.18)';
+        }
+        function applyFilter() {
+            const word = filterInput.value.trim();
+            if (!word) { showToast('Type a word to search first.'); return; }
+            if (!filterActive) originalHTML = contentEl.innerHTML;
+            const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex   = new RegExp(`(${escaped})`, 'gi');
+            const base    = originalHTML || contentEl.innerHTML;
+            contentEl.innerHTML = base.replace(regex, '<mark class="word-filter-match">$1</mark>');
+            sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+            const matches = contentEl.querySelectorAll('.word-filter-match');
+            const count   = matches.length;
+            if (count === 0) {
+                showToast(`"${word}" not found in this book.`);
+                contentEl.innerHTML = base;
+                sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+                filterActive = false; return;
+            }
+            filterLabel.textContent = `"${word}"`;
+            filterCount.textContent = `${count} match${count !== 1 ? 'es' : ''}`;
+            filterBar.classList.add('visible');
+            if (clearFilterBtn) clearFilterBtn.style.display = 'inline-flex';
+            filterActive = true;
+            restoreBookmarkMarkerOnly();
+            matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showToast(`🔍 ${count} match${count !== 1 ? 'es' : ''} found for "${word}"`);
+            closeAllMenus();
+        }
+        function clearFilter() {
+            if (!filterActive || !originalHTML) {
+                filterInput.value = '';
+                filterInput.style.borderColor = 'rgba(128,128,128,.18)';
+                filterBar.classList.remove('visible');
+                if (clearFilterBtn) clearFilterBtn.style.display = 'none';
+                return;
+            }
+            contentEl.innerHTML = originalHTML;
+            sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+            originalHTML = null; filterActive = false;
+            filterInput.value = '';
+            filterInput.style.borderColor = 'rgba(128,128,128,.18)';
+            filterBar.classList.remove('visible');
+            if (clearFilterBtn) clearFilterBtn.style.display = 'none';
+            restoreBookmarkMarkerOnly();
+            showToast('✅ Filter removed');
+        }
+
+        // ══ TTS ══
+        const synth = window.speechSynthesis;
+        let sentIdx = 0, isPlaying = false, isPaused = false, utterance = null, activeSpan = null;
+
+        function getBestVoice(lang) {
+            const all  = synth.getVoices();
+            const code = lang.toLowerCase().split('-')[0];
+            const pool = all.filter(v => {
+                const l = v.lang.toLowerCase();
+                return code === 'fil'
+                    ? (l.startsWith('fil') || l.startsWith('tl'))
+                    : l.startsWith('en');
+            });
+            return pool.find(v => v.name.includes('Google'))
+                || pool.find(v => v.name.includes('Neural'))
+                || pool[0] || null;
+        }
+        function highlightSpan(idx) {
+            if (activeSpan) activeSpan.classList.remove('tts-active');
+            activeSpan = sentenceSpans[idx] || null;
+            if (!activeSpan) return;
+            activeSpan.classList.add('tts-active');
+            const rect = activeSpan.getBoundingClientRect();
+            if (rect.top < window.innerHeight * 0.3 || rect.top > window.innerHeight * 0.7)
+                activeSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        function clearHighlight() {
+            if (activeSpan) activeSpan.classList.remove('tts-active');
+            activeSpan = null;
+        }
+        function speakNext() {
+            if (!IS_PREMIUM) return;
+            if (sentIdx >= sentenceSpans.length) { ttsStop(); return; }
+            const spanText = sentenceSpans[sentIdx].innerText.trim();
+            if (!spanText) { sentIdx++; speakNext(); return; }
+            highlightSpan(sentIdx);
+            if (nowText) nowText.textContent = spanText.substring(0, 38) + (spanText.length > 38 ? '…' : '');
+            if (nowReading) nowReading.classList.add('visible');
+            utterance        = new SpeechSynthesisUtterance(spanText);
+            utterance.rate   = parseFloat(rateEl.value);
+            utterance.pitch  = 1.05;
+            utterance.volume = 1;
+            utterance.lang   = langEl.value;
+            const voice = getBestVoice(langEl.value);
+            if (voice) utterance.voice = voice;
+            utterance.onend = () => {
+                if (isPaused) return;
+                sentIdx++;
+                if (progressEl) progressEl.style.width = Math.round((sentIdx / sentenceSpans.length) * 100) + '%';
+                speakNext();
+            };
+            utterance.onerror = (e) => {
+                if (e.error === 'interrupted') return;
+                sentIdx++;
+                if (!isPaused) speakNext();
+            };
+            synth.speak(utterance);
+        }
+        function ttsToggle() {
+            if (!IS_PREMIUM) { window.location.href = '/Subscription/Index'; return; }
+            if (!isPlaying && !isPaused) {
+                synth.cancel(); sentIdx = 0; isPlaying = true; isPaused = false;
+                ttsBtn.innerHTML = '⏸ Pause';
+                ttsBtn.classList.add('playing');
+                ttsStopBtn.style.display = 'inline-flex';
+                if (progressEl) progressEl.style.width = '0%';
+                setTimeout(speakNext, 150);
+            } else if (isPaused) {
+                isPaused = false; isPlaying = true;
+                ttsBtn.innerHTML = '⏸ Pause';
+                ttsBtn.classList.add('playing');
+                speakNext();
+            } else {
+                isPaused = true; isPlaying = false; synth.cancel();
+                ttsBtn.innerHTML = '▶ Resume';
+                ttsBtn.classList.remove('playing');
+                if (nowReading) nowReading.classList.remove('visible');
+            }
+        }
+        function ttsStop() {
+            synth.cancel(); isPlaying = false; isPaused = false; sentIdx = 0;
+            if (ttsBtn)     { ttsBtn.innerHTML = '🤖🔊 Play'; ttsBtn.classList.remove('playing'); }
+            if (ttsStopBtn) ttsStopBtn.style.display = 'none';
+            if (progressEl) progressEl.style.width = '0%';
+            if (nowReading) nowReading.classList.remove('visible');
+            clearHighlight();
+        }
+        if (IS_PREMIUM) {
+            if (rateEl) rateEl.addEventListener('change', () => { if (isPlaying) { synth.cancel(); speakNext(); } });
+            if (langEl) langEl.addEventListener('change', () => { if (isPlaying || isPaused) ttsStop(); });
+        }
+        window.addEventListener('beforeunload', () => synth.cancel());
+        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = () => {};
+
+        contentEl.addEventListener('click', e => {
+            const span = e.target.closest('.tts-sent');
+            if (!span) return;
+            if (bmPickMode) { placeBookmarkAt(span); return; }
+            if (!IS_PREMIUM) return;
+            const idx = parseInt(span.dataset.idx);
+            if (isNaN(idx)) return;
+            sentIdx = idx;
+            if (isPlaying) {
+                synth.cancel(); speakNext();
+            } else if (!isPaused) {
+                isPlaying = true;
+                ttsBtn.innerHTML = '⏸ Pause';
+                ttsBtn.classList.add('playing');
+                ttsStopBtn.style.display = 'inline-flex';
+                setTimeout(speakNext, 100);
+            }
+        });
+    </script>
+}

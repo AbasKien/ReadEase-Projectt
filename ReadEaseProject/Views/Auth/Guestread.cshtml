@@ -1,0 +1,992 @@
+﻿@model ReadEase.ViewModels.Landing.GuestBookPreviewViewModel
+@{
+    ViewData["Title"] = Model.Title + " — Preview";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Nunito:wght@400;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --re-orange: #FF6122;
+        --re-orange-soft: #FF8C5A;
+        --re-orange-glow: rgba(255,97,34,.18);
+        --re-dark: #1A1A2E;
+        --re-radius: 16px;
+        --re-shadow: 0 2px 20px rgba(0,0,0,.09);
+        --re-shadow-lg: 0 10px 50px rgba(0,0,0,.15);
+    }
+
+    /* ══ TOPBAR ══ */
+    .wp-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: .75rem 0 1.1rem;
+        flex-wrap: wrap;
+    }
+
+    .wp-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: #fff;
+        border: 1.5px solid #e2ddd8;
+        color: var(--re-dark);
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .8rem;
+        padding: .45rem 1rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all .2s;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+        letter-spacing: .01em;
+    }
+
+        .wp-back-btn:hover {
+            border-color: var(--re-orange);
+            color: var(--re-orange);
+            transform: translateX(-3px);
+            box-shadow: 0 4px 16px rgba(255,97,34,.15);
+        }
+
+    /* ══ READER SHELL ══ */
+    #readerWrap {
+        border-radius: var(--re-radius);
+        overflow: hidden;
+        overflow-x: hidden;
+        box-shadow: var(--re-shadow-lg);
+        transition: background .3s, color .3s;
+        border: 1px solid rgba(0,0,0,.06);
+        max-width: 100%;
+        position: relative;
+    }
+
+        #readerWrap.theme-light {
+            background: #FDFCFA;
+            color: #2b2720;
+        }
+
+        #readerWrap.theme-dark {
+            background: #111118;
+            color: #d9d4cb;
+        }
+
+        #readerWrap.theme-sepia {
+            background: #F8F1E4;
+            color: #3a2e1e;
+        }
+
+    /* ══ STICKY TOOLBAR ══ */
+    #readerToolbar {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        flex-wrap: wrap;
+        padding: .6rem 1.1rem;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(0,0,0,.07);
+        transition: background .3s, border-color .3s;
+    }
+
+    .theme-light #readerToolbar {
+        background: rgba(253,252,250,.96);
+    }
+
+    .theme-dark #readerToolbar {
+        background: rgba(17,17,24,.96);
+        border-color: rgba(255,255,255,.06);
+    }
+
+    .theme-sepia #readerToolbar {
+        background: rgba(248,241,228,.96);
+    }
+
+    .wp-title-chip {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+        .wp-title-chip .chip-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--re-orange), var(--re-orange-soft));
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(255,97,34,.35);
+        }
+
+        .wp-title-chip span {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: .79rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            letter-spacing: -.01em;
+        }
+
+    .rd-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 30px;
+        min-width: 30px;
+        padding: 0 .55rem;
+        border-radius: 50px;
+        border: 1.5px solid rgba(0,0,0,.09);
+        background: transparent;
+        cursor: pointer;
+        font-size: .74rem;
+        font-weight: 800;
+        font-family: 'Nunito', sans-serif;
+        transition: all .16s;
+        white-space: nowrap;
+        gap: .28rem;
+        letter-spacing: -.01em;
+    }
+
+    .theme-light .rd-btn {
+        color: #2b2720;
+    }
+
+    .theme-dark .rd-btn {
+        color: #d9d4cb;
+        border-color: rgba(255,255,255,.11);
+    }
+
+    .theme-sepia .rd-btn {
+        color: #3a2e1e;
+    }
+
+    .rd-btn:hover {
+        border-color: var(--re-orange);
+        color: var(--re-orange);
+        background: var(--re-orange-glow);
+    }
+
+    .rd-btn.active {
+        background: var(--re-orange);
+        color: #fff !important;
+        border-color: var(--re-orange);
+        box-shadow: 0 2px 12px rgba(255,97,34,.35);
+    }
+
+    .rd-btn.danger {
+        border-color: #ef4444;
+        color: #ef4444;
+    }
+
+        .rd-btn.danger:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+    #fontSizeLabel {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .7rem;
+        min-width: 24px;
+        text-align: center;
+        opacity: .38;
+    }
+
+    .rd-sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(128,128,128,.13);
+        flex-shrink: 0;
+    }
+
+    .theme-pill {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        transition: transform .16s, border-color .16s, box-shadow .16s;
+        flex-shrink: 0;
+    }
+
+        .theme-pill:hover {
+            transform: scale(1.22);
+        }
+
+        .theme-pill.active {
+            border-color: var(--re-orange);
+            box-shadow: 0 0 0 2.5px rgba(255,97,34,.22);
+            transform: scale(1.15);
+        }
+
+    /* Locked AI Read badge */
+    .tts-locked-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .32rem;
+        height: 30px;
+        padding: 0 .7rem;
+        border-radius: 50px;
+        border: 1.5px dashed rgba(128,128,128,.28);
+        background: transparent;
+        font-size: .72rem;
+        font-weight: 800;
+        font-family: 'Nunito', sans-serif;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .theme-light .tts-locked-btn {
+        color: rgba(43,39,32,.32);
+    }
+
+    .theme-dark .tts-locked-btn {
+        color: rgba(217,212,203,.3);
+        border-color: rgba(255,255,255,.1);
+    }
+
+    .theme-sepia .tts-locked-btn {
+        color: rgba(58,46,30,.3);
+    }
+
+    .tts-locked-btn:hover {
+        border-color: var(--re-orange);
+        color: var(--re-orange);
+        background: var(--re-orange-glow);
+    }
+
+    /* Progress bar */
+    #ttsBar {
+        height: 3px;
+        background: rgba(128,128,128,.07);
+    }
+
+    #ttsProgress {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--re-orange), var(--re-orange-soft));
+        border-radius: 0 2px 2px 0;
+    }
+
+    /* Filter bar */
+    #filterBar {
+        display: none;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+        padding: .5rem 1.1rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .74rem;
+        font-weight: 700;
+        border-bottom: 1px solid rgba(250,204,21,.25);
+    }
+
+        #filterBar.visible {
+            display: flex;
+        }
+
+    .theme-light #filterBar {
+        background: rgba(255,252,220,.88);
+        color: #854d0e;
+    }
+
+    .theme-dark #filterBar {
+        background: rgba(41,37,10,.65);
+        color: #fef08a;
+    }
+
+    .theme-sepia #filterBar {
+        background: rgba(254,243,199,.88);
+        color: #78350f;
+    }
+
+    /* Filter input */
+    #filterInput {
+        height: 30px;
+        border: 1.5px solid rgba(128,128,128,.18);
+        border-radius: 50px;
+        padding: 0 .7rem;
+        font-size: .74rem;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 700;
+        background: transparent;
+        width: 128px;
+        transition: border-color .18s, box-shadow .18s;
+        outline: none;
+    }
+
+    .theme-dark #filterInput {
+        color: #d9d4cb;
+    }
+
+    #filterInput:focus {
+        border-color: var(--re-orange);
+        box-shadow: 0 0 0 3px rgba(255,97,34,.09);
+    }
+
+    /* Story header */
+    .wp-story-header {
+        position: relative;
+        overflow: hidden;
+        padding: 3rem 2.5rem 2.2rem;
+    }
+
+        .wp-story-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(160deg, rgba(255,97,34,.07) 0%, transparent 55%);
+            pointer-events: none;
+        }
+
+        .wp-story-header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            opacity: .5;
+        }
+
+    .wp-story-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-family: 'Nunito', sans-serif;
+        font-size: .68rem;
+        font-weight: 900;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--re-orange);
+        margin-bottom: .9rem;
+        position: relative;
+        z-index: 1;
+    }
+
+        .wp-story-eyebrow::before {
+            content: '';
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--re-orange);
+            border-radius: 2px;
+            opacity: .6;
+        }
+
+    .wp-story-title {
+        font-family: 'Lora', 'PT Serif', Georgia, serif;
+        font-size: clamp(1.6rem, 3vw, 2.3rem);
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -.02em;
+        margin: 0 0 .5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .theme-light .wp-story-title {
+        color: #1a140d;
+    }
+
+    .theme-dark .wp-story-title {
+        color: #f0ece2;
+    }
+
+    .theme-sepia .wp-story-title {
+        color: #261a0a;
+    }
+
+    .wp-story-divider {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-top: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+        .wp-story-divider::before, .wp-story-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+        }
+
+    .theme-light .wp-story-divider::before, .theme-light .wp-story-divider::after {
+        background: rgba(0,0,0,.10);
+    }
+
+    .theme-dark .wp-story-divider::before, .theme-dark .wp-story-divider::after {
+        background: rgba(255,255,255,.08);
+    }
+
+    .theme-sepia .wp-story-divider::before, .theme-sepia .wp-story-divider::after {
+        background: rgba(0,0,0,.12);
+    }
+
+    .wp-story-divider-ornament {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        opacity: .45;
+    }
+
+        .wp-story-divider-ornament span {
+            font-size: .5rem;
+            color: var(--re-orange);
+        }
+
+    .wp-chapter-progress {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        margin-top: .5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .wp-progress-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--re-orange);
+        opacity: .22;
+    }
+
+        .wp-progress-dot.filled {
+            opacity: 1;
+        }
+
+    /* ══ BOOK CONTENT ══ */
+    #bookContent {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2.8rem 2.5rem 3rem;
+        font-family: 'PT Serif', 'Lora', Georgia, serif;
+        font-size: 17px;
+        line-height: 2.05;
+        transition: font-size .2s;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        overflow-x: hidden;
+    }
+
+    .tts-sent {
+        border-radius: 3px;
+        transition: background .18s, color .18s;
+        cursor: default;
+    }
+
+    .word-filter-match {
+        background: rgba(250,204,21,.42);
+        border-radius: 3px;
+        padding: 0 1px;
+    }
+
+    .theme-dark .word-filter-match {
+        background: rgba(250,204,21,.26);
+        color: #fef08a;
+    }
+
+    /* ══ LOGIN WALL ══ */
+    .guest-wall-wrap {
+        position: relative;
+        /* Fade-out the last portion of the text */
+    }
+
+    .guest-fade {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 160px;
+        pointer-events: none;
+    }
+
+    .theme-light .guest-fade {
+        background: linear-gradient(to bottom, transparent, #FDFCFA 88%);
+    }
+
+    .theme-dark .guest-fade {
+        background: linear-gradient(to bottom, transparent, #111118 88%);
+    }
+
+    .theme-sepia .guest-fade {
+        background: linear-gradient(to bottom, transparent, #F8F1E4 88%);
+    }
+
+    .guest-login-wall {
+        padding: 2.2rem 2.5rem 2.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        text-align: center;
+        border-top: 1px dashed rgba(255,97,34,.25);
+    }
+
+    .theme-dark .guest-login-wall {
+        border-color: rgba(255,97,34,.18);
+    }
+
+    .guest-wall-icon {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, var(--re-orange), var(--re-orange-soft));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        box-shadow: 0 6px 20px rgba(255,97,34,.35);
+    }
+
+    .guest-wall-title {
+        font-family: 'Lora', Georgia, serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.3;
+        letter-spacing: -.015em;
+        margin: 0;
+    }
+
+    .theme-light .guest-wall-title {
+        color: #1a140d;
+    }
+
+    .theme-dark .guest-wall-title {
+        color: #f0ece2;
+    }
+
+    .theme-sepia .guest-wall-title {
+        color: #261a0a;
+    }
+
+    .guest-wall-sub {
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        font-weight: 600;
+        opacity: .55;
+        margin: 0;
+        max-width: 340px;
+    }
+
+    .guest-wall-btns {
+        display: flex;
+        gap: .75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .guest-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: linear-gradient(135deg, var(--re-orange), var(--re-orange-soft));
+        color: #fff;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .88rem;
+        padding: .65rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 4px 18px rgba(255,97,34,.4);
+        transition: all .2s;
+    }
+
+        .guest-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px rgba(255,97,34,.5);
+            color: #fff;
+        }
+
+    .guest-btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        background: transparent;
+        border: 1.5px solid rgba(128,128,128,.22);
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: .88rem;
+        padding: .65rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all .2s;
+    }
+
+    .theme-light .guest-btn-ghost {
+        color: #2b2720;
+    }
+
+    .theme-dark .guest-btn-ghost {
+        color: #d9d4cb;
+        border-color: rgba(255,255,255,.18);
+    }
+
+    .theme-sepia .guest-btn-ghost {
+        color: #3a2e1e;
+    }
+
+    .guest-btn-ghost:hover {
+        border-color: var(--re-orange);
+        color: var(--re-orange);
+        background: var(--re-orange-glow);
+    }
+
+    .guest-preview-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        background: rgba(255,97,34,.08);
+        border: 1px solid rgba(255,97,34,.18);
+        color: var(--re-orange);
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        padding: .28rem .75rem;
+        border-radius: 20px;
+    }
+
+    /* ══ READING FOOTER ══ */
+    .wp-reading-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1.6rem 2.5rem;
+        border-top: 1px solid rgba(0,0,0,.06);
+        font-family: 'Nunito', sans-serif;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        opacity: .35;
+    }
+
+    .theme-dark .wp-reading-footer {
+        border-color: rgba(255,255,255,.06);
+    }
+
+    /* ══ TOAST ══ */
+    #bmToast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(16px);
+        background: linear-gradient(135deg, #1A1A2E, #262640);
+        color: #fff;
+        padding: .65rem 1.5rem;
+        border-radius: 50px;
+        font-family: 'Nunito', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        box-shadow: 0 8px 28px rgba(0,0,0,.3);
+        opacity: 0;
+        transition: all .3s cubic-bezier(.34,1.56,.64,1);
+        z-index: 9999;
+        pointer-events: none;
+        white-space: nowrap;
+        border: 1px solid rgba(255,255,255,.07);
+    }
+
+        #bmToast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+    /* ══ FULLSCREEN ══ */
+    #readerWrap.fullscreen {
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+        overflow-y: auto;
+        border-radius: 0 !important;
+    }
+
+    @@media(max-width:640px) {
+        #bookContent {
+            padding: 2rem 1.3rem 2.5rem;
+            font-size: 15.5px;
+        }
+
+        .wp-story-header {
+            padding: 2rem 1.3rem 1.6rem;
+        }
+
+        .guest-login-wall {
+            padding: 1.6rem 1.3rem 2rem;
+        }
+    }
+</style>
+
+@* ══ TOP NAV ══ *@
+<div class="wp-topbar">
+    <a asp-controller="Landing" asp-action="Landing" class="wp-back-btn">
+        ← Back
+    </a>
+    <a asp-controller="Auth" asp-action="Login"
+       style="display:inline-flex;align-items:center;gap:.4rem;font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;padding:.45rem 1.1rem;border-radius:50px;background:var(--re-orange);color:#fff;text-decoration:none;box-shadow:0 3px 14px rgba(255,97,34,.4);transition:all .2s;">
+        Log in to continue reading →
+    </a>
+</div>
+
+@* ══ READER WRAP ══ *@
+<div id="readerWrap" class="theme-light">
+
+    @* ── Sticky Toolbar ── *@
+    <div id="readerToolbar">
+
+        <div class="wp-title-chip">
+            <div class="chip-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </div>
+            <span>@Model.Title</span>
+        </div>
+
+        <div class="rd-sep"></div>
+
+        <button class="rd-btn" onclick="changeFontSize(-1)" title="Smaller text">A−</button>
+        <span id="fontSizeLabel">17</span>
+        <button class="rd-btn" onclick="changeFontSize(1)" title="Larger text">A+</button>
+
+        <div class="rd-sep"></div>
+
+        <span style="font-family:'Nunito',sans-serif;font-size:.64rem;font-weight:900;opacity:.32;letter-spacing:.06em;text-transform:uppercase;">Theme</span>
+        <div class="theme-pill active" id="pill-light" onclick="setTheme('light')" style="background:#FDFCFA;border-color:var(--re-orange);" title="Light"></div>
+        <div class="theme-pill" id="pill-dark" onclick="setTheme('dark')" style="background:#111118;" title="Dark"></div>
+        <div class="theme-pill" id="pill-sepia" onclick="setTheme('sepia')" style="background:#F8F1E4;" title="Sepia"></div>
+
+        <div class="rd-sep"></div>
+
+        <button class="rd-btn" id="fsBtn" onclick="toggleFullscreen()" title="Full screen">⛶</button>
+
+        <div class="rd-sep"></div>
+
+        <div style="display:flex;align-items:center;gap:.28rem;">
+            <input id="filterInput" type="text" placeholder="Find word…"
+                   oninput="onFilterInput()" onkeydown="if(event.key==='Enter')applyFilter()" />
+            <button class="rd-btn" onclick="applyFilter()" title="Apply filter">Go</button>
+            <button class="rd-btn danger" id="clearFilterBtn" onclick="clearFilter()" style="display:none;">✕</button>
+        </div>
+
+        <div class="rd-sep"></div>
+
+        @* AI Read locked for guests *@
+        <a asp-controller="Auth" asp-action="Login" class="tts-locked-btn" title="Log in to use AI Read"
+           style="display:inline-flex;align-items:center;gap:.35rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            AI Read
+        </a>
+
+    </div>
+
+    @* ── TTS progress bar (static, no playback for guests) ── *@
+    <div id="ttsBar"><div id="ttsProgress"></div></div>
+
+    @* ── Filter bar ── *@
+    <div id="filterBar">
+        <span style="display:inline-flex;align-items:center;gap:.3rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Showing matches for:
+        </span>
+        <strong id="filterLabel" style="font-size:.8rem;"></strong>
+        <span id="filterCount" style="opacity:.55;"></span>
+        <span style="flex:1;"></span>
+        <button class="rd-btn danger" onclick="clearFilter()" style="height:26px;">✕ Remove</button>
+    </div>
+
+    @* ── Wattpad-style story header ── *@
+    <div class="wp-story-header">
+        <div class="wp-story-eyebrow">Preview</div>
+        <h1 class="wp-story-title">@Model.Title</h1>
+        <div class="wp-chapter-progress">
+            <div class="wp-progress-dot filled"></div>
+            @for (int i = 1; i < 8; i++)
+            {
+                <div class="wp-progress-dot"></div>
+            }
+        </div>
+        <div class="wp-story-divider">
+            <div class="wp-story-divider-ornament">
+                <span>✦</span><span>✦</span><span>✦</span>
+            </div>
+        </div>
+    </div>
+
+    @* ── Book preview body — 500 chars, fades out at the bottom ── *@
+    <div class="guest-wall-wrap">
+        <div id="bookContent">
+            @Html.Raw(Model.PreviewContent.Replace("\n", "<br/>"))
+        </div>
+        @* Fade overlay sits on top of the last lines of text *@
+        <div class="guest-fade" id="guestFade"></div>
+    </div>
+
+    @* ── Login wall ── *@
+    <div class="guest-login-wall">
+        <div class="guest-preview-badge">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+            Free preview — 500 characters
+        </div>
+        <div class="guest-wall-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <h2 class="guest-wall-title">Want to keep reading?</h2>
+        <p class="guest-wall-sub">Create a free account to read the full book and unlock your personal library.</p>
+        <div class="guest-wall-btns">
+            <a asp-controller="Auth" asp-action="Register" class="guest-btn-primary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                Create Free Account
+            </a>
+            <a asp-controller="Auth" asp-action="Login" class="guest-btn-ghost">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+                Already have an account?
+            </a>
+        </div>
+    </div>
+
+    @* ── Footer ── *@
+    <div class="wp-reading-footer">
+        <span>✦</span>
+        <span>End of Preview</span>
+        <span>✦</span>
+    </div>
+
+</div>
+
+<div id="bmToast"></div>
+
+@section Scripts {
+    <script>
+        const contentEl      = document.getElementById('bookContent');
+        const wrap           = document.getElementById('readerWrap');
+        const filterBar      = document.getElementById('filterBar');
+        const filterLabel    = document.getElementById('filterLabel');
+        const filterCount    = document.getElementById('filterCount');
+        const filterInput    = document.getElementById('filterInput');
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+
+        // ══ FONT SIZE ══
+        let fontSize = parseInt(localStorage.getItem('re_fontSize') || '17');
+        applyFontSize();
+        function applyFontSize() {
+            fontSize = Math.min(28, Math.max(12, fontSize));
+            contentEl.style.fontSize = fontSize + 'px';
+            document.getElementById('fontSizeLabel').textContent = fontSize;
+            localStorage.setItem('re_fontSize', fontSize);
+        }
+        function changeFontSize(d) { fontSize += d; applyFontSize(); }
+
+        // ══ THEME ══
+        let currentTheme = localStorage.getItem('re_theme') || 'light';
+        setTheme(currentTheme);
+        function setTheme(t) {
+            currentTheme = t;
+            wrap.className = wrap.className.replace(/theme-\w+/g, '').trim() + ' theme-' + t;
+            ['light','dark','sepia'].forEach(n =>
+                document.getElementById('pill-' + n)?.classList.toggle('active', n === t)
+            );
+            localStorage.setItem('re_theme', t);
+        }
+
+        // ══ FULLSCREEN ══
+        const fsBtn = document.getElementById('fsBtn');
+        let isFS = false;
+        function toggleFullscreen() {
+            isFS = !isFS;
+            wrap.classList.toggle('fullscreen', isFS);
+            fsBtn.textContent = isFS ? '✕' : '⛶';
+            document.body.style.overflow = isFS ? 'hidden' : '';
+        }
+
+        // ══ SENTENCE WRAPPING (for word filter) ══
+        let sentenceSpans = [];
+        function wrapSentences() {
+            const fullText = contentEl.innerText;
+            const parts = fullText.match(/[^.!?…]+[.!?…]*[\s]*/g) || [fullText];
+            let rebuilt = '';
+            parts.forEach((part, i) => {
+                if (part.trim() === '') rebuilt += part;
+                else rebuilt += `<span class="tts-sent" data-idx="${i}">${escHtml(part)}</span>`;
+            });
+            contentEl.innerHTML = rebuilt;
+            sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+        }
+        function escHtml(t) {
+            return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+        wrapSentences();
+
+        // ══ TOAST ══
+        function showToast(msg) {
+            const t = document.getElementById('bmToast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // ══ WORD FILTER ══
+        let filterActive = false, originalHTML = null;
+        function onFilterInput() {
+            filterInput.style.borderColor = filterInput.value.trim() ? 'var(--re-orange)' : 'rgba(128,128,128,.18)';
+        }
+        function applyFilter() {
+            const word = filterInput.value.trim();
+            if (!word) { showToast('Type a word to search first.'); return; }
+            if (!filterActive) originalHTML = contentEl.innerHTML;
+            const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex   = new RegExp(`(${escaped})`, 'gi');
+            const base    = originalHTML || contentEl.innerHTML;
+            contentEl.innerHTML = base.replace(regex, '<mark class="word-filter-match">$1</mark>');
+            sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+            const matches = contentEl.querySelectorAll('.word-filter-match');
+            const count   = matches.length;
+            if (count === 0) {
+                showToast(`"${word}" not found in this preview.`);
+                contentEl.innerHTML = base;
+                sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+                filterActive = false; return;
+            }
+            filterLabel.textContent = `"${word}"`;
+            filterCount.textContent = `${count} match${count !== 1 ? 'es' : ''}`;
+            filterBar.classList.add('visible');
+            clearFilterBtn.style.display = 'inline-flex';
+            filterActive = true;
+            matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showToast(`${count} match${count !== 1 ? 'es' : ''} found for "${word}"`);
+        }
+        function clearFilter() {
+            if (!filterActive || !originalHTML) {
+                filterInput.value = ''; filterInput.style.borderColor = 'rgba(128,128,128,.18)';
+                filterBar.classList.remove('visible'); clearFilterBtn.style.display = 'none'; return;
+            }
+            contentEl.innerHTML = originalHTML;
+            sentenceSpans = Array.from(contentEl.querySelectorAll('.tts-sent'));
+            originalHTML = null; filterActive = false;
+            filterInput.value = ''; filterInput.style.borderColor = 'rgba(128,128,128,.18)';
+            filterBar.classList.remove('visible'); clearFilterBtn.style.display = 'none';
+            showToast('Filter removed');
+        }
+
+        // ══ KEYBOARD ══
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && isFS) toggleFullscreen();
+        });
+    </script>
+}

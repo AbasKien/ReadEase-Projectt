@@ -1,0 +1,669 @@
+@model ReadEase.ViewModels.Author.ManageBooksViewModel
+@{
+    ViewData["Title"] = "My Books";
+    Layout = "~/Areas/Mobile/Views/Shared/_MobileLayout.cshtml";
+}
+
+@if (Model is null)
+{
+    <div class="mob-empty">
+        <span class="mob-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="56" height="56" style="color:var(--re-muted);flex-shrink:0;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></span>
+        <div class="mob-empty-title">Nothing here</div>
+        <a class="mob-empty-btn" href="/Mobile/Dashboard">Back to Dashboard</a>
+    </div>
+    return;
+}
+
+<style>
+    /* ── MAUI WebView Compatibility ── */
+    /* Ensure content starts below status bar and doesn't clip */
+    body.maui-host .re-main {
+        padding-top: 0 !important;
+    }
+    .write-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .write-title {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: var(--re-text);
+    }
+
+    .write-sub {
+        font-size: .7rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-top: .1rem;
+    }
+
+    .write-new-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: var(--re-orange);
+        color: var(--re-text) !important;
+        font-size: .8rem;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        border-radius: var(--radius-sm);
+        text-decoration: none !important;
+        white-space: nowrap;
+        box-shadow: 0 3px 12px rgba(242,101,34,.3);
+        transition: background .15s, transform .15s;
+    }
+
+        .write-new-btn:hover {
+            background: var(--re-orange-dark);
+            transform: translateY(-1px);
+        }
+
+    .write-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: .6rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .write-stat {
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 14px;
+        padding: .85rem .75rem;
+        text-align: center;
+    }
+
+    .write-stat-val {
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: var(--re-orange);
+        line-height: 1;
+    }
+
+    .write-stat-lbl {
+        font-size: .62rem;
+        font-weight: 800;
+        color: var(--re-muted);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-top: .25rem;
+    }
+
+    .write-tabs {
+        display: flex;
+        gap: .4rem;
+        margin-bottom: 1.25rem;
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 12px;
+        padding: .3rem;
+    }
+
+    .write-tab {
+        flex: 1;
+        text-align: center;
+        font-size: .78rem;
+        font-weight: 800;
+        padding: .5rem;
+        border-radius: 9px;
+        cursor: pointer;
+        color: var(--re-text);
+        transition: all .18s;
+        border: none;
+        background: none;
+        font-family: 'Nunito', sans-serif;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+    }
+
+        .write-tab.active {
+            background: var(--re-orange);
+            color: var(--re-text);
+            box-shadow: 0 2px 8px rgba(200,134,10,.25);
+        }
+
+    .wb-card {
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 16px;
+        padding: .9rem;
+        margin-bottom: .7rem;
+        transition: border-color .15s;
+    }
+
+        .wb-card:hover {
+            border-color: rgba(242,101,34,.25);
+        }
+
+    .wb-card-top {
+        display: flex;
+        gap: .85rem;
+        margin-bottom: .85rem;
+    }
+
+    .wb-cover {
+        width: 56px;
+        aspect-ratio: 2/3;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 4px 14px rgba(0,0,0,.4);
+    }
+
+    .wb-cover-ph {
+        width: 56px;
+        aspect-ratio: 2/3;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f26522, #d97706);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .wb-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .wb-title {
+        font-size: .92rem;
+        font-weight: 800;
+        color: var(--re-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: .2rem;
+    }
+
+    .wb-category {
+        font-size: .68rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-bottom: .4rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+        max-height: 2.8em;
+    }
+
+    .wb-badges {
+        display: flex;
+        gap: .3rem;
+        flex-wrap: wrap;
+    }
+
+    .wb-pill {
+        font-size: .58rem;
+        font-weight: 900;
+        padding: .15rem .5rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+
+    .wb-pill-free {
+        background: rgba(34,197,94,.12);
+        color: #4ade80;
+    }
+
+    .wb-pill-pro {
+        background: rgba(242,101,34,.12);
+        color: var(--re-orange);
+    }
+
+    .wb-pill-done {
+        background: rgba(99,102,241,.12);
+        color: #a5b4fc;
+    }
+
+    .wb-pill-ongoing {
+        background: rgba(251,191,36,.1);
+        color: #fcd34d;
+    }
+
+    .wb-pill-arch {
+        background: rgba(156,163,175,.1);
+        color: #9ca3af;
+    }
+
+    .wb-pill-pending {
+        background: rgba(59,130,246,.1);
+        color: var(--re-orange);
+    }
+
+    .wb-pill-reject {
+        background: rgba(239,68,68,.1);
+        color: #fca5a5;
+    }
+
+    .wb-actions {
+        display: flex;
+        gap: .45rem;
+    }
+
+    .wb-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        padding: .58rem .5rem;
+        border-radius: 10px;
+        font-size: .75rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .15s;
+        text-decoration: none !important;
+        border: 1.5px solid var(--re-border);
+        background: var(--re-surface-2);
+        color: var(--re-text) !important;
+        font-family: 'Nunito', sans-serif;
+    }
+
+        .wb-btn:hover {
+            background: var(--re-surface);
+            border-color: var(--re-orange);
+        }
+
+        .wb-btn.primary {
+            background: rgba(242,101,34,.15);
+            border-color: rgba(242,101,34,.3);
+            color: var(--re-orange) !important;
+        }
+
+            .wb-btn.primary:hover {
+                background: rgba(242,101,34,.25);
+            }
+
+        .wb-btn.danger {
+            background: rgba(239,68,68,.08);
+            border-color: rgba(239,68,68,.2);
+            color: #ef4444 !important;
+        }
+        .wb-btn.danger:hover {
+            background: rgba(239,68,68,.15);
+            border-color: rgba(239,68,68,.3);
+        }
+
+    .wb-reject-reason {
+        font-size: .72rem;
+        color: #fca5a5;
+        background: rgba(239,68,68,.08);
+        border: 1px solid rgba(239,68,68,.2);
+        border-radius: 8px;
+        padding: .5rem .75rem;
+        margin-top: .5rem;
+        font-weight: 600;
+    }
+
+    .wb-toast {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: rgba(30,40,50,.97);
+        border: 1px solid var(--re-border);
+        border-radius: 99px;
+        padding: .6rem 1.2rem;
+        font-size: .82rem;
+        font-weight: 700;
+        color: var(--re-text);
+        white-space: nowrap;
+        opacity: 0;
+        transition: all .25s;
+        z-index: 500;
+        pointer-events: none;
+    }
+
+        .wb-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+    .wb-modal-bg {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.7);
+        z-index: 400;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+
+        .wb-modal-bg.open {
+            display: flex;
+        }
+
+    .wb-modal {
+        background: var(--re-surface);
+        border: 1px solid var(--re-border);
+        border-radius: 20px;
+        padding: 1.5rem 1.25rem;
+        width: 100%;
+        max-width: 360px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+
+    .wb-modal-title {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: var(--re-text);
+        margin-bottom: .5rem;
+        text-align: center;
+    }
+
+    .wb-modal-sub {
+        font-size: .85rem;
+        color: var(--re-muted);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        line-height: 1.5;
+    }
+
+    .wb-modal-actions {
+        display: flex;
+        gap: .75rem;
+    }
+
+    .wb-modal-cancel {
+        flex: 1;
+        padding: .9rem;
+        border-radius: 12px;
+        background: var(--re-surface-2);
+        border: 1.5px solid var(--re-border);
+        color: var(--re-muted);
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .wb-modal-cancel:hover {
+        background: var(--re-border);
+        color: var(--re-text);
+    }
+
+    .wb-modal-confirm {
+        flex: 1;
+        padding: .9rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(239,68,68,.2), rgba(239,68,68,.1));
+        border: 1.5px solid rgba(239,68,68,.4);
+        color: #ef4444;
+        font-family: 'Nunito', sans-serif;
+        font-size: .88rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .wb-modal-confirm:hover {
+        background: linear-gradient(135deg, rgba(239,68,68,.3), rgba(239,68,68,.15));
+        transform: translateY(-1px);
+    }
+
+    .write-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+</style>
+
+<!-- Page header -->
+<div class="write-header">
+    <div>
+        <div class="write-title">My Books</div>
+        <div class="write-sub">@Model.TotalBooks published · @Model.TotalReads total reads</div>
+    </div>
+    <a class="write-new-btn" href="/Mobile/PublishBook">+ New Book</a>
+</div>
+
+<!-- Stats -->
+<div class="write-stats">
+    <div class="write-stat">
+        <div class="write-stat-val">@Model.TotalBooks</div>
+        <div class="write-stat-lbl">Books</div>
+    </div>
+    <div class="write-stat">
+        <div class="write-stat-val">@(Model.Books.Count(b => !b.IsDeleted))</div>
+        <div class="write-stat-lbl"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Active</div>
+    </div>
+    <div class="write-stat">
+        <div class="write-stat-val">@Model.TotalReads</div>
+        <div class="write-stat-lbl">Reads</div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="write-tabs">
+    <button class="write-tab active" id="tabActive" onclick="switchTab('active')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Active</button>
+    <button class="write-tab" id="tabArchived" onclick="switchTab('archived')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Archived</button>
+</div>
+
+<!-- Toast -->
+<div class="wb-toast" id="wbToast"></div>
+
+@{
+    var activeBooks = Model.Books.Where(b => !b.IsDeleted).ToList();
+    var archivedBooks = Model.Books.Where(b => b.IsDeleted).ToList();
+}
+
+<!-- Active books -->
+<div id="listActive">
+    @if (activeBooks.Any())
+    {
+        @foreach (var b in activeBooks)
+        {
+            <div class="wb-card" id="wbcard-@b.Id">
+                <div class="wb-card-top">
+                    @if (!string.IsNullOrEmpty(b.CoverImage))
+                    {
+                        <img class="wb-cover" src="@b.CoverImage" alt="@b.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="wb-cover-ph"></div>
+                    }
+                    <div class="wb-info">
+                        <div class="wb-title">@b.Title</div>
+                        <div class="wb-category">@b.Category · @b.ChapterNumber ch.</div>
+                        <div class="wb-badges">
+                            <span class="wb-pill @(b.IsFree ? "wb-pill-free" : "wb-pill-pro")">
+                                @(b.IsFree ? "Free" : "Pro")
+                            </span>
+                            <span class="wb-pill @(b.IsStoryComplete ? "wb-pill-done" : "wb-pill-ongoing")">
+                                @(b.IsStoryComplete ? "Complete" : "Ongoing")
+                            </span>
+                            @if (b.Status == ReadEase.Enums.BookStatus.PendingApproval)
+                            {
+                                <span class="wb-pill wb-pill-pending">Pending</span>
+                            }
+                            else if (b.Status == ReadEase.Enums.BookStatus.Rejected)
+                            {
+                                <span class="wb-pill wb-pill-reject">Rejected</span>
+                            }
+                        </div>
+                        @if (b.Status == ReadEase.Enums.BookStatus.Rejected && !string.IsNullOrEmpty(b.RejectionReason))
+                        {
+                            <div class="wb-reject-reason">Error: @b.RejectionReason</div>
+                        }
+                    </div>
+                </div>
+                <div class="wb-actions">
+                    <a class="wb-btn primary" href="/Mobile/ManageChapters/@b.Id">
+                        Chapters
+                    </a>
+                    <a class="wb-btn" href="/Mobile/EditBook/@b.Id">
+                        Edit
+                    </a>
+                    <button class="wb-btn"
+                            onclick="toggleComplete('@b.Id', this)"
+                            title="@(b.IsStoryComplete ? "Mark ongoing" : "Mark complete")">
+                        @(b.IsStoryComplete ? "Ongoing" : "Complete")
+                    </button>
+                    <button class="wb-btn danger"
+                            onclick="confirmArchive('@b.Id', '@Html.Raw(b.Title.Replace("'", "\\'"))')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Archive
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="write-empty">
+            <div style="font-size:2.5rem;margin-bottom:.75rem;">📚</div>
+            <div style="font-size:.95rem;font-weight:800;color:var(--re-text);margin-bottom:.35rem;">No books yet</div>
+            <div style="font-size:.78rem;color:var(--re-muted);font-weight:600;margin-bottom:1.25rem;">Start your first story today!</div>
+            <a class="write-new-btn" href="/Mobile/PublishBook">Publish Your First Book</a>
+        </div>
+    }
+</div>
+
+<!-- Archived books -->
+<div id="listArchived" style="display:none;">
+    @if (archivedBooks.Any())
+    {
+        @foreach (var b in archivedBooks)
+        {
+            <div class="wb-card" id="wbcard-arch-@b.Id">
+                <div class="wb-card-top">
+                    @if (!string.IsNullOrEmpty(b.CoverImage))
+                    {
+                        <img class="wb-cover" src="@b.CoverImage" alt="@b.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="wb-cover-ph"></div>
+                    }
+                    <div class="wb-info">
+                        <div class="wb-title">@b.Title</div>
+                        <div class="wb-category">@b.Category · @b.ChapterNumber ch.</div>
+                        <div class="wb-badges">
+                            <span class="wb-pill wb-pill-arch"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="color:currentColor;flex-shrink:0;vertical-align:middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Archived</span>
+                            <span class="wb-pill @(b.IsFree ? "wb-pill-free" : "wb-pill-pro")">
+                                @(b.IsFree ? "Free" : "Pro")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="wb-actions">
+                    <button class="wb-btn primary" onclick="restoreBook('@b.Id')">
+                        Restore
+                    </button>
+                    <button class="wb-btn danger"
+                            onclick="confirmDelete('@b.Id', '@Html.Raw(b.Title.Replace("'", "\\'"))')">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="write-empty">
+            <div style="font-size:2.5rem;margin-bottom:.75rem;">📦</div>
+            <div style="font-size:.88rem;color:var(--re-muted);font-weight:700;">No archived books</div>
+        </div>
+    }
+</div>
+
+<!-- Confirm modal -->
+<div class="wb-modal-bg" id="wbModal">
+    <div class="wb-modal">
+        <div class="wb-modal-title" id="modalTitle">Are you sure?</div>
+        <div class="wb-modal-sub" id="modalSub"></div>
+        <div class="wb-modal-actions">
+            <button class="wb-modal-cancel" onclick="closeModal()">Cancel</button>
+            <button class="wb-modal-confirm" id="modalConfirmBtn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchTab(tab) {
+            document.getElementById('listActive').style.display   = tab === 'active'   ? 'block' : 'none';
+            document.getElementById('listArchived').style.display = tab === 'archived' ? 'block' : 'none';
+            document.getElementById('tabActive').classList.toggle('active',   tab === 'active');
+            document.getElementById('tabArchived').classList.toggle('active', tab === 'archived');
+        }
+
+        function wbToast(msg) {
+            const el = document.getElementById('wbToast');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2800);
+        }
+
+        function openModal(title, sub, action) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalSub').textContent   = sub;
+            document.getElementById('modalConfirmBtn').onclick = async () => { closeModal(); await action(); };
+            document.getElementById('wbModal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('wbModal').classList.remove('open');
+        }
+
+        async function toggleComplete(bookId, btn) {
+            try {
+                const res  = await mobileApi('/Areas/Mobile/api/Books/toggle-complete/' + bookId, { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed');
+                btn.textContent = data.isStoryComplete ? 'Ongoing' : 'Complete';
+                btn.title = data.isStoryComplete ? 'Mark ongoing' : 'Mark complete';
+                const pill = document.getElementById('wbcard-' + bookId)?.querySelector('.wb-pill-done, .wb-pill-ongoing');
+                if (pill) {
+                    pill.textContent = data.isStoryComplete ? 'Complete' : 'Ongoing';
+                    pill.className = 'wb-pill ' + (data.isStoryComplete ? 'wb-pill-done' : 'wb-pill-ongoing');
+                }
+                wbToast(data.isStoryComplete ? 'Marked complete!' : 'Marked ongoing');
+            } catch(e) { wbToast('Error: ' + e.message); }
+        }
+
+        function confirmArchive(bookId, title) {
+            openModal('Archive this book?', '"' + title + '" will be hidden from readers.', async function() {
+                try {
+                    const res = await mobileApi('/Areas/Mobile/api/Books/archive/' + bookId, { method: 'POST' });
+                    if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+                    wbToast('Book archived');
+                    // Navigate to Archive page so user sees it immediately
+                    window.location.href = '/Mobile/Archive';
+                } catch(e) { wbToast('Error: ' + e.message); }
+            });
+        }
+
+        async function restoreBook(bookId) {
+            try {
+                const res = await mobileApi('/Areas/Mobile/api/Books/restore/' + bookId, { method: 'POST' });
+                if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+                document.getElementById('wbcard-arch-' + bookId)?.remove();
+                wbToast('Book restored!');
+            } catch(e) { wbToast('Error: ' + e.message); }
+        }
+
+        function confirmDelete(bookId, title) {
+            openModal('Permanently delete?', '"' + title + '" cannot be recovered.', async function() {
+                try {
+                    const res = await mobileApi('/Areas/Mobile/api/Books/' + bookId, { method: 'DELETE' });
+                    if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+                    document.getElementById('wbcard-arch-' + bookId)?.remove();
+                    wbToast('Book deleted');
+                } catch(e) { wbToast('Error: ' + e.message); }
+            });
+        }
+    </script>
+}
